@@ -85,7 +85,7 @@
                 <label class="form-label">Harga Jual <span class="text-danger">*</span></label>
                 <div class="input-group">
                     <span class="input-group-text" style="border-radius:16px 0 0 16px;background:var(--pink-soft);border:2px solid var(--border-soft);border-right:none">Rp</span>
-                    <input type="number" name="harga_jual" id="harga_jual" class="form-control" value="{{ old('harga_jual') }}" required>
+                    <input type="text" name="harga_jual" id="harga_jual" class="form-control input-rupiah" data-type="rupiah" value="{{ old('harga_jual') }}" required>
                 </div>
             </div>
         </div>
@@ -112,7 +112,7 @@
                 <label class="form-label">Harga Beli / Unit <span class="text-danger">*</span></label>
                 <div class="input-group">
                     <span class="input-group-text" style="border-radius:16px 0 0 16px;background:var(--pink-soft);border:2px solid var(--border-soft);border-right:none">Rp</span>
-                    <input type="number" name="harga_beli_per_unit" id="harga_beli" class="form-control" value="{{ old('harga_beli_per_unit') }}" required>
+                    <input type="text" name="harga_beli_per_unit" id="harga_beli" class="form-control input-rupiah" data-type="rupiah" value="{{ old('harga_beli_per_unit') }}" required>
                 </div>
             </div>
             <div class="col-md-4">

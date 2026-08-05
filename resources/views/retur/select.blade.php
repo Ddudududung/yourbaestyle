@@ -299,40 +299,6 @@
     </div>
 </div>
 
-<style>
-    .form-control, .form-select {
-        border-color: #E8D9E0;
-        border-radius: 12px;
-        font-size: 13px;
-    }
-    .form-control:focus, .form-select:focus {
-        border-color: #EC95A8;
-        box-shadow: 0 0 0 0.2rem rgba(236, 149, 168, 0.25);
-    }
-    .btn-primary {
-        background: linear-gradient(135deg, #EC95A8, #D97B90);
-        border: none;
-    }
-    .btn-primary:hover {
-        background: linear-gradient(135deg, #D97B90, #C56C7F);
-    }
-    #scanner video, #scanner canvas {
-        max-width: 100%;
-        max-height: 100%;
-        border-radius: 12px;
-    }
-    #barcodeTab .nav-link {
-        color: #7A686D;
-        background: transparent;
-        transition: all 0.2s ease;
-        border: none;
-    }
-    #barcodeTab .nav-link.active {
-        color: #fff;
-        background: linear-gradient(135deg, #EC95A8, #D97B90);
-        box-shadow: 0 2px 6px rgba(236, 149, 168, 0.4);
-    }
-</style>
 @endsection
 
 @push('scripts')

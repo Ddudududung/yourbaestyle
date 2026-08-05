@@ -49,6 +49,10 @@ class SesiLiveController extends Controller
      */
     public function store(Request $request)
     {
+        if ($request->has('harga_live')) {
+            $request->merge(['harga_live' => str_replace('.', '', $request->harga_live)]);
+        }
+
         $request->validate([
             'tanggal_live' => 'required|date',
             'id_sesi_live' => 'required|exists:sesi_lives,id',
@@ -105,14 +109,12 @@ class SesiLiveController extends Controller
         'jam_selesai'  => 'nullable',
     ]);
 
-    // ✅ PERBAIKAN: Langsung pakai Auth::id(), lebih simple
     $userId = Auth::id();
     
     if (!$userId) {
-        return back()->withError('❌ Anda harus login terlebih dahulu!');
+        return back()->withError('Anda harus login terlebih dahulu!');
     }
 
-    // ✅ PERBAIKAN: Buat tanpa fallback logic
     try {
         \App\Models\SesiLive::create([
             'nama_sesi'    => $request->nama_sesi,
@@ -121,11 +123,11 @@ class SesiLiveController extends Controller
             'jam_mulai'    => $request->jam_mulai,
             'jam_selesai'  => $request->jam_selesai,
             'status'       => 'ongoing',
-            'created_by'   => $userId,  // ✅ Simple & clear
+            'created_by'   => $userId,
         ]);
         
         return redirect()->back()
-            ->with('success', '✅ Jadwal Sesi Live [' . $request->nama_sesi . '] berhasil dibuat!');
+            ->with('success', 'Jadwal Sesi Live [' . $request->nama_sesi . '] berhasil dibuat!');
             
     } catch (\Exception $e) {
         \Illuminate\Support\Facades\Log::error('Sesi live creation failed', [
@@ -133,7 +135,7 @@ class SesiLiveController extends Controller
             'user_id' => $userId,
         ]);
         
-        return back()->withError('❌ Gagal membuat jadwal: ' . $e->getMessage());
+        return back()->withError('Gagal membuat jadwal: ' . $e->getMessage());
     }
 }
     public function destroyJadwal($id)

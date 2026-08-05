@@ -29,9 +29,7 @@ class PesananOnlineController extends Controller
     return null;
 }
 
-    /**
-     * 🆕 HELPER: Get value dari data array dengan multiple alias support
-     */
+    /** Helper: Ambil value dari data array dengan multiple alias support*/
     private function getValueFromData(array $data, array $aliases, $default = null)
 {
     $key = $this->findColumnKey(array_keys($data), $aliases);
@@ -45,11 +43,11 @@ class PesananOnlineController extends Controller
 
     public function preview(Request $request)
 {
-    // ✅ STEP 1: Validasi input
+    // Validasi input
     $request->validate([
-        'platform'   => 'required|in:shopee,tiktok',  // Platform mana?
+        'platform'   => 'required|in:shopee,tiktok',
         'format_csv' => 'required|in:shopee_standard,shopee_hemat_kargo,tiktok',
-        'file_csv'   => 'required|file|mimes:xlsx,xls,csv|max:5120',  // File, max 5MB
+        'file_csv'   => 'required|file|mimes:xlsx,xls,csv|max:5120',
     ]);
 
     $file      = $request->file('file_csv');
@@ -57,32 +55,30 @@ class PesananOnlineController extends Controller
     $formatCsv = $request->format_csv;
 
     try {
-        // ✅ STEP 2: Parse Excel file
-        $rows = Excel::toArray(new \stdClass(), $file)[0];  // Ambil sheet pertama
+        // Parse file Excel
+        $rows = Excel::toArray(new \stdClass(), $file)[0];
         
         if (empty($rows)) {
             return back()->with('error', 'File Excel kosong atau tidak terbaca.');
         }
         
-        // ✅ STEP 3: Pisahkan header dari data
-        $header = array_shift($rows);  // Baris pertama = header
+        // Pisahkan header dari data
+        $header = array_shift($rows);
 
         $parsed = [];
         $parseErrors = [];
         
-        // ✅ STEP 4: Parse setiap row
+        // Parse setiap baris data
         foreach ($rows as $rowIdx => $row) {
-            // Pastikan kolom sesuai dengan header
             if (count($row) > count($header)) {
                 $row = array_slice($row, 0, count($header));
             } else {
                 $row = array_pad($row, count($header), null);
             }
 
-            // Combine header dengan row data → jadi array key:value
             $data = array_combine($header, $row);
 
-            // ✅ STEP 5: Pilih parser sesuai format
+            // Pilih parser sesuai format platform
             $hasil = match ($formatCsv) {
                 'shopee_standard'    => $this->parseShopeeStandardRobust($data),
                 'shopee_hemat_kargo' => $this->parseShopeeHematKargoRobust($data),
@@ -91,13 +87,13 @@ class PesananOnlineController extends Controller
             };
 
             if ($hasil) {
-                $parsed[] = $hasil;  // Sukses → masukkan ke array parsed
+                $parsed[] = $hasil;
             } else {
-                $parseErrors[] = $rowIdx + 2;  // Error → catat row number (1-indexed + header)
+                $parseErrors[] = $rowIdx + 2;
             }
         }
 
-        // ✅ STEP 6: Cek apakah ada baris yang berhasil di-parse
+        // Cek kelengkapan data hasil parse
         if (empty($parsed)) {
             $errorMsg = 'Tidak ada baris yang berhasil di-parse. ';
             $errorMsg .= 'Periksa: 1) Header kolom sesuai format? ';
@@ -115,50 +111,45 @@ class PesananOnlineController extends Controller
                 'error_rows' => $parseErrors,
             ]);
             
-            return back()->with('error', $errorMsg);  // Kembali ke form dengan error
+            return back()->with('error', $errorMsg);
         }
 
-        // ✅ STEP 7: Deteksi mapping otomatis (cari di katalog_live)
+        // Deteksi mapping otomatis berdasarkan katalog live
         $tanggalLiveDefault = date('Y-m-d');
         
         foreach ($parsed as &$item) {
-            $variasiLive = $item['variasi'];  // Kode variasi dari Excel (FIX 10, dll)
+            $variasiLive = $item['variasi'];
             
             if (!empty($variasiLive)) {
-                // Cari di katalog_live tabel (sudah di-map sebelumnya)
                 $katalog = KatalogLive::where('kode_live', $variasiLive)
                                       ->whereDate('tanggal_live', $tanggalLiveDefault)
                                       ->with('produk')
                                       ->first();
                 
                 if ($katalog && $katalog->produk && $katalog->produk->status === 'aktif') {
-                    // Produk sudah di-map! Auto-found!
                     $item['mapping_status'] = 'auto_found';
                     $item['id_produk_auto'] = $katalog->produk->id;
                     $item['nama_produk_auto'] = $katalog->produk->nama_produk;
                 } else {
-                    // Kode tidak ada di katalog
                     $item['mapping_status'] = 'not_found';
                     $item['id_produk_auto'] = null;
                 }
             } else {
-                // Tidak ada kode variasi
                 $item['mapping_status'] = 'no_kode';
                 $item['id_produk_auto'] = null;
             }
         }
         
-        // ✅ STEP 8: Ambil produk aktif (untuk manual mapping di preview page)
+        // Ambil data produk aktif untuk manual mapping
         $produkAktif = Produk::where('status', 'aktif')
                              ->orderBy('nama_produk', 'asc')
                              ->get();
         
-        // ✅ STEP 9: Simpan ke session (buat nanti dipakai di importProses())
+        // Simpan info session platform
         session(['csv_platform' => $platform, 'csv_format' => $formatCsv]);
 
         Log::info('Preview success', ['rows_parsed' => count($parsed), 'platform' => $platform]);
 
-        // ✅ STEP 10: Return view dengan parsed data
         return view('pesanan.preview', compact('parsed', 'platform', 'formatCsv', 'produkAktif'));
         
     } catch (\Exception $e) {
@@ -172,12 +163,10 @@ class PesananOnlineController extends Controller
     }
 }
 
-    /**
-     * 🆕 ROBUST PARSER: Shopee Standard
-     */
+    /** Parser: Shopee Standard */
     private function parseShopeeStandardRobust(array $data): ?array
 {
-    // ✅ Extract "No. Pesanan" (bisa juga "No.Pesanan", "NoPesanan", "Order ID", dll)
+    // Extract No. Pesanan
     $noPesanan = trim((string)$this->getValueFromData($data, [
         'No. Pesanan', 'No.Pesanan', 'NoPesanan',
         'Order ID', 'OrderID', 'order_id',
@@ -357,7 +346,7 @@ class PesananOnlineController extends Controller
      */
    public function importProses(Request $request)
 {
-    // ✅ STEP 1: Validasi input
+    // Validasi input
     $validated = $request->validate([
         'pesanan' => 'required|array',
         'pesanan.*.no_pesanan' => 'required|string',
@@ -365,10 +354,8 @@ class PesananOnlineController extends Controller
         'pesanan.*.harga_satuan' => 'required|numeric|min:1000',
     ]);
 
-    // ✅ STEP 2: Get platform dari session
     $platform = session('csv_platform') ?? 'shopee';
 
-    // ⚠️ STEP 3: Mulai transaction (sudah ada, tapi bisa lebih robust)
     DB::beginTransaction();
     
     try {
@@ -376,30 +363,28 @@ class PesananOnlineController extends Controller
         $pesananGagal = 0;
         $pesananSkip = 0;
 
-        // ✅ STEP 4: Loop setiap pesanan
         foreach ($validated['pesanan'] as $idx => $row) {
             $noPesanan = $row['no_pesanan'] ?? null;
             $variasiLive = $row['variasi'] ?? null;
             $tanggalLive = $row['tanggal'] ?? date('Y-m-d');
 
             try {
-                // ✅ STEP 5A: Cari atau bikin pesanan
+                // Cari atau buat pesanan baru
                 $pesanan = PesananOnline::firstOrCreate(
-                    ['no_pesanan' => $noPesanan],  // Cari berdasarkan no_pesanan
+                    ['no_pesanan' => $noPesanan],
                     [
-                        'platform'   => $platform,
-                        'status'     => 'draft',  // Status awal: draft
+                        'platform'    => $platform,
+                        'status'      => 'draft',
                         'total_harga' => $row['total_harga'] ?? 0,
                         'total_hpp'   => 0,
                     ]
                 );
 
-                // ✅ STEP 5B: Cari produk via mapping (katalog_live)
+                // Cari produk berdasarkan mapping katalog live
                 $produk = null;
                 $mapping_status = 'not_found';
 
                 if (!empty($variasiLive)) {
-                    // Cari di katalog_live
                     $katalog = KatalogLive::where('kode_live', $variasiLive)
                                           ->whereDate('tanggal_live', date('Y-m-d', strtotime($tanggalLive)))
                                           ->with('produk')
@@ -411,9 +396,8 @@ class PesananOnlineController extends Controller
                     }
                 }
 
-                // ✅ STEP 5C: Kalau tidak ketemu, catat error
+                // Jika produk tidak ditemukan, buat record review manual
                 if (!$produk) {
-                    // ❌ Produk tidak ketemu → akan dihandle di review_manual nanti
                     ReviewMappingManual::create([
                         'no_pesanan' => $noPesanan,
                         'kode_live_raw' => $variasiLive,
@@ -424,10 +408,10 @@ class PesananOnlineController extends Controller
                     
                     $pesananSkip++;
                     Log::warning("Kode {$variasiLive} tidak ditemukan di katalog");
-                    continue;  // Skip ke pesanan berikutnya
+                    continue;
                 }
 
-                // ✅ STEP 5D: Create detail pesanan
+                // Simpan detail pesanan dan snapshot HPP
                 PesananOnline::where('id', $pesanan->id)->update([
                     'status'         => 'diproses',
                     'status_mapping' => 'sukses',
@@ -439,14 +423,13 @@ class PesananOnlineController extends Controller
                     'id_produk'    => $produk->id,
                     'qty'          => $row['qty'],
                     'harga_satuan' => $row['harga_satuan'],
-                    'hpp_satuan'   => $produk->hpp_otomatis,  // ✅ Snapshot HPP!
+                    'hpp_satuan'   => $produk->hpp_otomatis,
                     'variasi'      => $variasiLive,
                 ]);
 
-                // ✅ STEP 5E: Potong stok
+                // Potong stok dan update katalog live
                 $produk->decrement('stok', $row['qty']);
                 
-                // ✅ STEP 5F: Simpan ke katalog_live (kalau belum ada)
                 KatalogLive::firstOrCreate(
                     ['kode_live' => $variasiLive, 'tanggal_live' => date('Y-m-d', strtotime($tanggalLive))],
                     ['id_produk' => $produk->id, 'harga_live' => $produk->harga_jual]
@@ -460,14 +443,13 @@ class PesananOnlineController extends Controller
                     'error' => $e->getMessage(),
                     'pesanan' => $row['no_pesanan'] ?? 'unknown',
                 ]);
-                throw $e;  // ✅ Throw ke outer catch (rollback)
+                throw $e;
             }
         }
 
-        // ✅ STEP 6: Commit transaction (semua berhasil)
         DB::commit();
 
-        $pesan = "✅ Import selesai! Berhasil: {$pesananBerhasil}, Gagal: {$pesananGagal}";
+        $pesan = "Import selesai! Berhasil: {$pesananBerhasil}, Gagal: {$pesananGagal}";
         if ($pesananSkip > 0) {
             $pesan .= ", Dilewati: {$pesananSkip}";
         }
@@ -483,7 +465,6 @@ class PesananOnlineController extends Controller
         return redirect()->route('pesanan.index')->with('success', $pesan);
 
     } catch (\Exception $e) {
-        // ✅ STEP 7: Rollback jika error!
         DB::rollBack();
         
         Log::error('Import proses failed', [
@@ -493,12 +474,10 @@ class PesananOnlineController extends Controller
             'trace' => $e->getTraceAsString(),
         ]);
         
-        return back()->with('error', '❌ Gagal Menyimpan: ' . $e->getMessage());
+        return back()->with('error', 'Gagal Menyimpan: ' . $e->getMessage());
     }
 }
-    // ============================================================
-    // HELPERS
-    // ============================================================
+    // Helpers
     // ✅ Ekstrak field dari text (untuk TikTok format yang text-based)
 private function ekstrakField(string $text, string $key): ?string
 {

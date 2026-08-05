@@ -12,9 +12,9 @@ use Illuminate\Support\Facades\DB;
 
 class ReturController extends Controller
 {
-    // ============================================================
-    // INDEX — Daftar semua retur
-    // ============================================================
+    /**
+     * Daftar retur
+     */
     public function index(Request $request)
     {
         $query = Retur::with(['pesananOnline', 'produk', 'user']);
@@ -33,16 +33,12 @@ class ReturController extends Controller
         return view('retur.index', compact('retur'));
     }
 
-    // ============================================================
-    // SELECT TRANSAKSI — Halaman untuk pilih transaksi dulu
-    // ============================================================
+    /**
+     * Pilih transaksi untuk retur
+     */
     public function selectTransaksi(Request $request)
 {
-    // 1. Ambil data Sesi Live untuk dropdown filter
     $sesiLive = \App\Models\SesiLive::orderBy('tanggal_live', 'desc')->get();
-
-    // 2. Query Transaksi (Contoh query gabungan atau salah satu tabel)
-    // Sesuaikan logika query transaksi Anda di sini
     $query = \App\Models\TransaksiPos::query(); 
 
     if ($request->filled('search')) {
@@ -53,16 +49,14 @@ class ReturController extends Controller
         $query->where('id_sesi_live', $request->id_sesi_live);
     }
 
-    // Pastikan nama variabelnya $transaksis (pake S)
     $transaksis = $query->orderBy('tanggal', 'desc')->get();
 
-    // 3. Kirim ke View dengan nama $transaksis dan $sesiLive
     return view('retur.select', compact('transaksis', 'sesiLive'));
 }
 
-    // ============================================================
-    // CREATE — Form retur (setelah pilih transaksi)
-    // ============================================================
+    /**
+     * Form buat retur
+     */
     public function create(Request $request)
     {
         $transaksiId = $request->query('transaksi_id');
@@ -92,9 +86,9 @@ class ReturController extends Controller
         return view('retur.create', compact('transaksi', 'transaksiType', 'detail'));
     }
 
-    // ============================================================
-    // SEARCH PRODUK BY BARCODE (AJAX untuk barcode scan)
-    // ============================================================
+    /**
+     * Cari produk berdasarkan barcode (AJAX)
+     */
     public function searchByBarcode(Request $request)
     {
         $barcode = $request->input('barcode');
@@ -123,9 +117,9 @@ class ReturController extends Controller
         ]);
     }
 
-    // ============================================================
-    // STORE — Simpan retur
-    // ============================================================
+    /**
+     * Simpan transaksi retur
+     */
     public function store(Request $request)
     {
         $request->validate([
@@ -178,9 +172,9 @@ class ReturController extends Controller
         }
     }
 
-    // ============================================================
-    // SHOW — Detail retur
-    // ============================================================
+    /**
+     * Detail retur
+     */
     public function show(string $id)
     {
         $retur = Retur::with(['pesananOnline', 'produk', 'user'])->findOrFail($id);

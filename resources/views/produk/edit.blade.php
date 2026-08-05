@@ -160,7 +160,7 @@
                         <label class="form-label fw-bold text-dark">Harga Jual <span class="text-danger">*</span></label>
                         <div class="input-group">
                             <span class="input-group-text bg-light border-end-0">Rp</span>
-                            <input type="number" name="harga_jual" class="form-control" value="{{ old('harga_jual', $produk->harga_jual) }}" required>
+                            <input type="text" name="harga_jual" class="form-control input-rupiah" data-type="rupiah" value="{{ old('harga_jual', number_format($produk->harga_jual ?? 0, 0, '', '')) }}" required>
                         </div>
                     </div>
 
@@ -168,7 +168,7 @@
                         <label class="form-label fw-bold text-dark">Harga Beli Per Unit</label>
                         <div class="input-group">
                             <span class="input-group-text bg-light border-end-0">Rp</span>
-                            <input type="number" name="harga_beli_per_unit" class="form-control" value="{{ old('harga_beli_per_unit', $produk->harga_beli_per_unit) }}" step="0.01">
+                            <input type="text" name="harga_beli_per_unit" class="form-control input-rupiah" data-type="rupiah" value="{{ old('harga_beli_per_unit', number_format($produk->harga_beli_per_unit ?? 0, 0, '', '')) }}">
                         </div>
                         <small class="text-muted d-block mt-1">Digunakan jika ada penambahan stok.</small>
                     </div>
@@ -177,7 +177,7 @@
                         <label class="form-label fw-bold text-dark">HPP Otomatis</label>
                         <div class="input-group">
                             <span class="input-group-text bg-light border-end-0">Rp</span>
-                            <input type="number" class="form-control bg-light" value="{{ $produk->hpp_otomatis }}" readonly>
+                            <input type="text" class="form-control bg-light input-rupiah" value="{{ number_format($produk->hpp_otomatis ?? 0, 0, '', '') }}" readonly>
                         </div>
                         <small class="text-muted" style="font-size: 11px;">Dihitung otomatis dari stok + harga beli.</small>
                     </div>
@@ -186,30 +186,59 @@
                         <label class="form-label fw-bold text-dark">HPP Realisasi (Optional)</label>
                         <div class="input-group">
                             <span class="input-group-text bg-light border-end-0">Rp</span>
-                            <input type="number" name="hpp_realisasi" class="form-control" value="{{ old('hpp_realisasi', $produk->hpp_realisasi) }}" step="0.01">
+                            <input type="text" name="hpp_realisasi" class="form-control input-rupiah" data-type="rupiah" value="{{ old('hpp_realisasi', $produk->hpp_realisasi ? number_format($produk->hpp_realisasi, 0, '', '') : '') }}">
                         </div>
                     </div>
                 </div>
 
-                <!-- ==================== BAGIAN 4: STOK ==================== -->
-                <div class="card mb-3 border-0" style="background: #E8F7EE;">
-                    <div class="card-body p-3">
+                <!-- ==================== BAGIAN 4: PENGELOLAAN & PENYESUAIAN STOK ==================== -->
+                <div class="card mb-4 border-0 shadow-sm rounded-4" style="background: #FFF5F7; border: 1.5px solid #F7E5EA !important;">
+                    <div class="card-body p-4">
+                        <h6 class="fw-bold mb-3" style="color: #4D3D43; font-family: 'Quicksand', sans-serif;">
+                            <i class="bi bi-box-seam me-2" style="color: #EC95A8;"></i>Stok Barang & Penyesuaian
+                        </h6>
+
                         <div class="row g-3 align-items-center">
+                            <!-- Informasi Stok Saat Ini -->
                             <div class="col-md-4">
-                                <label class="form-label fw-bold text-dark mb-0">Stok Saat Ini</label>
-                                <div style="font-size: 28px; font-weight: bold; color: #52976D;">
-                                    {{ $produk->stok }} pcs
+                                <label class="form-label font-semibold text-muted mb-1" style="font-size: 11.5px;">STOK SAAT INI</label>
+                                <div style="font-size: 32px; font-weight: 800; color: #4D3D43;">
+                                    {{ number_format($produk->stok) }} <span class="fs-6 font-semibold text-muted">pcs</span>
                                 </div>
                             </div>
 
+                            <!-- Opsi Penyesuaian Stok -->
                             <div class="col-md-8">
-                                <label class="form-label fw-bold text-dark">Penambahan Stok (Optional) <span class="text-success">+</span></label>
-                                <div class="input-group">
-                                    <input type="number" name="qty_tambah" class="form-control" min="0" placeholder="Masukkan jumlah tambahan" value="{{ old('qty_tambah', '') }}">
-                                    <span class="input-group-text bg-success text-white fw-bold">pcs</span>
+                                <label class="form-label fw-bold text-dark mb-1">Aksi Penyesuaian Stok</label>
+                                <div class="row g-2">
+                                    <div class="col-12 col-sm-6">
+                                        <select name="jenis_koreksi_stok" id="jenisKoreksiStok" class="form-select font-semibold" onchange="toggleKoreksiStok(this.value)">
+                                            <option value="tetap">-- Tidak Ada Perubahan Stok --</option>
+                                            <option value="tambah">🟢 Tambah Stok (+)</option>
+                                            <option value="kurang">🔴 Kurangi Stok (-)</option>
+                                            <option value="set_total">⚙️ Set Total Stok Baru (=)</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Input Qty Koreksi -->
+                                    <div class="col-12 col-sm-6" id="boxQtyKoreksi" style="display: none;">
+                                        <div class="input-group">
+                                            <input type="number" name="qty_koreksi" id="qtyKoreksi" class="form-control" min="1" placeholder="Jumlah unit">
+                                            <span class="input-group-text bg-light text-muted fw-bold">pcs</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Input Set Total Baru -->
+                                    <div class="col-12 col-sm-6" id="boxSetTotal" style="display: none;">
+                                        <div class="input-group">
+                                            <input type="number" name="stok_total_baru" id="stokTotalBaru" class="form-control" min="0" placeholder="Stok total baru" value="{{ $produk->stok }}">
+                                            <span class="input-group-text bg-light text-muted fw-bold">pcs</span>
+                                        </div>
+                                    </div>
                                 </div>
-                                <small class="text-muted d-block mt-1">
-                                    <i class="bi bi-info-circle me-1"></i>Kosongkan jika hanya update data (tanpa tambah stok). Jika ada qty, akan ditambahkan ke stok saat ini. HPP akan di-rata-rata otomatis.
+
+                                <small class="text-muted d-block mt-2" style="font-size: 11.5px;">
+                                    <i class="bi bi-info-circle me-1"></i>Pilih <strong>"Tambah Stok"</strong> jika ada barang masuk, <strong>"Kurangi Stok"</strong> jika ada barang rusak/hilang, atau <strong>"Set Total Stok Baru"</strong> untuk mengubah angka stok secara langsung.
                                 </small>
                             </div>
                         </div>
@@ -227,7 +256,7 @@
                     <a href="{{ route('produk.index') }}" class="btn btn-outline-secondary rounded-pill px-4">
                         <i class="bi bi-x-lg me-1"></i> Batal
                     </a>
-                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold" style="background: var(--pink-primary); border: none;">
                         <i class="bi bi-check-lg me-1"></i> Simpan Perubahan
                     </button>
                 </div>
@@ -236,19 +265,23 @@
     </div>
 </div>
 
-<style>
-    .form-label {
-        font-size: 13px;
-        color: #4D3D43;
+<script>
+function toggleKoreksiStok(val) {
+    const boxQty = document.getElementById('boxQtyKoreksi');
+    const boxSet = document.getElementById('boxSetTotal');
+    if (!boxQty || !boxSet) return;
+
+    if (val === 'tambah' || val === 'kurang') {
+        boxQty.style.display = 'block';
+        boxSet.style.display = 'none';
+    } else if (val === 'set_total') {
+        boxQty.style.display = 'none';
+        boxSet.style.display = 'block';
+    } else {
+        boxQty.style.display = 'none';
+        boxSet.style.display = 'none';
     }
-    .form-control, .form-select {
-        border-color: #E8D9E0;
-        border-radius: 8px;
-        font-size: 13px;
-    }
-    .form-control:focus, .form-select:focus {
-        border-color: #EC95A8;
-        box-shadow: 0 0 0 0.2rem rgba(236, 149, 168, 0.25);
-    }
-</style>
+}
+</script>
+
 @endsection

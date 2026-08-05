@@ -22,7 +22,7 @@
             <a href="{{ route('laporan.unduh', request()->all()) }}" class="btn btn-yb-outline w-100"><i class="bi bi-file-earmark-pdf"></i> PDF</a>
         </div>
         <div class="col-6 col-md-2">
-            <a href="{{ route('laporan.unduh_excel', request()->all()) }}" class="btn btn-yb-excel w-100"><i class="bi bi-file-earmark-excel"></i> Excel</a>
+            <a href="{{ route('laporan.unduh_excel', request()->all()) }}" class="btn btn-yb-excel-outline w-100"><i class="bi bi-file-earmark-excel me-1"></i> Excel</a>
         </div>
     </form>
 </div>

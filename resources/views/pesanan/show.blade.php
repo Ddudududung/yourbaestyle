@@ -140,13 +140,4 @@
 
 </div>
 
-<!-- STYLE KHUSUS SAAT DICETAK KE PRINTER / PDF -->
-<style>
-    @media print {
-        body { background: #fff !important; }
-        .navbar, .btn, footer, .sidebar { display: none !important; }
-        .card { box-shadow: none !important; border: 1px solid #ddd !important; }
-        .container-fluid { max-width: 100% !important; padding: 0 !important; }
-    }
-</style>
 @endsection

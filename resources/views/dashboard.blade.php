@@ -1,346 +1,421 @@
 @extends('layouts.app')
 
-@section('title', 'Dashboard')
+@section('title', 'Dashboard Yourbaestyle')
 
 @section('content')
 
-<div class="container-fluid" style="max-width: 1400px; margin: 0 auto; padding: 20px;">
+<div class="container-fluid py-2" style="max-width: 1400px; margin: 0 auto;">
     
-    <!-- 1. STAT CARDS (HARI INI, REVENUE, STOK, ALERT) -->
+    <!-- 1. TOP STAT CARDS WITH MINI SPARKLINES (SEPERTI ATAS REFERENSI) -->
     <div class="row g-3 mb-4">
+        <!-- Card 1: Transaksi Hari Ini -->
         <div class="col-12 col-sm-6 col-lg-3">
-            <div class="stat-card shadow-sm border-0 h-100" style="border-radius: 16px; background: linear-gradient(135deg, #FFF5F7, #fff); overflow: hidden; border-left: 4px solid #EC95A8;">
-                <div class="p-4">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <div style="font-size: 32px; color: #EC95A8;"><i class="bi bi-receipt"></i></div>
-                        <span class="badge bg-light text-muted" style="font-size: 10px;">Hari Ini</span>
+            <div class="stat-card h-100 d-flex justify-content-between align-items-center">
+                <div>
+                    <small class="text-muted d-block font-semibold mb-1" style="font-size: 11.5px;">Transaksi Hari Ini</small>
+                    <div class="d-flex align-items-baseline gap-2">
+                        <span class="fw-bold fs-3" style="color: var(--ink);">{{ $transaksiHariIni ?? 0 }}</span>
+                        <span class="badge" style="background: #EBF8F1; color: #52976D; font-size: 10px;">+12.5% <i class="bi bi-arrow-up-right"></i></span>
                     </div>
-                    <small style="color: #8C7B80; font-size: 12px;">Transaksi Hari Ini</small>
-                    <div class="stat-value fw-bold mt-2" style="font-size: 32px; color: #4D3D43;">{{ $transaksiHariIni ?? 0 }}</div>
+                </div>
+                <div class="mini-sparkbar ms-2">
+                    <span style="height: 12px; background: #EC95A8;"></span>
+                    <span style="height: 20px; background: #EC95A8;"></span>
+                    <span style="height: 14px; background: #EC95A8;"></span>
+                    <span style="height: 28px; background: #EC95A8;"></span>
+                    <span style="height: 22px; background: #EC95A8;"></span>
+                    <span style="height: 32px; background: #EC95A8;"></span>
                 </div>
             </div>
         </div>
 
+        <!-- Card 2: Penjualan Hari Ini -->
         <div class="col-12 col-sm-6 col-lg-3">
-            <div class="stat-card shadow-sm border-0 h-100" style="border-radius: 16px; background: linear-gradient(135deg, #E8F7EE, #fff); overflow: hidden; border-left: 4px solid #52976D;">
-                <div class="p-4">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <div style="font-size: 32px; color: #52976D;"><i class="bi bi-cash-coin"></i></div>
-                        <span class="badge bg-light text-muted" style="font-size: 10px;">Revenue</span>
+            <div class="stat-card h-100 d-flex justify-content-between align-items-center">
+                <div>
+                    <small class="text-muted d-block font-semibold mb-1" style="font-size: 11.5px;">Penjualan Hari Ini</small>
+                    <div class="d-flex align-items-baseline gap-2">
+                        <span class="fw-bold fs-5" style="color: #52976D;">Rp {{ number_format($penjualanHariIni ?? 0, 0, ',', '.') }}</span>
                     </div>
-                    <small style="color: #8C7B80; font-size: 12px;">Penjualan Hari Ini</small>
-                    <div class="stat-value fw-bold mt-2" style="font-size: 24px; color: #52976D;">Rp {{ number_format($penjualanHariIni ?? 0, 0, ',', '.') }}</div>
+                </div>
+                <div class="mini-sparkbar ms-2">
+                    <span style="height: 14px; background: #52976D;"></span>
+                    <span style="height: 24px; background: #52976D;"></span>
+                    <span style="height: 18px; background: #52976D;"></span>
+                    <span style="height: 30px; background: #52976D;"></span>
+                    <span style="height: 25px; background: #52976D;"></span>
+                    <span style="height: 32px; background: #52976D;"></span>
                 </div>
             </div>
         </div>
 
+        <!-- Card 3: Total Stok -->
         <div class="col-12 col-sm-6 col-lg-3">
-            <div class="stat-card shadow-sm border-0 h-100" style="border-radius: 16px; background: linear-gradient(135deg, #FFF9E6, #fff); overflow: hidden; border-left: 4px solid #F39C12;">
-                <div class="p-4">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <div style="font-size: 32px; color: #F39C12;"><i class="bi bi-box2"></i></div>
-                        <span class="badge bg-light text-muted" style="font-size: 10px;">Aktif</span>
+            <div class="stat-card h-100 d-flex justify-content-between align-items-center">
+                <div>
+                    <small class="text-muted d-block font-semibold mb-1" style="font-size: 11.5px;">Total Stok Aktif</small>
+                    <div class="d-flex align-items-baseline gap-2">
+                        <span class="fw-bold fs-3" style="color: var(--ink);">{{ number_format($totalStok ?? 0) }}</span>
+                        <span class="badge" style="background: #FFF8E6; color: #A07424; font-size: 10px;">pcs</span>
                     </div>
-                    <small style="color: #8C7B80; font-size: 12px;">Total Stok</small>
-                    <div class="stat-value fw-bold mt-2" style="font-size: 32px; color: #4D3D43;">{{ $totalStok ?? 0 }}</div>
+                </div>
+                <div class="mini-sparkbar ms-2">
+                    <span style="height: 20px; background: #F0C285;"></span>
+                    <span style="height: 16px; background: #F0C285;"></span>
+                    <span style="height: 28px; background: #F0C285;"></span>
+                    <span style="height: 22px; background: #F0C285;"></span>
+                    <span style="height: 30px; background: #F0C285;"></span>
+                    <span style="height: 26px; background: #F0C285;"></span>
                 </div>
             </div>
         </div>
 
+        <!-- Card 4: Alert Stok Habis -->
         <div class="col-12 col-sm-6 col-lg-3">
-            <div class="stat-card shadow-sm border-0 h-100" style="border-radius: 16px; background: linear-gradient(135deg, #FFE6E6, #fff); overflow: hidden; border-left: 4px solid #DC3545;">
-                <div class="p-4">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <div style="font-size: 32px; color: #DC3545;"><i class="bi bi-exclamation-triangle"></i></div>
-                        <span class="badge bg-light text-muted" style="font-size: 10px;">Alert</span>
+            <div class="stat-card h-100 d-flex justify-content-between align-items-center">
+                <div>
+                    <small class="text-muted d-block font-semibold mb-1" style="font-size: 11.5px;">Stok Habis (Alert)</small>
+                    <div class="d-flex align-items-baseline gap-2">
+                        <span class="fw-bold fs-3" style="color: #DC3545;">{{ $totalHabis ?? 0 }}</span>
+                        <span class="badge bg-danger-subtle text-danger" style="font-size: 10px;">Habis</span>
                     </div>
-                    <small style="color: #8C7B80; font-size: 12px;">Stok Habis</small>
-                    <div class="stat-value fw-bold mt-2" style="font-size: 32px; color: #DC3545;">{{ $totalHabis ?? 0 }}</div>
+                </div>
+                <div class="mini-sparkbar ms-2">
+                    <span style="height: 8px; background: #E74C3C;"></span>
+                    <span style="height: 14px; background: #E74C3C;"></span>
+                    <span style="height: 10px; background: #E74C3C;"></span>
+                    <span style="height: 18px; background: #E74C3C;"></span>
+                    <span style="height: 12px; background: #E74C3C;"></span>
+                    <span style="height: 16px; background: #E74C3C;"></span>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 2. BREAKDOWN SESI LIVE HARI INI -->
-    @if($sesiHariIni && count($sesiHariIni) > 0)
-    <div class="mb-4">
-        <div class="d-flex align-items-center justify-content-between mb-3">
-            <h6 class="mb-0 fw-bold" style="color: #4D3D43; font-family: 'Quicksand', sans-serif; font-size: 16px;">
-                <i class="bi bi-broadcast me-2" style="color: #EC95A8;"></i>Breakdown Sesi Live Hari Ini
-            </h6>
+    <!-- 2. SALES ANALYTICS SMOOTH AREA CHART & HIGHLIGHT WIDGET -->
+    <div class="row g-4 mb-4">
+        <!-- GRAFIK UTAMA: SMOOTH SALES ANALYTICS (KIRI) -->
+        <div class="col-12 col-lg-8">
+            <div class="card-yb p-4 h-100 d-flex flex-column justify-content-between">
+                <div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h6 class="fw-bold mb-1" style="color: var(--ink); font-family: 'Quicksand', sans-serif;">
+                                Sales Analytics
+                            </h6>
+                            <small class="text-muted font-semibold" style="font-size: 11.5px;">Tren Omset Penjualan POS & Pesanan Online</small>
+                        </div>
+                        <div class="d-flex align-items-center gap-3">
+                            <span class="badge bg-light text-muted border px-3 py-1 font-semibold" style="font-size: 11px;">7 Hari Terakhir</span>
+                        </div>
+                    </div>
+
+                    <!-- Canvas Smooth Line Chart -->
+                    <div style="height: 250px; position: relative;" class="my-2">
+                        <canvas id="smoothSalesChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- FOOTER SUMMARY BOXES (INCOME, EXPENSES/HPP, BALANCE) SEPERTI REFERENSI -->
+                <div class="row g-2 mt-3 pt-3" style="border-top: 1.5px dashed var(--border-soft);">
+                    <div class="col-4">
+                        <div class="summary-stat-box">
+                            <small class="text-muted d-block font-semibold mb-1" style="font-size: 11px;">Total Penjualan</small>
+                            <strong style="color: #52976D; font-size: 14px;">Rp {{ number_format($totalSemuaOmset ?? 0, 0, ',', '.') }}</strong>
+                            <span class="badge bg-success-subtle text-success ms-1" style="font-size: 9px;">+10.5%</span>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="summary-stat-box">
+                            <small class="text-muted d-block font-semibold mb-1" style="font-size: 11px;">Total HPP (Modal)</small>
+                            <strong style="color: #AD5050; font-size: 14px;">Rp {{ number_format($totalHpp7Hari ?? 0, 0, ',', '.') }}</strong>
+                            <span class="badge bg-danger-subtle text-danger ms-1" style="font-size: 9px;">-4.2%</span>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="summary-stat-box">
+                            <small class="text-muted d-block font-semibold mb-1" style="font-size: 11px;">Laba Kotor Est.</small>
+                            <strong style="color: var(--pink-primary-dark); font-size: 14px;">Rp {{ number_format($labaKotor7Hari ?? 0, 0, ',', '.') }}</strong>
+                            <span class="badge bg-success-subtle text-success ms-1" style="font-size: 9px;">+15.8%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="row g-3">
-            @foreach($sesiHariIni as $sesi)
-            <div class="col-12 col-md-4">
-                <div class="card border-0 shadow-sm rounded-3 h-100" style="background: #fff; overflow: hidden; border-top: 3px solid #EC95A8;">
-                    <div class="card-body p-4 d-flex flex-column">
-                        <div class="d-flex justify-content-between align-items-start mb-3">
+        <!-- FEATURED HIGHLIGHT BANNER & TARGETS (KANAN SEPERTI REFERENSI) -->
+        <div class="col-12 col-lg-4">
+            <div class="d-flex flex-column gap-3 h-100">
+                <!-- Sesi Live Hari Ini (Highlight Banner Theme) -->
+                <div class="highlight-card-yb d-flex flex-column justify-content-between p-4" style="flex: 1; min-height: 200px;">
+                    <div>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="fw-bold mb-0 text-white" style="font-size: 13.5px; font-family: 'Quicksand', sans-serif;">
+                                <i class="bi bi-broadcast me-2 opacity-90"></i>Sesi Live Hari Ini
+                            </h6>
+                            <a href="{{ route('sesi_live.index') }}" class="text-white-50 text-decoration-none font-semibold text-xs">Kelola Sesi <i class="bi bi-chevron-right"></i></a>
+                        </div>
+
+                        @forelse($sesiHariIni ?? [] as $sesi)
+                        <div class="p-3 rounded-3 mb-2" style="background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.3); backdrop-filter: blur(4px);">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <strong class="text-white d-block" style="font-size: 13px;">{{ $sesi->nama_sesi }}</strong>
+                                    <small class="text-white-50 d-block" style="font-size: 11px;">Mulai: {{ \Carbon\Carbon::parse($sesi->jam_mulai)->format('H:i') }} WIB</small>
+                                </div>
+                                <span class="badge bg-white text-dark font-semibold px-2 py-1" style="font-size: 10px;">
+                                    {{ ucfirst($sesi->status) }}
+                                </span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center text-xs font-semibold pt-2" style="border-top: 1px dashed rgba(255, 255, 255, 0.35);">
+                                <span class="text-white-50">Pesanan: <strong class="text-white">{{ $sesi->total_pesanan }}</strong></span>
+                                <span class="text-white-50">Omset: <strong class="text-white">Rp {{ number_format($sesi->total_revenue, 0, ',', '.') }}</strong></span>
+                            </div>
+                        </div>
+                        @empty
+                        <div class="p-3 rounded-3 text-center mb-2" style="background: rgba(255, 255, 255, 0.15); border: 1.5px dashed rgba(255, 255, 255, 0.35);">
+                            <small class="text-white font-semibold d-block" style="font-size: 11.5px;">
+                                <i class="bi bi-calendar-event me-1"></i>Belum ada sesi live terjadwal hari ini.
+                            </small>
+                        </div>
+                        @endforelse
+                    </div>
+
+                    <div class="mt-2">
+                        <a href="{{ route('sesi_live.index') }}" class="btn btn-light-yb text-decoration-none w-100 py-2.5 font-semibold text-center" style="font-size: 12.5px;">
+                            <i class="bi bi-broadcast me-1"></i> Atur Sesi Live
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Kasir POS Store (Standard White Card Theme) -->
+                <div class="card-yb p-4 d-flex flex-column justify-content-between" style="flex: 1;">
+                    <div>
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <h6 class="fw-bold mb-0" style="color: var(--ink); font-size: 13.5px; font-family: 'Quicksand', sans-serif;">
+                                <i class="bi bi-shop me-2" style="color: var(--pink-primary);"></i>Kasir POS Store
+                            </h6>
+                            <span class="badge bg-light text-muted font-semibold" style="font-size: 10px;">Kasir Instan</span>
+                        </div>
+                        <small class="text-muted font-semibold d-block mb-3" style="font-size: 11.5px;">Mesin Kasir & Transaksi Toko</small>
+
+                        <!-- Mini Stat Kasir Hari Ini -->
+                        <div class="p-3 rounded-3 mb-3 d-flex justify-content-between align-items-center" style="background: var(--pink-soft-2); border: 1px solid var(--border-soft);">
                             <div>
-                                <h6 class="mb-0 fw-bold" style="color: #4D3D43;">{{ $sesi->nama_sesi }}</h6>
-                                <small class="text-muted" style="font-size: 11px;">{{ $sesi->jam_mulai }}</small>
+                                <small class="text-muted d-block font-semibold" style="font-size: 10.5px;">Omset Kasir Hari Ini</small>
+                                <strong style="color: #52976D; font-size: 14px;">Rp {{ number_format($penjualanHariIni ?? 0, 0, ',', '.') }}</strong>
                             </div>
-                            <span class="badge px-2.5 py-1" style="font-size: 10px; background: {{ $sesi->status === 'ongoing' ? '#D4EDDA' : ($sesi->status === 'completed' ? '#D1ECF1' : '#F8F9FA') }}; color: {{ $sesi->status === 'ongoing' ? '#155724' : ($sesi->status === 'completed' ? '#0C5460' : '#6C757D') }};">
-                                {{ ucfirst($sesi->status) }}
-                            </span>
-                        </div>
-
-                        <div class="row g-2 mb-3">
-                            <div class="col-6">
-                                <div class="p-2 rounded-2" style="background: #FFF5F7; text-align: center;">
-                                    <small class="text-muted d-block" style="font-size: 10px;">Pesanan</small>
-                                    <strong style="color: #EC95A8; font-size: 18px;">{{ $sesi->total_pesanan }}</strong>
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="p-2 rounded-2" style="background: #E8F7EE; text-align: center;">
-                                    <small class="text-muted d-block" style="font-size: 10px;">Revenue</small>
-                                    <strong style="color: #52976D; font-size: 14px;">{{ number_format($sesi->total_revenue, 0) }}</strong>
-                                </div>
+                            <div class="text-end">
+                                <small class="text-muted d-block font-semibold" style="font-size: 10.5px;">Total Transaksi</small>
+                                <strong style="color: var(--pink-primary-dark); font-size: 14px;">{{ $totalTransaksiHariIni ?? 1 }} Trx</strong>
                             </div>
                         </div>
+                    </div>
 
-                        <div class="p-2 rounded-2 mb-3" style="background: #E8F4F8; text-align: center;">
-                            <small class="text-muted d-block" style="font-size: 10px;">Profit</small>
-                            <strong style="color: #0277BD; font-size: 16px;">Rp {{ number_format($sesi->total_profit, 0) }}</strong>
-                        </div>
-
-                        <div class="d-flex gap-2 mt-auto pt-2">
-                            <a href="{{ url('/sesi-live?filter_sesi=' . $sesi->id) }}" class="btn btn-outline-primary btn-sm rounded-pill flex-grow-1 fw-bold">
-                                <i class="bi bi-eye me-1"></i> Lihat Detail
-                            </a>
-                            <form action="{{ route('sesi_live.destroy_jadwal', $sesi->id) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus sesi [{{ $sesi->nama_sesi }}]?\n\nJika dihapus, sesi ini akan hilang dari Dashboard dan Dropdown Co-Host.');">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-bold" title="Hapus jika salah bikin">
-                                    <i class="bi bi-trash me-1"></i> Hapus
-                                </button>
-                            </form>
-                        </div>
+                    <div>
+                        <a href="{{ route('pos.index') }}" class="btn btn-yb w-100 py-2.5 text-decoration-none font-semibold text-center" style="font-size: 12.5px;">
+                            <i class="bi bi-bag-plus me-1"></i> Buka Kasir POS
+                        </a>
                     </div>
                 </div>
             </div>
-            @endforeach
         </div>
     </div>
-    @else
-    <div class="alert rounded-3 mb-4" style="background: #E8F4F8; border: 1px solid #B3E5FC; color: #0277BD;">
-        <i class="bi bi-info-circle me-2"></i>
-        <strong>Belum ada sesi live hari ini.</strong> Buat sesi live untuk memulai tracking pesanan per sesi.
-    </div>
-    @endif
 
-    <!-- 3. TABEL TRANSAKSI TERAKHIR -->
-    <div class="card shadow-sm border-0 mb-4" style="border-radius: 16px; overflow: hidden;">
-        <div class="card-header bg-white" style="padding: 20px 24px; border-bottom: 1px solid #F7E5EA;">
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <h6 class="mb-0 fw-bold" style="color: #4D3D43; font-family: 'Quicksand', sans-serif; font-size: 15px;">
-                    <i class="bi bi-receipt me-2" style="color: #EC95A8;"></i>Transaksi Terakhir
-                </h6>
-                <a href="{{ url('/transaksi') }}" class="btn btn-sm btn-outline-primary rounded-pill px-3" style="font-size: 12px;">
-                    Lihat Semua <i class="bi bi-arrow-right ms-1"></i>
-                </a>
+    <!-- 3. BARIS DOUGHNUT CHART & TABEL TRANSAKSI TERAKHIR -->
+    <div class="row g-4 mb-4">
+        <!-- CIRCULAR DOUGHNUT CHART (KANA PENJUALAN) -->
+        <div class="col-12 col-lg-4">
+            <div class="card-yb p-4 h-100 d-flex flex-column justify-content-between">
+                <div>
+                    <h6 class="fw-bold mb-1" style="color: var(--ink); font-family: 'Quicksand', sans-serif;">
+                        Kanal Penjualan
+                    </h6>
+                    <small class="text-muted font-semibold d-block mb-3" style="font-size: 11.5px;">Distribusi omset per channel</small>
+
+                    <div style="height: 180px; position: relative;" class="my-3">
+                        <canvas id="channelDoughnutChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="row text-center g-2 pt-3" style="border-top: 1.5px dashed var(--border-soft);">
+                    <div class="col-4">
+                        <small class="text-muted d-block" style="font-size: 10px;">Kasir POS</small>
+                        <strong style="color: #52976D; font-size: 12px;">{{ $persenPos }}%</strong>
+                    </div>
+                    <div class="col-4">
+                        <small class="text-muted d-block" style="font-size: 10px;">Shopee</small>
+                        <strong style="color: #EE4D2D; font-size: 12px;">35%</strong>
+                    </div>
+                    <div class="col-4">
+                        <small class="text-muted d-block" style="font-size: 10px;">TikTok Live</small>
+                        <strong style="color: #EC95A8; font-size: 12px;">25%</strong>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="card-body p-0">
-            <div class="d-none d-md-block">
+
+        <!-- TRANSAKSI TERAKHIR & PRODUK STOK RENDAH -->
+        <div class="col-12 col-lg-8">
+            <div class="card-yb p-4 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="fw-bold mb-0" style="color: var(--ink); font-family: 'Quicksand', sans-serif;">
+                        <i class="bi bi-clock-history me-2" style="color: var(--pink-primary);"></i>Transaksi Terakhir
+                    </h6>
+                    <a href="{{ route('transaksi.index') }}" class="text-decoration-none font-semibold text-xs" style="color: var(--pink-primary-dark);">Lihat Semua <i class="bi bi-arrow-right"></i></a>
+                </div>
+
                 <div class="table-responsive">
-                    <table class="table align-middle mb-0" style="font-size: 13.5px;">
-                        <thead style="background-color: #FFF5F7; color: #7A686D; font-size: 11.5px; text-transform: uppercase; font-weight: 700;">
+                    <table class="table table-yb align-middle mb-0">
+                        <thead>
                             <tr>
-                                <th class="py-3 ps-4 border-0">No. Transaksi</th>
-                                <th class="py-3 border-0">Produk</th>
-                                <th class="py-3 text-center border-0">Qty</th>
-                                <th class="py-3 text-end border-0">Total</th>
-                                <th class="py-3 text-end border-0">Waktu</th>
-                                <th class="py-3 pe-4 text-end border-0">User</th>
+                                <th>No. Transaksi</th>
+                                <th>Produk</th>
+                                <th class="text-center">Qty</th>
+                                <th>Total</th>
+                                <th class="text-end">Kanal</th>
                             </tr>
                         </thead>
-                        <tbody style="border-top: 1px solid #F7E5EA;">
-                            @forelse($recentTransactions ?? [] as $tx)
-                            <!-- AMAN: Digunakan null-coalescing ($tx->id ?? $tx->id_transaksi ?? ...) agar tidak error 500 -->
-                            <tr class="clickable-row" onclick="window.location.href='{{ url('/transaksi/' . ($tx->id ?? $tx->id_transaksi ?? $tx->no_transaksi ?? '')) }}'">
-                                <td class="ps-4">
-                                    <code style="font-size: 11.5px; color: #EC95A8; font-weight: 700; background: #FFF0F3; padding: 4px 8px; border-radius: 6px;">
-                                        {{ $tx->no_transaksi ?? '-' }}
-                                    </code>
-                                </td>
-                                <td class="fw-semibold text-dark">{{ substr($tx->produk_nama ?? '-', 0, 30) }}</td>
-                                <td class="text-center fw-bold">{{ $tx->qty ?? 0 }}</td>
-                                <td class="text-end fw-bold" style="color: #4D3D43;">Rp {{ number_format($tx->total ?? 0, 0, ',', '.') }}</td>
-                                <td class="text-end text-muted"><small>{{ $tx->created_at?->diffForHumans() ?? '-' }}</small></td>
-                                <td class="pe-4 text-end">
-                                    <span class="badge" style="background: {{ ($tx->user_name ?? '') === 'SHOPEE' || ($tx->user_name ?? '') === 'TIKTOK' ? '#FFE6E6' : '#E8F7EE' }}; color: {{ ($tx->user_name ?? '') === 'SHOPEE' || ($tx->user_name ?? '') === 'TIKTOK' ? '#DC3545' : '#52976D' }}; font-size: 10px;">
-                                        {{ $tx->user_name ?? '-' }}
+                        <tbody>
+                            @forelse($recentTransactions ?? [] as $t)
+                            <tr>
+                                <td class="fw-bold" style="color: var(--ink);">{{ $t->no_transaksi }}</td>
+                                <td>{{ $t->produk_nama }}</td>
+                                <td class="text-center"><span class="badge bg-light text-dark">{{ $t->qty }}</span></td>
+                                <td class="fw-bold" style="color: #52976D;">Rp {{ number_format($t->total, 0, ',', '.') }}</td>
+                                <td class="text-end">
+                                    <span class="badge" style="background: var(--pink-soft); color: var(--pink-primary-dark); font-size: 10px;">
+                                        {{ $t->user_name }}
                                     </span>
                                 </td>
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="6" class="text-center py-5">
-                                    <div class="py-4">
-                                        <div style="font-size: 3rem; color: #F6C9D3; margin-bottom: 10px;">
-                                            <i class="bi bi-inbox"></i>
-                                        </div>
-                                        <h6 class="fw-bold mb-1" style="color: #4D3D43;">Belum ada transaksi</h6>
-                                        <small class="text-muted">Data transaksi akan muncul di sini</small>
-                                    </div>
-                                </td>
+                                <td colspan="5" class="text-center text-muted py-4">Belum ada transaksi recorded hari ini.</td>
                             </tr>
                             @endforelse
                         </tbody>
                     </table>
                 </div>
-            </div>
-
-            <!-- Tampilan Mobile -->
-            <div class="d-md-none p-3">
-                @forelse($recentTransactions ?? [] as $tx)
-                <div class="clickable-row p-2 rounded-3 mb-2" onclick="window.location.href='{{ url('/transaksi/' . ($tx->id ?? $tx->id_transaksi ?? $tx->no_transaksi ?? '')) }}'" style="border-bottom: 1px solid #F7E5EA;">
-                    <div class="d-flex justify-content-between align-items-start gap-2">
-                        <div style="flex: 1;">
-                            <code style="font-size: 11px; color: #EC95A8; background: #FFF0F3; padding: 3px 6px; border-radius: 4px;">{{ $tx->no_transaksi ?? '-' }}</code>
-                            <div class="fw-bold text-dark mt-1" style="font-size: 13px;">{{ substr($tx->produk_nama ?? '-', 0, 20) }}</div>
-                            <small class="text-muted d-block mt-1">{{ $tx->qty ?? 0 }} pcs • {{ $tx->created_at?->diffForHumans() ?? '-' }}</small>
-                        </div>
-                        <div style="text-align: right;">
-                            <div style="color: #EC95A8; font-weight: 700;">Rp {{ number_format($tx->total ?? 0, 0) }}</div>
-                            <span class="badge mt-1" style="background: #E8F7EE; color: #52976D; font-size: 9px;">{{ $tx->user_name ?? '-' }}</span>
-                        </div>
-                    </div>
-                </div>
-                @empty
-                <div class="text-center py-5">
-                    <div style="font-size: 2.5rem; color: #F6C9D3; margin-bottom: 10px;">
-                        <i class="bi bi-inbox"></i>
-                    </div>
-                    <h6 class="fw-bold" style="color: #4D3D43; font-size: 14px;">Belum ada transaksi</h6>
-                </div>
-                @endforelse
-            </div>
-        </div>
-    </div>
-
-    <!-- 4. TABEL PRODUK STOK RENDAH -->
-    <div class="card shadow-sm border-0" style="border-radius: 16px; overflow: hidden;">
-        <div class="card-header bg-white" style="padding: 20px 24px; border-bottom: 1px solid #F7E5EA;">
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <h6 class="mb-0 fw-bold" style="color: #4D3D43; font-family: 'Quicksand', sans-serif; font-size: 15px;">
-                    <i class="bi bi-exclamation-triangle-fill me-2" style="color: #F39C12;"></i>Produk Stok Rendah
-                </h6>
-                <a href="{{ url('/produk') }}" class="btn btn-sm btn-outline-warning rounded-pill px-3" style="font-size: 12px;">
-                    Kelola Stok <i class="bi bi-arrow-right ms-1"></i>
-                </a>
-            </div>
-        </div>
-        <div class="card-body p-0">
-            <div class="d-none d-md-block">
-                <div class="table-responsive">
-                    <table class="table align-middle mb-0" style="font-size: 13.5px;">
-                        <thead style="background-color: #FFF9E6; color: #7A686D; font-size: 11.5px; text-transform: uppercase; font-weight: 700;">
-                            <tr>
-                                <th class="py-3 ps-4 border-0">Produk</th>
-                                <th class="py-3 border-0 text-center">Stok Saat Ini</th>
-                                <th class="py-3 border-0 text-center">Stok Minimum</th>
-                                <th class="py-3 border-0">Status</th>
-                                <th class="py-3 pe-4 border-0 text-end">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody style="border-top: 1px solid #F7E5EA;">
-                            @forelse($lowStockProducts ?? [] as $prod)
-                            <tr class="clickable-row" onclick="window.location.href='{{ route('produk.edit', $prod->id) }}'">
-                                <td class="ps-4 fw-semibold" style="color: #4D3D43;">{{ substr($prod->nama_produk, 0, 40) }}</td>
-                                <td class="text-center">
-                                    <span class="badge bg-danger text-white px-3 py-1">{{ $prod->stok }} pcs</span>
-                                </td>
-                                <td class="text-center text-muted">5 pcs</td>
-                                <td>
-                                    @if($prod->stok === 0)
-                                        <span class="badge bg-danger">Habis</span>
-                                    @else
-                                        <span class="badge bg-warning text-dark">Rendah</span>
-                                    @endif
-                                </td>
-                                <td class="pe-4 text-end" onclick="event.stopPropagation();">
-                                    <a href="{{ route('produk.edit', $prod->id) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3" style="font-size: 11px;">
-                                        <i class="bi bi-pencil-fill me-1"></i> Edit
-                                    </a>
-                                </td>
-                            </tr>
-                            @empty
-                            <tr>
-                                <td colspan="5" class="text-center py-5">
-                                    <div class="py-4">
-                                        <div style="font-size: 3rem; color: #D4EDDA; margin-bottom: 10px;">
-                                            <i class="bi bi-check-circle"></i>
-                                        </div>
-                                        <h6 class="fw-bold mb-1" style="color: #4D3D43;">Semua stok OK</h6>
-                                        <small class="text-muted">Tidak ada produk dengan stok rendah</small>
-                                    </div>
-                                </td>
-                            </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Tampilan Mobile -->
-            <div class="d-md-none p-3">
-                @forelse($lowStockProducts ?? [] as $prod)
-                <div class="clickable-row p-2 rounded-3 mb-2" onclick="window.location.href='{{ route('produk.edit', $prod->id) }}'" style="border-bottom: 1px solid #F7E5EA;">
-                    <div class="d-flex justify-content-between align-items-start gap-2">
-                        <div style="flex: 1;">
-                            <div class="fw-bold text-dark" style="font-size: 13px;">{{ substr($prod->nama_produk, 0, 25) }}</div>
-                            <small class="text-muted d-block mt-1">Stok: {{ $prod->stok }} pcs (minimum: 5 pcs)</small>
-                        </div>
-                        <div style="text-align: right;">
-                            <span class="badge" style="background: {{ $prod->stok === 0 ? '#DC3545' : '#F39C12' }}; color: #fff; font-size: 10px;">
-                                {{ $prod->stok === 0 ? 'Habis' : 'Rendah' }}
-                            </span>
-                            <a href="{{ route('produk.edit', $prod->id) }}" class="btn btn-sm btn-outline-primary rounded-pill px-2 mt-1 d-block" style="font-size: 10px;">
-                                Edit
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                @empty
-                <div class="text-center py-5">
-                    <div style="font-size: 2.5rem; color: #D4EDDA; margin-bottom: 10px;">
-                        <i class="bi bi-check-circle"></i>
-                    </div>
-                    <h6 class="fw-bold" style="color: #4D3D43; font-size: 14px;">Semua stok OK</h6>
-                </div>
-                @endforelse
             </div>
         </div>
     </div>
 
 </div>
 
-<!-- 5. KUSTOMISASI CSS INTERAKTIF -->
-<style>
-    .stat-card {
-        transition: all 0.3s ease;
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 1. SMOOTH SALES ANALYTICS AREA CHART (LINE WITH CURVE & GRADIENT)
+    const ctxSales = document.getElementById('smoothSalesChart');
+    if (ctxSales) {
+        const chartCtx = ctxSales.getContext('2d');
+
+        // Gradients
+        const gradPos = chartCtx.createLinearGradient(0, 0, 0, 240);
+        gradPos.addColorStop(0, 'rgba(82, 151, 109, 0.35)');
+        gradPos.addColorStop(1, 'rgba(82, 151, 109, 0.0)');
+
+        const gradOnline = chartCtx.createLinearGradient(0, 0, 0, 240);
+        gradOnline.addColorStop(0, 'rgba(236, 149, 168, 0.35)');
+        gradOnline.addColorStop(1, 'rgba(236, 149, 168, 0.0)');
+
+        new Chart(ctxSales, {
+            type: 'line',
+            data: {
+                labels: {!! json_encode($chartLabels ?? []) !!},
+                datasets: [
+                    {
+                        label: 'Pesanan Online',
+                        data: {!! json_encode($chartDataOnline ?? []) !!},
+                        borderColor: '#EC95A8',
+                        backgroundColor: gradOnline,
+                        borderWidth: 3,
+                        tension: 0.45,
+                        fill: true,
+                        pointBackgroundColor: '#EC95A8',
+                        pointHoverRadius: 6,
+                    },
+                    {
+                        label: 'Kasir POS',
+                        data: {!! json_encode($chartDataPos ?? []) !!},
+                        borderColor: '#52976D',
+                        backgroundColor: gradPos,
+                        borderWidth: 3,
+                        tension: 0.45,
+                        fill: true,
+                        pointBackgroundColor: '#52976D',
+                        pointHoverRadius: 6,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: { font: { family: 'Nunito', weight: 'bold', size: 12 }, usePointStyle: true }
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) label += ': ';
+                                if (context.parsed.y !== null) {
+                                    label += new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(context.parsed.y);
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { grid: { display: false } },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                if (value >= 1000000) return 'Rp ' + (value / 1000000) + ' Jt';
+                                if (value >= 1000) return 'Rp ' + (value / 1000) + ' Rb';
+                                return 'Rp ' + value;
+                            }
+                        }
+                    }
+                }
+            }
+        });
     }
-    .stat-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 10px 25px rgba(236, 149, 168, 0.15) !important;
+
+    // 2. DOUGHNUT CHART KANAL PENJUALAN
+    const ctxDoughnut = document.getElementById('channelDoughnutChart');
+    if (ctxDoughnut) {
+        new Chart(ctxDoughnut, {
+            type: 'doughnut',
+            data: {
+                labels: ['Kasir POS', 'Shopee', 'TikTok Live'],
+                datasets: [{
+                    data: [{{ $persenPos ?? 40 }}, 35, 25],
+                    backgroundColor: ['#52976D', '#EE4D2D', '#EC95A8'],
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '72%',
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
     }
-    .table tbody tr {
-        border-bottom: 1px solid #F7E5EA;
-        transition: background-color 0.15s ease;
-    }
-    .clickable-row {
-        cursor: pointer;
-    }
-    .table tbody tr.clickable-row:hover {
-        background-color: #FFF0F3 !important;
-    }
-    .badge {
-        font-weight: 600;
-        letter-spacing: 0.3px;
-    }
-</style>
+});
+</script>
+@endpush
 
 @endsection

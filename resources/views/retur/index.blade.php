@@ -1,36 +1,77 @@
 @extends('layouts.app')
 
-@section('title', 'Manajemen Retur ↩')
+@section('title', 'Manajemen Retur Barang')
 
 @section('content')
 
-<div class="card-yb p-4 mb-3">
-    <div class="d-flex justify-content-between">
-        <form method="GET" class="row g-2 grow">
-            <div class="col-md-4">
-                <select name="kondisi" class="form-select">
-                    <option value="">Semua Kondisi</option>
-                    <option value="layak_jual" {{ request('kondisi')=='layak_jual'?'selected':'' }}>Layak Jual</option>
-                    <option value="tidak_layak" {{ request('kondisi')=='tidak_layak'?'selected':'' }}>Tidak Layak</option>
-                </select>
-            </div>
-            <div class="col-md-4"><input type="text" name="search" class="form-control" placeholder="Cari no. pesanan..." value="{{ request('search') }}"></div>
-            <div class="col-md-2"><button class="btn btn-yb w-100">Filter</button></div>
-        </form>
-        <a href="{{ route('retur.create') }}" class="btn btn-yb ms-2"><i class="bi bi-plus-lg"></i> Tambah Retur</a>
+<!-- Header Action -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h5 class="fw-bold mb-1" style="color: var(--ink); font-family: 'Quicksand', sans-serif;">
+            <i class="bi bi-arrow-return-left me-2" style="color: var(--pink-primary);"></i>Manajemen Retur Barang
+        </h5>
+        <small class="text-muted font-semibold">Kelola retur barang penjualan online maupun kasir POS</small>
     </div>
+    <a href="{{ route('retur.select') }}" class="btn btn-yb">
+        <i class="bi bi-plus-lg me-1"></i> Tambah Retur
+    </a>
 </div>
 
+<!-- Card Filter Rapi & Aesthetic -->
+<div class="card-yb p-4 mb-4">
+    <form method="GET" class="row g-3 align-items-end">
+        <div class="col-12 col-md-5">
+            <label class="form-label">Cari Nomor Pesanan / Transaksi</label>
+            <div class="input-group">
+                <span class="input-group-text bg-transparent border-end-0" style="border-color: var(--border-soft); border-radius: 16px 0 0 16px; color: var(--ink-soft);">
+                    <i class="bi bi-search"></i>
+                </span>
+                <input type="text" name="search" class="form-control border-start-0" placeholder="Ketik nomor pesanan..." value="{{ request('search') }}" style="border-radius: 0 16px 16px 0;">
+            </div>
+        </div>
+
+        <div class="col-12 col-md-4">
+            <label class="form-label">Kondisi Barang</label>
+            <select name="kondisi" class="form-select">
+                <option value="">Semua Kondisi</option>
+                <option value="layak_jual" {{ request('kondisi') == 'layak_jual' ? 'selected' : '' }}>🟢 Layak Jual (Restok)</option>
+                <option value="tidak_layak" {{ request('kondisi') == 'tidak_layak' ? 'selected' : '' }}>🔴 Tidak Layak (Rugi)</option>
+            </select>
+        </div>
+
+        <div class="col-12 col-md-3 d-flex gap-2">
+            <button type="submit" class="btn btn-yb flex-grow-1">
+                <i class="bi bi-funnel me-1"></i> Filter
+            </button>
+            @if(request()->has('search') || request()->has('kondisi'))
+                <a href="{{ route('retur.index') }}" class="btn btn-yb-outline" title="Reset Filter">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                </a>
+            @endif
+        </div>
+    </form>
+</div>
+
+<!-- Table Data Retur -->
 <div class="card-yb p-4">
     <div class="table-responsive">
         <table class="table table-yb align-middle">
-            <thead><tr><th>Tanggal</th><th>No. Pesanan</th><th>Produk</th><th>Kondisi</th><th>Nilai Kerugian</th><th>Diproses Oleh</th></tr></thead>
+            <thead>
+                <tr>
+                    <th>Tanggal</th>
+                    <th>No. Pesanan</th>
+                    <th>Produk</th>
+                    <th>Kondisi</th>
+                    <th>Nilai Kerugian</th>
+                    <th class="text-end">Diproses Oleh</th>
+                </tr>
+            </thead>
             <tbody>
                 @forelse($retur as $r)
                 <tr>
-                    <td>{{ \Carbon\Carbon::parse($r->tanggal)->format('d M Y') }}</td>
-                    <td class="fw-semibold">{{ $r->pesananOnline->no_pesanan }}</td>
-                    <td>{{ $r->produk->nama_produk }}</td>
+                    <td class="fw-semibold">{{ \Carbon\Carbon::parse($r->tanggal)->format('d M Y') }}</td>
+                    <td class="fw-bold" style="color: var(--ink);">{{ $r->pesananOnline->no_pesanan ?? 'POS Transaksi' }}</td>
+                    <td>{{ $r->produk->nama_produk ?? '-' }}</td>
                     <td>
                         @if($r->kondisi_barang == 'layak_jual')
                             <span class="badge bg-success">Layak Jual</span>
@@ -40,20 +81,27 @@
                     </td>
                     <td class="fw-semibold">
                         @if($r->nilai_kerugian > 0)
-                            Rp {{ number_format($r->nilai_kerugian,0,',','.') }}
+                            <span style="color: #AD5050;">Rp {{ number_format($r->nilai_kerugian, 0, ',', '.') }}</span>
                         @else
-                            —
+                            <span class="text-muted">—</span>
                         @endif
                     </td>
-                    <td>{{ $r->user->nama }}</td>
+                    <td class="text-end font-semibold">{{ $r->user->nama ?? $r->user->name ?? 'Admin' }}</td>
                 </tr>
                 @empty
-                <tr><td colspan="6" class="text-center text-secondary py-4">Belum ada data retur 🌷</td></tr>
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-5">
+                        <i class="bi bi-inbox fs-1 d-block mb-2" style="color: var(--border-soft);"></i>
+                        <span class="font-semibold">Belum ada data retur barang yang ditemukan.</span>
+                    </td>
+                </tr>
                 @endforelse
             </tbody>
         </table>
     </div>
-    {{ $retur->links() }}
+    <div class="mt-3">
+        {{ $retur->links() }}
+    </div>
 </div>
 
 @endsection

@@ -98,6 +98,45 @@ class DashboardController extends Controller
             $sesiHariIni = [];
         }
 
+        // ========== STATISTIK 7 HARI TERAKHIR & KANAL PENJUALAN ==========
+        $chartLabels = [];
+        $chartDataPos = [];
+        $chartDataOnline = [];
+
+        for ($i = 6; $i >= 0; $i--) {
+            $tgl = Carbon::today()->subDays($i);
+            $chartLabels[] = $tgl->format('d M');
+
+            $totalPos = TransaksiPos::whereDate('tanggal', $tgl)->sum('total_harga');
+            $totalOnline = PesananOnline::whereDate('tanggal', $tgl)->sum('total_harga');
+
+            $chartDataPos[] = (float) $totalPos;
+            $chartDataOnline[] = (float) $totalOnline;
+        }
+
+        $totalPosOmset = array_sum($chartDataPos);
+        $totalOnlineOmset = array_sum($chartDataOnline);
+        $totalSemuaOmset = $totalPosOmset + $totalOnlineOmset;
+        
+        $persenPos = $totalSemuaOmset > 0 ? round(($totalPosOmset / $totalSemuaOmset) * 100) : 40;
+        $persenOnline = $totalSemuaOmset > 0 ? round(($totalOnlineOmset / $totalSemuaOmset) * 100) : 60;
+
+        $shopeeOmset = PesananOnline::where('platform', 'shopee')->sum('total_harga');
+        $tiktokOmset = PesananOnline::where('platform', 'tiktok')->sum('total_harga');
+
+        $hppPos7Hari = DB::table('detail_transaksi_pos as d')
+            ->join('transaksi_pos as t', 'd.id_transaksi', '=', 't.id')
+            ->whereDate('t.tanggal', '>=', Carbon::today()->subDays(6))
+            ->sum(DB::raw('d.qty * d.hpp_satuan'));
+            
+        $hppOnline7Hari = DB::table('detail_pesanan_online as d')
+            ->join('pesanan_online as p', 'd.id_pesanan', '=', 'p.id')
+            ->whereDate('p.tanggal', '>=', Carbon::today()->subDays(6))
+            ->sum(DB::raw('d.qty * d.hpp_satuan'));
+            
+        $totalHpp7Hari = (float) ($hppPos7Hari + $hppOnline7Hari);
+        $labaKotor7Hari = (float) ($totalSemuaOmset - $totalHpp7Hari);
+
         // ========== KIRIM KE VIEW ==========
         return view('dashboard', compact(
             'transaksiHariIni',
@@ -106,7 +145,19 @@ class DashboardController extends Controller
             'totalHabis',
             'lowStockProducts',
             'recentTransactions',
-            'sesiHariIni'
+            'sesiHariIni',
+            'chartLabels',
+            'chartDataPos',
+            'chartDataOnline',
+            'totalPosOmset',
+            'totalOnlineOmset',
+            'totalSemuaOmset',
+            'shopeeOmset',
+            'tiktokOmset',
+            'totalHpp7Hari',
+            'labaKotor7Hari',
+            'persenPos',
+            'persenOnline'
         ));
     }
 }

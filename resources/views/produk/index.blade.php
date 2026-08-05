@@ -290,34 +290,4 @@
 
 </div>
 
-<style>
-    .form-control, .form-select {
-        border-color: #E8D9E0;
-        font-size: 13px;
-    }
-    .form-control:focus, .form-select:focus {
-        border-color: #EC95A8;
-        box-shadow: 0 0 0 0.2rem rgba(236, 149, 168, 0.25);
-    }
-    .table tbody tr {
-        border-bottom: 1px solid #F7E5EA;
-    }
-    .table tbody tr:hover {
-        background-color: #FFF5F7;
-    }
-    .btn-outline-primary {
-        color: #EC95A8;
-        border-color: #EC95A8;
-    }
-    .btn-outline-primary:hover {
-        background-color: #EC95A8;
-        border-color: #EC95A8;
-        color: #fff;
-    }
-    .badge {
-        font-weight: 600;
-        letter-spacing: 0.3px;
-    }
-</style>
-
 @endsection

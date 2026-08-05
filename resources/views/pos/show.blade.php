@@ -55,11 +55,4 @@
 
 @endsection
 
-@push('styles')
-<style>
-@media print {
-    .sidebar-wrap, .topbar, .btn { display:none !important; }
-    .main-content { margin-left:0 !important; }
-}
-</style>
-@endpush
+

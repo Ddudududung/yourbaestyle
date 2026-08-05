@@ -195,14 +195,6 @@
     </div>
 </div>
 
-<style>
-    .form-label { font-size: 13px; color: #4D3D43; }
-    .form-control, .form-select { border-color: #E8D9E0; border-radius: 8px; font-size: 13px; }
-    .form-control:focus, .form-select:focus { border-color: #EC95A8; box-shadow: 0 0 0 0.2rem rgba(236, 149, 168, 0.25); }
-    .form-control:disabled { background-color: #f8f9fa; cursor: not-allowed; }
-    .form-check-input { border-color: #E8D9E0; }
-    .form-check-input:checked { background-color: #EC95A8; border-color: #EC95A8; }
-</style>
 @endsection
 
 @push('scripts')

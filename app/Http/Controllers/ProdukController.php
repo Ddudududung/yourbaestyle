@@ -71,6 +71,17 @@ class ProdukController extends Controller
     public function store(Request $request)
     {
         try {
+            // BERSIHKAN TITIK DARI VALUE RUPIAH SEBELUM VALIDASI
+            if ($request->has('harga_jual')) {
+                $request->merge(['harga_jual' => str_replace('.', '', $request->harga_jual)]);
+            }
+            if ($request->has('harga_beli_per_unit')) {
+                $request->merge(['harga_beli_per_unit' => str_replace('.', '', $request->harga_beli_per_unit)]);
+            }
+            if ($request->has('hpp_realisasi')) {
+                $request->merge(['hpp_realisasi' => str_replace('.', '', $request->hpp_realisasi)]);
+            }
+
             // VALIDASI
             $request->validate([
                 'nama_produk'        => 'required|string|max:150',
@@ -187,6 +198,17 @@ class ProdukController extends Controller
         try {
             $produk = Produk::findOrFail($id);
 
+            // BERSIHKAN TITIK DARI VALUE RUPIAH SEBELUM VALIDASI
+            if ($request->has('harga_jual')) {
+                $request->merge(['harga_jual' => str_replace('.', '', $request->harga_jual)]);
+            }
+            if ($request->has('harga_beli_per_unit')) {
+                $request->merge(['harga_beli_per_unit' => str_replace('.', '', $request->harga_beli_per_unit)]);
+            }
+            if ($request->has('hpp_realisasi')) {
+                $request->merge(['hpp_realisasi' => str_replace('.', '', $request->hpp_realisasi)]);
+            }
+
             $request->validate([
                 'nama_produk'           => 'required|string|max:150',
                 'id_jenis_pakaian'      => 'required|exists:ms_jenis_pakaian,id',
@@ -194,67 +216,101 @@ class ProdukController extends Controller
                 'id_model'              => 'required|exists:ms_model,id',
                 'harga_jual'            => 'required|numeric|min:0',
                 'id_pemasok'            => 'required|exists:pemasok,id',
+                'jenis_koreksi_stok'    => 'nullable|in:tetap,tambah,kurang,set_total',
+                'qty_koreksi'           => 'nullable|integer|min:0',
+                'stok_total_baru'       => 'nullable|integer|min:0',
                 'qty_tambah'            => 'nullable|integer|min:0',
                 'harga_beli_per_unit'   => 'nullable|numeric|min:0',
                 'hpp_realisasi'         => 'nullable|numeric|min:0',
                 'deskripsi'             => 'nullable|string',
+                'status'                => 'nullable|in:aktif,nonaktif',
             ]);
 
             DB::beginTransaction();
 
-            if ($request->filled('qty_tambah') && $request->qty_tambah > 0) {
-                $qtyTambah = $request->qty_tambah;
+            $stokLama = $produk->stok;
+            $stokBaru = $stokLama;
+            $pesanStok = "";
+
+            // Backward compatibility jika form lama mengirim qty_tambah
+            $jenisKoreksi = $request->jenis_koreksi_stok;
+            if (!$jenisKoreksi && $request->filled('qty_tambah') && $request->qty_tambah > 0) {
+                $jenisKoreksi = 'tambah';
+                $request->merge(['qty_koreksi' => $request->qty_tambah]);
+            }
+
+            // PROSES LOGIK PENYESUAIAN STOK (TAMBAH / KURANG / SET TOTAL)
+            if ($jenisKoreksi === 'tambah' && $request->filled('qty_koreksi') && $request->qty_koreksi > 0) {
+                $qtyTambah = (int) $request->qty_koreksi;
+                $stokBaru = $stokLama + $qtyTambah;
                 $hargaBaru = $request->harga_beli_per_unit ?? $produk->harga_beli_per_unit;
                 
                 // Hitung HPP baru (rata-rata tertimbang)
-                $nilaiStokLama = $produk->stok * $produk->hpp_otomatis;
+                $nilaiStokLama = $stokLama * $produk->hpp_otomatis;
                 $nilaiStokBaru = $qtyTambah * $hargaBaru;
-                $hppBaruOtomatis = ($nilaiStokLama + $nilaiStokBaru) / ($produk->stok + $qtyTambah);
+                $hppBaruOtomatis = ($stokLama + $qtyTambah) > 0 ? ($nilaiStokLama + $nilaiStokBaru) / ($stokLama + $qtyTambah) : $produk->hpp_otomatis;
                 
-                $produk->increment('stok', $qtyTambah);
-                
-                $produk->update([
-                    'nama_produk'        => $request->nama_produk,
-                    'id_jenis_pakaian'   => $request->id_jenis_pakaian,
-                    'id_warna'           => $request->id_warna,
-                    'id_model'           => $request->id_model,
-                    'harga_jual'         => $request->harga_jual,
-                    'harga_beli_per_unit'=> $hargaBaru,
-                    'hpp_otomatis'       => $hppBaruOtomatis,
-                    'hpp_realisasi'      => $request->hpp_realisasi ?? $hppBaruOtomatis,
-                    'id_pemasok'         => $request->id_pemasok,
-                    'deskripsi'          => $request->deskripsi,
-                ]);
+                $produk->hpp_otomatis = $hppBaruOtomatis;
+                $produk->harga_beli_per_unit = $hargaBaru;
                 
                 PembelianBarang::create([
                     'id_produk'          => $produk->id,
                     'qty'                => $qtyTambah,
                     'harga_beli_per_unit'=> $hargaBaru,
                     'tanggal_pembelian'  => now()->toDateString(),
-                    'keterangan'         => 'Penambahan stok via edit',
+                    'keterangan'         => 'Penambahan stok via edit produk',
                 ]);
-            } else {
-                $produk->update([
-                    'nama_produk'        => $request->nama_produk,
-                    'id_jenis_pakaian'   => $request->id_jenis_pakaian,
-                    'id_warna'           => $request->id_warna,
-                    'id_model'           => $request->id_model,
-                    'harga_jual'         => $request->harga_jual,
-                    'id_pemasok'         => $request->id_pemasok,
-                    'hpp_realisasi'      => $request->hpp_realisasi,
-                    'deskripsi'          => $request->deskripsi,
-                ]);
+
+                $pesanStok = "Stok bertambah {$qtyTambah} unit (stok baru: {$stokBaru} pcs).";
+
+            } elseif ($jenisKoreksi === 'kurang' && $request->filled('qty_koreksi') && $request->qty_koreksi > 0) {
+                $qtyKurang = (int) $request->qty_koreksi;
+                $stokBaru = max(0, $stokLama - $qtyKurang);
+                $pesanStok = "Stok berkurang {$qtyKurang} unit (stok baru: {$stokBaru} pcs).";
+
+            } elseif ($jenisKoreksi === 'set_total' && $request->filled('stok_total_baru')) {
+                $stokBaru = max(0, (int) $request->stok_total_baru);
+                $pesanStok = "Total stok diperbarui menjadi {$stokBaru} pcs.";
             }
+
+            // SIMPAN DATA PRODUK
+            $produk->stok = $stokBaru;
+            $produk->nama_produk = $request->nama_produk;
+            $produk->id_jenis_pakaian = $request->id_jenis_pakaian;
+            $produk->id_warna = $request->id_warna;
+            $produk->id_model = $request->id_model;
+            $produk->harga_jual = $request->harga_jual;
+            $produk->id_pemasok = $request->id_pemasok;
+
+            if ($request->filled('harga_beli_per_unit')) {
+                $hargaBeliVal = (float) $request->harga_beli_per_unit;
+                $produk->harga_beli_per_unit = $hargaBeliVal;
+                // Jika HPP otomatis belum ada, set awal sesuai harga beli
+                if (empty($produk->hpp_otomatis) || $produk->hpp_otomatis == 0) {
+                    $produk->hpp_otomatis = $hargaBeliVal;
+                }
+            }
+
+            if ($request->filled('status')) {
+                $produk->status = $request->status;
+            }
+            if ($request->filled('hpp_realisasi')) {
+                $produk->hpp_realisasi = $request->hpp_realisasi;
+            }
+            $produk->deskripsi = $request->deskripsi;
+            $produk->save();
 
             DB::commit();
 
-            $message = $request->filled('qty_tambah') && $request->qty_tambah > 0 
-                ? "✅ Produk berhasil diupdate! Stok bertambah {$request->qty_tambah} unit."
-                : "✅ Produk berhasil diupdate!";
+            $message = !empty($pesanStok) 
+                ? "✅ Produk [{$produk->nama_produk}] berhasil diupdate! {$pesanStok}"
+                : "✅ Data produk [{$produk->nama_produk}] berhasil diupdate!";
 
             Log::info('Produk updated', [
                 'produk_id' => $produk->id,
-                'user_id' => Auth::id(),
+                'stok_lama' => $stokLama,
+                'stok_baru' => $stokBaru,
+                'user_id'   => Auth::id(),
             ]);
 
             return redirect()->route('produk.show', $produk->id)

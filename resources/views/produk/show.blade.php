@@ -1,65 +1,95 @@
 @extends('layouts.app')
 
-@section('title', 'Detail Produk ')
+@section('title', 'Detail Produk — ' . $produk->nama_produk)
 
 @section('content')
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h5 class="fw-bold m-0" style="font-family:'Quicksand',sans-serif">
-        <a href="{{ route('produk.index') }}" class="text-decoration-none text-secondary"><i class="bi bi-arrow-left"></i> Kembali</a>
-    </h5>
-    <a href="{{ route('produk.edit', $produk->id) }}" class="btn btn-warning"><i class="bi bi-pencil-square"></i> Edit Produk</a>
+<!-- Header Action Nav -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <a href="{{ route('produk.index') }}" class="btn btn-yb-outline text-decoration-none">
+        <i class="bi bi-arrow-left me-1"></i> Kembali ke Daftar Produk
+    </a>
+    <a href="{{ route('produk.edit', $produk->id) }}" class="btn btn-yb">
+        <i class="bi bi-pencil-square me-1"></i> Edit Produk
+    </a>
 </div>
 
-<div class="row">
-    <div class="col-md-4 mb-4">
-        <div class="card-yb p-4 h-100">
-            <h6 class="fw-bold mb-3 text-secondary text-uppercase">Informasi Produk</h6>
-            
-            <div class="mb-3">
-                <small class="text-muted d-block">Kode Produk</small>
-                <span class="fw-bold fs-5">{{ $produk->kode_produk }}</span>
-            </div>
-            
-            <div class="mb-3">
-                <small class="text-muted d-block">Nama Produk</small>
-                <span class="fw-semibold fs-5">{{ $produk->nama_produk }}</span>
-            </div>
-
-            <div class="mb-3">
-                <small class="text-muted d-block">Jenis</small>
-                <span class="badge bg-primary">{{ ucfirst($produk->jenis) }}</span>
+<div class="row g-4">
+    <!-- Informasi Utama Produk -->
+    <div class="col-12 col-lg-4">
+        <div class="card-yb p-4 h-100 position-relative overflow-hidden">
+            <div class="d-flex align-items-center gap-3 mb-4 pb-3" style="border-bottom: 1.5px dashed var(--border-soft);">
+                <div style="width: 52px; height: 52px; border-radius: 18px; background: var(--pink-soft); display: flex; align-items: center; justify-content: center; font-size: 24px; color: var(--pink-primary-dark); transform: rotate(-5deg);">
+                    <i class="bi bi-bag-heart"></i>
+                </div>
+                <div>
+                    <h5 class="fw-bold mb-1" style="color: var(--ink); font-family: 'Quicksand', sans-serif;">{{ $produk->nama_produk }}</h5>
+                    <small class="text-muted font-semibold" style="font-size: 11.5px;">Kode: <span class="text-dark fw-bold">{{ $produk->kode_produk }}</span></small>
+                </div>
             </div>
 
+            <!-- Detail Grid -->
             <div class="mb-3">
-                <small class="text-muted d-block">Harga Jual</small>
-                <span class="fw-bold text-success fs-5">Rp {{ number_format($produk->harga_jual, 0, ',', '.') }}</span>
+                <small class="text-muted d-block font-semibold mb-1" style="font-size: 11px;">KATEGORI & STATUS</small>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge" style="background: var(--pink-soft); color: var(--pink-primary-dark); font-size: 11px;">{{ ucfirst($produk->jenis) }}</span>
+                    @if($produk->status == 'aktif')
+                        <span class="badge bg-success" style="font-size: 11px;">Aktif / Dijual</span>
+                    @else
+                        <span class="badge bg-secondary" style="font-size: 11px;">Nonaktif</span>
+                    @endif
+                </div>
             </div>
 
-            <div class="mb-3">
-                <small class="text-muted d-block">HPP (Modal Rata-rata)</small>
-                <span class="fw-bold text-danger fs-5">Rp {{ number_format($produk->hpp_otomatis, 0, ',', '.') }}</span>
+            <div class="row g-2 mb-3">
+                <div class="col-6">
+                    <div class="p-3 rounded-3" style="background: var(--pink-soft-2); border: 1px solid var(--border-soft);">
+                        <small class="text-muted d-block font-semibold mb-1" style="font-size: 10.5px;">HARGA JUAL</small>
+                        <span class="fw-bold fs-6" style="color: #52976D;">Rp {{ number_format($produk->harga_jual, 0, ',', '.') }}</span>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-3 rounded-3" style="background: #FFF5F5; border: 1px solid #FCEAEA;">
+                        <small class="text-muted d-block font-semibold mb-1" style="font-size: 10.5px;">HPP (MODAL)</small>
+                        <span class="fw-bold fs-6" style="color: #AD5050;">Rp {{ number_format($produk->hpp_otomatis, 0, ',', '.') }}</span>
+                    </div>
+                </div>
             </div>
 
-            <div class="mb-3">
-                <small class="text-muted d-block">Sisa Stok</small>
-                <span class="fw-bold fs-4">{{ $produk->stok }} <small class="fs-6 fw-normal text-muted">pcs</small></span>
+            <!-- Estimasi Margin Profit -->
+            @php
+                $marginUnit = $produk->harga_jual - $produk->hpp_otomatis;
+                $persenMargin = $produk->harga_jual > 0 ? round(($marginUnit / $produk->harga_jual) * 100, 1) : 0;
+            @endphp
+            <div class="p-3 rounded-3 mb-3" style="background: #EDF5EA; border: 1px solid #ACC9A4;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <small class="d-block font-semibold" style="font-size: 11px; color: #56794D;">ESTIMASI PROFiT / UNIT</small>
+                        <strong style="color: #2D7A4D; font-size: 15px;">Rp {{ number_format($marginUnit, 0, ',', '.') }}</strong>
+                    </div>
+                    <span class="badge bg-success" style="font-size: 11px;">{{ $persenMargin }}% Margin</span>
+                </div>
             </div>
 
             <div>
-                <small class="text-muted d-block">Status</small>
-                @if($produk->status == 'aktif')
-                    <span class="badge bg-success">Aktif / Dijual</span>
-                @else
-                    <span class="badge bg-secondary">Nonaktif</span>
-                @endif
+                <small class="text-muted d-block font-semibold mb-1" style="font-size: 11px;">SISA STOK SAAT INI</small>
+                <div class="d-flex align-items-baseline gap-2">
+                    <span class="fw-bold fs-3" style="color: var(--ink);">{{ number_format($produk->stok) }}</span>
+                    <small class="text-muted font-semibold">pcs tersedia di gudang</small>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="col-md-8 mb-4">
+    <!-- Riwayat Barang Masuk -->
+    <div class="col-12 col-lg-8">
         <div class="card-yb p-4 h-100">
-            <h6 class="fw-bold mb-3 text-secondary text-uppercase">Riwayat Barang Masuk (Restock)</h6>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="fw-bold mb-0" style="color: var(--ink); font-family: 'Quicksand', sans-serif;">
+                    <i class="bi bi-clock-history me-2" style="color: var(--pink-primary);"></i>Riwayat Barang Masuk (Restock)
+                </h6>
+                <span class="badge bg-light text-muted" style="font-size: 11px;">{{ count($riwayat) }} Transaksi Pembelian</span>
+            </div>
             
             <div class="table-responsive">
                 <table class="table table-yb align-middle">
@@ -67,7 +97,7 @@
                         <tr>
                             <th>Tanggal</th>
                             <th>Pemasok</th>
-                            <th>Jml Masuk</th>
+                            <th>Jumlah Masuk</th>
                             <th>Harga Beli / Unit</th>
                             <th class="text-end">Total Modal</th>
                         </tr>
@@ -75,15 +105,18 @@
                     <tbody>
                         @forelse($riwayat as $r)
                         <tr>
-                            <td>{{ \Carbon\Carbon::parse($r->tanggal)->format('d M Y') }}</td>
+                            <td class="fw-semibold">{{ \Carbon\Carbon::parse($r->tanggal)->format('d M Y') }}</td>
                             <td>{{ $r->pemasok->nama_pemasok ?? 'Tidak Diketahui' }}</td>
-                            <td class="fw-bold text-primary">+{{ $r->jumlah }}</td>
+                            <td><span class="badge bg-success">+{{ $r->jumlah }} pcs</span></td>
                             <td>Rp {{ number_format($r->harga_beli_per_unit, 0, ',', '.') }}</td>
-                            <td class="text-end fw-semibold">Rp {{ number_format($r->total_modal, 0, ',', '.') }}</td>
+                            <td class="text-end fw-bold" style="color: var(--ink);">Rp {{ number_format($r->total_modal, 0, ',', '.') }}</td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="5" class="text-center text-secondary py-4">Belum ada riwayat pembelian untuk produk ini 🌷</td>
+                            <td colspan="5" class="text-center text-muted py-5">
+                                <i class="bi bi-box-seam fs-1 d-block mb-2" style="color: var(--border-soft);"></i>
+                                <span class="font-semibold">Belum ada riwayat pembelian restock untuk produk ini.</span>
+                            </td>
                         </tr>
                         @endforelse
                     </tbody>
