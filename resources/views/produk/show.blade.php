@@ -18,12 +18,21 @@
     <!-- Informasi Utama Produk -->
     <div class="col-12 col-lg-4">
         <div class="card-yb p-4 h-100 position-relative overflow-hidden">
+            <!-- FOTO PRODUK -->
+            @if($produk->foto && file_exists(storage_path('app/public/' . $produk->foto)))
+            <div class="mb-4" style="border-radius: 14px; overflow: hidden; background: #fff; aspect-ratio: 1/1; border: 1.5px solid var(--border-soft); box-shadow: inset 0 0 10px rgba(0,0,0,0.02);">
+                <img src="{{ asset('storage/' . $produk->foto) }}" alt="{{ $produk->nama_produk }}" style="width: 100%; height: 100%; object-fit: contain;">
+            </div>
+            @endif
+
             <div class="d-flex align-items-center gap-3 mb-4 pb-3" style="border-bottom: 1.5px dashed var(--border-soft);">
-                <div style="width: 52px; height: 52px; border-radius: 18px; background: var(--pink-soft); display: flex; align-items: center; justify-content: center; font-size: 24px; color: var(--pink-primary-dark); transform: rotate(-5deg);">
+                @if(!$produk->foto || !file_exists(storage_path('app/public/' . $produk->foto)))
+                <div style="width: 52px; height: 52px; border-radius: 18px; background: var(--pink-soft); display: flex; align-items: center; justify-content: center; font-size: 24px; color: var(--pink-primary-dark); transform: rotate(-5deg); flex-shrink: 0;">
                     <i class="bi bi-bag-heart"></i>
                 </div>
+                @endif
                 <div>
-                    <h5 class="fw-bold mb-1" style="color: var(--ink); font-family: 'Quicksand', sans-serif;">{{ $produk->nama_produk }}</h5>
+                    <h5 class="fw-bold mb-1" style="color: var(--ink); font-family: 'Quicksand', sans-serif; line-height: 1.3;">{{ $produk->nama_produk }}</h5>
                     <small class="text-muted font-semibold" style="font-size: 11.5px;">Kode: <span class="text-dark fw-bold">{{ $produk->kode_produk }}</span></small>
                 </div>
             </div>

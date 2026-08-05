@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google" content="notranslate">
     <title>Official Catalog — Yourbaestyle</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
@@ -15,7 +16,9 @@
     <nav class="navbar navbar-custom sticky-top">
         <div class="container d-flex justify-content-between align-items-center">
             <a href="{{ url('/') }}" class="text-decoration-none d-flex align-items-center gap-2">
-                <div class="brand-icon"><i class="bi bi-bag-heart-fill"></i></div>
+                <div style="width: 42px; height: 42px; border-radius: 16px; background: var(--brand-pink); display: flex; align-items: center; justify-content: center; font-size: 19px; color: #fff; transform: rotate(-6deg);">
+                    <i class="bi bi-bag-heart-fill"></i>
+                </div>
                 <div>
                     <h5 class="mb-0 fw-bold text-dark font-heading" style="letter-spacing: -0.5px;">Yourbaestyle</h5>
                     <small style="color: var(--brand-pink); font-size: 10.5px; font-weight: 800; letter-spacing: 1px;">CURATED BRAND</small>

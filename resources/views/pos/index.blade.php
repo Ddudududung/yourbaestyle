@@ -45,11 +45,11 @@
                          onclick="{{ $p->stok > 0 ? 'tambahKeranjang('.$p->id.', \''.addslashes($p->nama_produk).'\', '.$p->harga_jual.', '.$p->stok.')' : '' }}">
                         <div>
                             <!-- Thumbnail Foto -->
-                            <div class="pos-thumb mb-2" style="height: 72px; border-radius: 12px; background: var(--pink-soft-2); display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                            <div class="pos-thumb mb-2" style="aspect-ratio: 1/1; border-radius: 12px; background: #fff; border: 1.5px solid var(--border-soft); display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 4px;">
                                 @if($p->foto && file_exists(storage_path('app/public/'.$p->foto)))
-                                    <img src="{{ asset('storage/'.$p->foto) }}" alt="{{ $p->nama_produk }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                    <img src="{{ asset('storage/'.$p->foto) }}" alt="{{ $p->nama_produk }}" style="width: 100%; height: 100%; object-fit: contain;">
                                 @else
-                                    <i class="bi bi-bag-heart fs-3" style="color: var(--pink-primary-dark);"></i>
+                                    <i class="bi bi-bag-heart fs-1" style="color: var(--pink-soft);"></i>
                                 @endif
                             </div>
 

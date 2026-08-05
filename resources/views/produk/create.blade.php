@@ -90,17 +90,22 @@
             </div>
         </div>
 
-       <div class="mb-3">
-    <label for="foto" class="form-label">Foto Produk</label>
-    <input 
-        type="file" 
-        name="foto" 
-        id="foto" 
-        class="form-control" 
-        accept="image/*"
-        capture="environment"
-    >
-</div>
+        <div class="mb-3">
+            <label for="fotoInput" class="form-label font-semibold">Foto Produk</label>
+            <div class="d-flex align-items-center gap-3">
+                <div id="previewBox" style="width: 80px; height: 80px; border-radius: 14px; background: var(--pink-soft-2); border: 2px dashed var(--border-soft); overflow: hidden;" class="d-flex align-items-center justify-content-center flex-shrink-0">
+                    <img id="imgPreview" src="" alt="Preview Foto" style="width: 100%; height: 100%; object-fit: cover; display: none;">
+                    <div id="placeholderPreview" class="text-center text-muted">
+                        <i class="bi bi-image fs-3 d-block" style="color: var(--pink-primary);"></i>
+                        <small style="font-size: 9px; font-weight: 700;">Preview</small>
+                    </div>
+                </div>
+                <div class="flex-grow-1">
+                    <input type="file" name="foto" id="fotoInput" class="form-control" accept="image/*" onchange="previewFoto(this)">
+                    <small class="text-muted d-block mt-1" style="font-size: 11px;">Upload foto produk (JPG, PNG, WEBP. Maksimal 2MB).</small>
+                </div>
+            </div>
+        </div>
 
         <p class="text-secondary small fw-bold text-uppercase mb-3 mt-4" style="letter-spacing:.4px">💰 Data Pembelian &amp; HPP</p>
         <div class="row g-3 mb-3">
@@ -146,9 +151,24 @@
 
 @push('scripts')
 <script>
+    function previewFoto(input) {
+        const previewImg = document.getElementById('imgPreview');
+        const placeholder = document.getElementById('placeholderPreview');
+        
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewImg.src = e.target.result;
+                previewImg.style.display = 'block';
+                if (placeholder) placeholder.style.display = 'none';
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
     function hitungHPP() {
-        const hargaBeli = parseFloat(document.getElementById('harga_beli').value) || 0;
-        document.getElementById('hpp_otomatis_display').value = hargaBeli.toLocaleString('id-ID');
+        const hargaBeli = parseFloat((document.getElementById('harga_beli').value || '').toString().replace(/\D/g, '')) || 0;
+        document.getElementById('hpp_otomatis_display').value = formatRupiahDisplay(hargaBeli);
     }
     document.getElementById('harga_beli').addEventListener('input', hitungHPP);
     document.getElementById('jumlah').addEventListener('input', hitungHPP);

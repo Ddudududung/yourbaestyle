@@ -43,27 +43,32 @@
                     <label class="form-label fw-bold" style="color: #4D3D43;">Foto Produk</label>
                     <div class="d-flex align-items-center gap-3 flex-wrap">
                         
-                        <!-- Preview Foto Saat Ini -->
+                        <!-- Preview Foto (Saat Ini / Hasil Upload Baru) -->
                         <div class="text-center">
+                            <div id="previewBoxEdit" style="width: 100px; height: 100px; border-radius: 12px; background: #fff; border: 2px dashed #F7E5EA; overflow: hidden;" class="d-flex align-items-center justify-content-center">
+                                @if($produk->foto && file_exists(storage_path('app/public/' . $produk->foto)))
+                                    <img id="imgPreviewEdit" src="{{ asset('storage/' . $produk->foto) }}" alt="Preview" style="width: 100%; height: 100%; object-fit: cover;">
+                                @else
+                                    <img id="imgPreviewEdit" src="" alt="Preview" style="width: 100%; height: 100%; object-fit: cover; display: none;">
+                                    <div id="placeholderPreviewEdit" class="text-center text-muted">
+                                        <i class="bi bi-camera fs-1 text-muted d-block"></i>
+                                        <small style="font-size: 10px;">Belum ada foto</small>
+                                    </div>
+                                @endif
+                            </div>
                             @if($produk->foto && file_exists(storage_path('app/public/' . $produk->foto)))
-                                <img src="{{ asset('storage/' . $produk->foto) }}" width="100" height="100" class="rounded-3 shadow-sm mb-1" style="object-fit: cover; border: 2px solid #fff;">
                                 <div class="form-check form-check-inline mt-1 d-block">
                                     <input class="form-check-input" type="checkbox" name="hapus_foto" value="1" id="hapusFoto">
                                     <label class="form-check-label text-danger small fw-bold" for="hapusFoto">Hapus Foto Lama</label>
                                 </div>
-                            @else
-                                <div style="width: 100px; height: 100px; background: #fff; border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 1px solid #F7E5EA;">
-                                    <i class="bi bi-camera fs-1 text-muted"></i>
-                                </div>
-                                <span class="d-block small text-muted mt-1">Belum ada foto</span>
                             @endif
                         </div>
 
                         <!-- Input Upload Baru -->
-                        <div class="grow">
-                            <input type="file" name="foto" class="form-control form-control-sm" accept="image/png, image/jpeg, image/jpg">
+                        <div class="grow" style="flex: 1;">
+                            <input type="file" name="foto" id="fotoInputEdit" class="form-control form-control-sm" accept="image/*" onchange="previewFotoEdit(this)">
                             <small class="text-muted d-block mt-1" style="font-size: 11.5px;">
-                                <i class="bi bi-info-circle me-1"></i>Format: JPG, JPEG, PNG (Maks. 2MB). Biarkan kosong jika tidak ganti foto.
+                                <i class="bi bi-info-circle me-1"></i>Format: JPG, JPEG, PNG, WEBP (Maks. 2MB). Pilih foto baru untuk melihat pratinjau (*preview*).
                             </small>
                         </div>
                     </div>
@@ -266,6 +271,21 @@
 </div>
 
 <script>
+function previewFotoEdit(input) {
+    const previewImg = document.getElementById('imgPreviewEdit');
+    const placeholder = document.getElementById('placeholderPreviewEdit');
+    
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            previewImg.src = e.target.result;
+            previewImg.style.display = 'block';
+            if (placeholder) placeholder.style.display = 'none';
+        }
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
 function toggleKoreksiStok(val) {
     const boxQty = document.getElementById('boxQtyKoreksi');
     const boxSet = document.getElementById('boxSetTotal');

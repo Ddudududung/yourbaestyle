@@ -43,6 +43,14 @@ class ProdukController extends Controller
             $query->where('status', $request->status);
         }
 
+        if ($request->filled('stok')) {
+            if ($request->stok === 'habis') {
+                $query->where('stok', 0);
+            } elseif ($request->stok === 'ada') {
+                $query->where('stok', '>', 0);
+            }
+        }
+
         $produk = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
         
         $jenisPakaian = MsJenisPakaian::orderBy('nama_jenis')->get();
@@ -93,7 +101,7 @@ class ProdukController extends Controller
                 'jumlah'             => 'required|integer|min:1',
                 'harga_beli_per_unit'=> 'required|numeric|min:0',
                 'hpp_realisasi'      => 'nullable|numeric|min:0',
-                'foto'               => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+                'foto'               => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5000',
                 'deskripsi'          => 'nullable|string',
             ]);
 
@@ -222,6 +230,7 @@ class ProdukController extends Controller
                 'qty_tambah'            => 'nullable|integer|min:0',
                 'harga_beli_per_unit'   => 'nullable|numeric|min:0',
                 'hpp_realisasi'         => 'nullable|numeric|min:0',
+                'foto'                  => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5000',
                 'deskripsi'             => 'nullable|string',
                 'status'                => 'nullable|in:aktif,nonaktif',
             ]);
@@ -298,6 +307,20 @@ class ProdukController extends Controller
                 $produk->hpp_realisasi = $request->hpp_realisasi;
             }
             $produk->deskripsi = $request->deskripsi;
+
+            // PROSES UPLOAD FOTO BARU ATAU HAPUS FOTO LAMA
+            if ($request->hasFile('foto')) {
+                if ($produk->foto && \Illuminate\Support\Facades\Storage::disk('public')->exists($produk->foto)) {
+                    \Illuminate\Support\Facades\Storage::disk('public')->delete($produk->foto);
+                }
+                $produk->foto = $request->file('foto')->store('produk', 'public');
+            } elseif ($request->boolean('hapus_foto')) {
+                if ($produk->foto && \Illuminate\Support\Facades\Storage::disk('public')->exists($produk->foto)) {
+                    \Illuminate\Support\Facades\Storage::disk('public')->delete($produk->foto);
+                }
+                $produk->foto = null;
+            }
+
             $produk->save();
 
             DB::commit();

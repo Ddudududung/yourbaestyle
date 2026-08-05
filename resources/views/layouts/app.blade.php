@@ -28,7 +28,7 @@
                 <div class="brand-icon"><i class="bi bi-bag-heart-fill"></i></div>
                 <div>
                     <div class="brand-text">Yourbaestyle</div>
-                    <div class="brand-sub">manage with love 🌸</div>
+                    <div class="brand-sub">manage with love </div>
                 </div>
             </div>
             <nav>

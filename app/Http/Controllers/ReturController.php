@@ -49,7 +49,7 @@ class ReturController extends Controller
         $query->where('id_sesi_live', $request->id_sesi_live);
     }
 
-    $transaksis = $query->orderBy('tanggal', 'desc')->get();
+    $transaksis = $query->with('detail.produk')->orderBy('tanggal', 'desc')->get();
 
     return view('retur.select', compact('transaksis', 'sesiLive'));
 }

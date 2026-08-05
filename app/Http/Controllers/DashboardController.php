@@ -78,19 +78,25 @@ class DashboardController extends Controller
         // ========== SESI LIVE BREAKDOWN (Jika ada table sesi_lives) ==========
         $sesiHariIni = [];
         try {
+            $currentTime = Carbon::now()->format('H:i:s');
             $sesiHariIni = DB::table('sesi_lives as sl')
                 ->leftJoin('pesanan_online as po', 'sl.id', '=', 'po.id_sesi_live')
                 ->select(
                     'sl.id',
                     'sl.nama_sesi',
                     'sl.jam_mulai',
+                    'sl.jam_selesai',
                     'sl.status',
                     DB::raw('COUNT(DISTINCT po.id) as total_pesanan'),
                     DB::raw('COALESCE(SUM(po.total_harga), 0) as total_revenue'),
                     DB::raw('COALESCE(SUM(po.total_harga - po.total_hpp), 0) as total_profit')
                 )
                 ->whereDate('sl.tanggal_live', $hariIni)
-                ->groupBy('sl.id', 'sl.nama_sesi', 'sl.jam_mulai', 'sl.status')
+                ->where(function ($q) use ($currentTime) {
+                    $q->whereNull('sl.jam_selesai')
+                      ->orWhere('sl.jam_selesai', '>=', $currentTime);
+                })
+                ->groupBy('sl.id', 'sl.nama_sesi', 'sl.jam_mulai', 'sl.jam_selesai', 'sl.status')
                 ->orderBy('sl.jam_mulai')
                 ->get();
         } catch (\Exception $e) {

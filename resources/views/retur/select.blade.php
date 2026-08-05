@@ -118,19 +118,24 @@
                 </thead>
                 <tbody style="border-top: 1px solid #F7E5EA;">
                     @forelse($transaksis as $tx)
+                    @php
+                        $type = $tx->type ?? 'pos';
+                        $kode = $tx->kode_transaksi ?? '-';
+                        $produkNames = $tx->detail ? $tx->detail->map(fn($d) => optional($d->produk)->nama_produk)->filter()->implode(', ') : '-';
+                    @endphp
                     <tr>
                         <td class="ps-4">
                             <code style="font-size: 11.5px; color: #EC95A8; background: #FFF0F3; padding: 4px 8px; border-radius: 6px;">
-                                {{ $tx->no_transaksi ?? '-' }}
+                                {{ $kode }}
                             </code>
                         </td>
                         <td>
-                            <span class="badge" style="background: {{ $tx->type === 'online' ? '#FFE6E6' : '#E8F7EE' }}; color: {{ $tx->type === 'online' ? '#DC3545' : '#52976D' }};">
-                                {{ $tx->type === 'online' ? 'ONLINE' : 'POS' }}
+                            <span class="badge" style="background: {{ $type === 'online' ? '#FFE6E6' : '#E8F7EE' }}; color: {{ $type === 'online' ? '#DC3545' : '#52976D' }};">
+                                {{ $type === 'online' ? 'ONLINE' : 'POS' }}
                             </span>
                         </td>
-                        <td class="fw-semibold text-dark" title="{{ $tx->produk_nama ?? '-' }}">
-                            {{ \Illuminate\Support\Str::limit($tx->produk_nama ?? '-', 45) }}
+                        <td class="fw-semibold text-dark" title="{{ $produkNames }}">
+                            {{ \Illuminate\Support\Str::limit($produkNames, 45) }}
                         </td>
                         <td class="text-end fw-bold" style="color: #4D3D43;">
                             Rp {{ number_format($tx->total_harga ?? 0, 0, ',', '.') }}
@@ -139,8 +144,8 @@
                             {{ $tx->tanggal ? \Carbon\Carbon::parse($tx->tanggal)->format('d-m-Y H:i') : '-' }}
                         </td>
                         <td class="pe-4 text-center">
-                            <a href="{{ route('retur.create', ['transaksi_id' => $tx->id, 'type' => $tx->type]) }}" 
-                               class="btn btn-sm btn-primary rounded-pill px-3 fw-bold">
+                            <a href="{{ route('retur.create', ['transaksi_id' => $tx->id, 'type' => $type]) }}" 
+                               class="btn btn-sm btn-yb rounded-pill px-3 fw-bold">
                                 <i class="bi bi-plus-lg me-1"></i> Pilih
                             </a>
                         </td>
@@ -168,23 +173,28 @@
     <!-- KARTU MOBILE -->
     <div class="d-lg-none">
         @forelse($transaksis as $tx)
+        @php
+            $type = $tx->type ?? 'pos';
+            $kode = $tx->kode_transaksi ?? '-';
+            $produkNames = $tx->detail ? $tx->detail->map(fn($d) => optional($d->produk)->nama_produk)->filter()->implode(', ') : '-';
+        @endphp
         <div class="card border-0 shadow-sm rounded-4 mb-3" style="overflow: hidden; background: #fff;">
             <div class="card-body p-3">
                 <div class="d-flex justify-content-between align-items-start mb-3">
                     <div>
                         <code style="font-size: 12px; color: #EC95A8; background: #FFF0F3; padding: 4px 8px; border-radius: 6px;">
-                            {{ $tx->no_transaksi ?? '-' }}
+                            {{ $kode }}
                         </code>
                         <br>
-                        <span class="badge mt-1" style="background: {{ $tx->type === 'online' ? '#FFE6E6' : '#E8F7EE' }}; color: {{ $tx->type === 'online' ? '#DC3545' : '#52976D' }}; font-size: 11px;">
-                            {{ $tx->type === 'online' ? 'PESANAN ONLINE' : 'KASIR POS' }}
+                        <span class="badge mt-1" style="background: {{ $type === 'online' ? '#FFE6E6' : '#E8F7EE' }}; color: {{ $type === 'online' ? '#DC3545' : '#52976D' }}; font-size: 11px;">
+                            {{ $type === 'online' ? 'PESANAN ONLINE' : 'KASIR POS' }}
                         </span>
                     </div>
                 </div>
 
                 <div class="mb-3">
                     <small class="text-muted d-block" style="font-size: 11px;">Produk</small>
-                    <strong class="text-dark d-block">{{ $tx->produk_nama ?? '-' }}</strong>
+                    <strong class="text-dark d-block">{{ $produkNames }}</strong>
                 </div>
 
                 <div class="row g-2 mb-3">
@@ -198,8 +208,8 @@
                     </div>
                 </div>
 
-                <a href="{{ route('retur.create', ['transaksi_id' => $tx->id, 'type' => $tx->type]) }}" 
-                   class="btn btn-primary w-100 rounded-pill fw-bold">
+                <a href="{{ route('retur.create', ['transaksi_id' => $tx->id, 'type' => $type]) }}" 
+                   class="btn btn-yb w-100 rounded-pill fw-bold">
                     <i class="bi bi-plus-lg me-1"></i> Pilih Transaksi Ini
                 </a>
             </div>

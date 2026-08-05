@@ -49,11 +49,11 @@
             </div>
         </div>
 
-        <!-- Card 3: Total Stok -->
+        <!-- Card 3: Total Stok (Klik Mengarah ke Halaman Produk) -->
         <div class="col-12 col-sm-6 col-lg-3">
-            <div class="stat-card h-100 d-flex justify-content-between align-items-center">
+            <a href="{{ route('produk.index') }}" class="stat-card h-100 d-flex justify-content-between align-items-center text-decoration-none" style="cursor: pointer;" title="Klik untuk lihat katalog produk">
                 <div>
-                    <small class="text-muted d-block font-semibold mb-1" style="font-size: 11.5px;">Total Stok Aktif</small>
+                    <small class="text-muted d-block font-semibold mb-1" style="font-size: 11.5px;">Total Stok Aktif <i class="bi bi-arrow-right-short"></i></small>
                     <div class="d-flex align-items-baseline gap-2">
                         <span class="fw-bold fs-3" style="color: var(--ink);">{{ number_format($totalStok ?? 0) }}</span>
                         <span class="badge" style="background: #FFF8E6; color: #A07424; font-size: 10px;">pcs</span>
@@ -67,14 +67,14 @@
                     <span style="height: 30px; background: #F0C285;"></span>
                     <span style="height: 26px; background: #F0C285;"></span>
                 </div>
-            </div>
+            </a>
         </div>
 
-        <!-- Card 4: Alert Stok Habis -->
+        <!-- Card 4: Alert Stok Habis (Klik Mengarah ke Halaman Produk Stok Habis) -->
         <div class="col-12 col-sm-6 col-lg-3">
-            <div class="stat-card h-100 d-flex justify-content-between align-items-center">
+            <a href="{{ route('produk.index', ['stok' => 'habis']) }}" class="stat-card h-100 d-flex justify-content-between align-items-center text-decoration-none" style="cursor: pointer;" title="Klik untuk lihat produk stok habis">
                 <div>
-                    <small class="text-muted d-block font-semibold mb-1" style="font-size: 11.5px;">Stok Habis (Alert)</small>
+                    <small class="text-muted d-block font-semibold mb-1" style="font-size: 11.5px;">Stok Habis (Alert) <i class="bi bi-arrow-right-short"></i></small>
                     <div class="d-flex align-items-baseline gap-2">
                         <span class="fw-bold fs-3" style="color: #DC3545;">{{ $totalHabis ?? 0 }}</span>
                         <span class="badge bg-danger-subtle text-danger" style="font-size: 10px;">Habis</span>
@@ -88,7 +88,7 @@
                     <span style="height: 12px; background: #E74C3C;"></span>
                     <span style="height: 16px; background: #E74C3C;"></span>
                 </div>
-            </div>
+            </a>
         </div>
     </div>
 
