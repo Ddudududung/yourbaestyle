@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Buat Retur')
+@section('title', 'Buat Retur - Yourbaestyle')
 
 @section('content')
 <div class="container-fluid py-4" style="max-width: 900px; margin: 0 auto;">
@@ -41,7 +41,7 @@
                 <div class="row g-2">
                     <div class="col-md-3">
                         <small class="text-muted">No. Transaksi</small>
-                        <div class="fw-bold text-dark">{{ $transaksi->no_pesanan ?? $transaksi->kode_transaksi }}</div>
+                        <div class="fw-bold text-dark">{{ $transaksi->no_pesanan ?? $transaksi->kode_transaksi ?? '-' }}</div>
                     </div>
                     <div class="col-md-3">
                         <small class="text-muted">Tipe</small>
@@ -57,36 +57,58 @@
                     </div>
                     <div class="col-md-3">
                         <small class="text-muted">Tanggal</small>
-                        <div class="fw-bold text-dark">{{ $transaksi->tanggal->format('d-m-Y') }}</div>
+                        <div class="fw-bold text-dark">{{ $transaksi->tanggal ? \Carbon\Carbon::parse($transaksi->tanggal)->format('d-m-Y') : '-' }}</div>
                     </div>
                 </div>
             </div>
             @endif
 
             <!-- FORM RETUR -->
-            <form action="{{ route('retur.store') }}" method="POST">
+            <form action="{{ route('retur.store') }}" method="POST" id="formRetur">
                 @csrf
 
                 <!-- Hidden: Transaksi Info -->
                 <input type="hidden" name="transaksi_type" value="{{ $transaksiType }}">
                 <input type="hidden" name="transaksi_id" value="{{ $transaksi->id }}">
 
-                <!-- BAGIAN 1: PILIH PRODUK -->
+                <!-- BAGIAN 1: PILIH PRODUK (OTOMATIS JIKA CUMA 1 BARANG) -->
                 <div class="mb-4">
-                    <label class="form-label fw-bold text-dark">Pilih Produk dari Transaksi <span class="text-danger">*</span></label>
+                    <label class="form-label fw-bold text-dark">Produk yang Di-retur <span class="text-danger">*</span></label>
                     
-                    @if($detail && $detail->count() > 0)
+                    @if($detail && $detail->count() === 1)
+                        <?php $singleItem = $detail->first(); ?>
+                        <!-- JIKA CUMA 1 BARANG: Tampilkan sebagai kotak info rapi dan input hidden -->
+                        <div class="p-3 rounded-3" style="background: #FFF5F7; border: 1px solid #F7E5EA;">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="fw-bold text-dark mb-1">
+                                        {{ $singleItem->produk->nama_produk ?? $singleItem->nama_produk_history ?? 'Produk' }}
+                                        @if($singleItem->variasi) <span class="text-muted">({{ $singleItem->variasi }})</span> @endif
+                                    </h6>
+                                    <span class="badge bg-light text-dark border">Total Beli: <strong>{{ $singleItem->qty }} pcs</strong></span>
+                                </div>
+                                <i class="bi bi-check-circle-fill text-success fs-4"></i>
+                            </div>
+                        </div>
+                        
+                        <!-- Hidden Input untuk dikirim ke Backend -->
+                        <input type="hidden" name="id_produk" id="produkSelect" value="{{ $singleItem->id_produk }}" data-max="{{ $singleItem->qty }}" data-auto="true">
+                        
+                    @elseif($detail && $detail->count() > 1)
+                        <!-- JIKA LEBIH DARI 1 BARANG: Tampilkan Dropdown -->
                         <select name="id_produk" class="form-select" id="produkSelect" required>
-                            <option value="">-- Pilih Produk --</option>
+                            <option value="" data-max="0">-- Pilih Produk --</option>
                             @foreach($detail as $d)
-                            <option value="{{ $d->id_produk }}" data-name="{{ $d->produk->nama_produk }}">
-                                {{ $d->produk->nama_produk }} 
+                            <option value="{{ $d->id_produk }}" 
+                                    data-max="{{ $d->qty }}" 
+                                    data-name="{{ $d->produk->nama_produk ?? $d->nama_produk_history ?? 'Produk' }}">
+                                {{ $d->produk->nama_produk ?? $d->nama_produk_history ?? 'Produk Telah Dihapus' }} 
                                 @if($d->variasi) ({{ $d->variasi }}) @endif
-                                - Qty: {{ $d->qty }}
+                                - Qty Beli: {{ $d->qty }} pcs
                             </option>
                             @endforeach
                         </select>
-                        <small class="text-muted">Pilih produk yang akan di-retur dari transaksi ini.</small>
+                        <small class="text-muted">Pilih salah satu produk yang akan di-retur dari transaksi ini.</small>
                     @else
                         <div class="alert alert-warning rounded-3">
                             <i class="bi bi-exclamation-triangle me-1"></i>
@@ -99,9 +121,10 @@
                 <div class="mb-4">
                     <label class="form-label fw-bold text-dark">Jumlah Produk yang Di-Retur <span class="text-danger">*</span></label>
                     <div class="input-group">
-                        <input type="number" name="qty" class="form-control" min="1" value="1" required>
+                        <input type="number" name="qty" id="qtyInput" class="form-control" min="1" max="1" value="1" required disabled>
                         <span class="input-group-text bg-light">pcs</span>
                     </div>
+                    <small class="text-primary fw-bold" id="qtyHelperText">Silakan pilih produk terlebih dahulu.</small>
                 </div>
 
                 <!-- BAGIAN 3: ALASAN RETUR -->
@@ -109,11 +132,10 @@
                     <label class="form-label fw-bold text-dark">Alasan Retur <span class="text-danger">*</span></label>
                     <select name="alasan" class="form-select" required>
                         <option value="">-- Pilih Alasan --</option>
-                        <option value="cacat_produksi">Cacat Produksi</option>
-                        <option value="tidak_sesuai_pesanan">Tidak Sesuai Pesanan</option>
+                        <option value="cacat_produksi">Cacat Produksi / Rusak</option>
+                        <option value="tidak_sesuai_pesanan">Tidak Sesuai Pesanan (Salah Warna/Model)</option>
+                        <option value="salah_ukuran">Salah Ukuran (Kebesaran/Kekecilan)</option>
                         <option value="rusak_pengiriman">Rusak saat Pengiriman</option>
-                        <option value="tidak_layak_jual">Tidak Layak Jual</option>
-                        <option value="kesalahan_barang">Kesalahan Barang</option>
                         <option value="lainnya">Lainnya</option>
                     </select>
                 </div>
@@ -123,22 +145,22 @@
                     <label class="form-label fw-bold text-dark">Kondisi Barang <span class="text-danger">*</span></label>
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <div class="form-check p-3 rounded-3" style="background: #E8F7EE; border: 2px solid #C3EEDB; cursor: pointer;">
-                                <input class="form-check-input" type="radio" name="kondisi_barang" value="layak_jual" id="layakJual" required>
-                                <label class="form-check-label fw-bold text-dark" for="layakJual" style="cursor: pointer;">
-                                    <i class="bi bi-check-circle me-2" style="color: #52976D;"></i>Layak Jual
-                                </label>
-                                <small class="d-block text-muted ms-4">Barang akan dikembalikan ke stok</small>
-                            </div>
+                            <label class="form-check p-3 rounded-3 w-100 d-block" for="layakJual" style="background: #E8F7EE; border: 2px solid #C3EEDB; cursor: pointer;">
+                                <input class="form-check-input ms-0 me-2" type="radio" name="kondisi_barang" value="layak_jual" id="layakJual" required>
+                                <span class="fw-bold text-dark">
+                                    <i class="bi bi-check-circle me-1" style="color: #52976D;"></i>Layak Jual
+                                </span>
+                                <small class="d-block text-muted mt-1">Barang masih bagus dan akan dikembalikan ke stok inventaris.</small>
+                            </label>
                         </div>
                         <div class="col-md-6">
-                            <div class="form-check p-3 rounded-3" style="background: #FFE6E6; border: 2px solid #F7C9D3; cursor: pointer;">
-                                <input class="form-check-input" type="radio" name="kondisi_barang" value="tidak_layak" id="tidakLayak" required>
-                                <label class="form-check-label fw-bold text-dark" for="tidakLayak" style="cursor: pointer;">
-                                    <i class="bi bi-x-circle me-2" style="color: #DC3545;"></i>Tidak Layak Jual
-                                </label>
-                                <small class="d-block text-muted ms-4">Akan dihitung sebagai kerugian</small>
-                            </div>
+                            <label class="form-check p-3 rounded-3 w-100 d-block" for="tidakLayak" style="background: #FFE6E6; border: 2px solid #F7C9D3; cursor: pointer;">
+                                <input class="form-check-input ms-0 me-2" type="radio" name="kondisi_barang" value="tidak_layak" id="tidakLayak" required>
+                                <span class="fw-bold text-dark">
+                                    <i class="bi bi-x-circle me-1" style="color: #DC3545;"></i>Tidak Layak Jual
+                                </span>
+                                <small class="d-block text-muted mt-1">Barang rusak/cacat dan akan dihitung sebagai kerugian/penyusutan.</small>
+                            </label>
                         </div>
                     </div>
                 </div>
@@ -154,9 +176,9 @@
                     <label class="form-label fw-bold text-dark">Ongkir Retur (Optional)</label>
                     <div class="input-group">
                         <span class="input-group-text bg-light">Rp</span>
-                        <input type="number" name="ongkir_retur" class="form-control" min="0" value="0">
+                        <input type="number" name="ongkir_retur" class="form-control" min="0" value="{{ old('ongkir_retur', 0) }}">
                     </div>
-                    <small class="text-muted">Biaya pengiriman barang retur (jika ada).</small>
+                    <small class="text-muted">Biaya pengiriman barang retur (jika ditanggung atau perlu dicatat).</small>
                 </div>
 
                 <!-- TOMBOL ACTION -->
@@ -164,7 +186,7 @@
                     <a href="{{ route('retur.select') }}" class="btn btn-outline-secondary rounded-pill px-4">
                         <i class="bi bi-x-lg me-1"></i> Batal
                     </a>
-                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold" id="btnSubmit">
                         <i class="bi bi-check-lg me-1"></i> Simpan Retur
                     </button>
                 </div>
@@ -174,28 +196,74 @@
 </div>
 
 <style>
-    .form-label {
-        font-size: 13px;
-        color: #4D3D43;
-    }
-    .form-control, .form-select {
-        border-color: #E8D9E0;
-        border-radius: 8px;
-        font-size: 13px;
-    }
-    .form-control:focus, .form-select:focus {
-        border-color: #EC95A8;
-        box-shadow: 0 0 0 0.2rem rgba(236, 149, 168, 0.25);
-    }
-    .form-check {
-        margin: 0;
-    }
-    .form-check-input {
-        border-color: #E8D9E0;
-    }
-    .form-check-input:checked {
-        background-color: #EC95A8;
-        border-color: #EC95A8;
-    }
+    .form-label { font-size: 13px; color: #4D3D43; }
+    .form-control, .form-select { border-color: #E8D9E0; border-radius: 8px; font-size: 13px; }
+    .form-control:focus, .form-select:focus { border-color: #EC95A8; box-shadow: 0 0 0 0.2rem rgba(236, 149, 168, 0.25); }
+    .form-control:disabled { background-color: #f8f9fa; cursor: not-allowed; }
+    .form-check-input { border-color: #E8D9E0; }
+    .form-check-input:checked { background-color: #EC95A8; border-color: #EC95A8; }
 </style>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const produkSelect = document.getElementById('produkSelect');
+    const qtyInput = document.getElementById('qtyInput');
+    const qtyHelperText = document.getElementById('qtyHelperText');
+
+    function updateQtyState(maxQty) {
+        if (maxQty > 0) {
+            qtyInput.removeAttribute('disabled');
+            qtyInput.setAttribute('max', maxQty);
+            qtyInput.value = 1; 
+            qtyHelperText.innerHTML = `<i class="bi bi-info-circle me-1"></i>Maksimal yang dapat diretur untuk produk ini adalah <strong>${maxQty} pcs</strong>.`;
+            qtyHelperText.className = 'text-success small fw-bold mt-1 d-block';
+        } else {
+            qtyInput.setAttribute('disabled', 'disabled');
+            qtyInput.value = '';
+            qtyHelperText.innerHTML = 'Silakan pilih produk terlebih dahulu.';
+            qtyHelperText.className = 'text-primary small fw-bold mt-1 d-block';
+        }
+    }
+
+    if (produkSelect && qtyInput) {
+        // Cek jika produknya otomatis terpilih karena cuma ada 1 macam barang
+        if (produkSelect.getAttribute('data-auto') === 'true') {
+            const maxQty = parseInt(produkSelect.getAttribute('data-max')) || 0;
+            updateQtyState(maxQty);
+        }
+
+        // Kontrol perubahan jika ada lebih dari 1 macam barang (menggunakan dropdown)
+        produkSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const maxQty = parseInt(selectedOption.getAttribute('data-max')) || 0;
+            updateQtyState(maxQty);
+        });
+
+        // Cegah input melebihi batas maksimal atau kurang dari 1
+        qtyInput.addEventListener('input', function() {
+            const max = parseInt(this.getAttribute('max')) || 1;
+            let val = parseInt(this.value) || 0;
+
+            if (val > max) {
+                alert(`Jumlah retur tidak boleh melebihi jumlah pembelian (${max} pcs).`);
+                this.value = max;
+            } else if (val < 1 && this.value !== '') {
+                this.value = 1;
+            }
+        });
+    }
+
+    // Proteksi double submit pada tombol simpan
+    const formRetur = document.getElementById('formRetur');
+    if(formRetur) {
+        formRetur.addEventListener('submit', function() {
+            const btn = document.getElementById('btnSubmit');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...';
+        });
+    }
+});
+</script>
+@endpush

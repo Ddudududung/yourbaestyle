@@ -74,11 +74,12 @@ Route::middleware(['auth', 'menu.access'])->group(function () {
     Route::get('/retur/cari',        [ReturController::class, 'cariPesanan'])->name('retur.cari');
     
     // Laporan
-    Route::get('/laporan',           [LaporanController::class, 'index'])->name('laporan.index');
-    Route::get('/laporan/unduh',     [LaporanController::class, 'unduh'])->name('laporan.unduh');
+    Route::get('/laporan',             [LaporanController::class, 'index'])->name('laporan.index');
+    Route::get('/laporan/unduh',       [LaporanController::class, 'unduh'])->name('laporan.unduh');
+    Route::get('/laporan/unduh-excel', [LaporanController::class, 'unduhExcel'])->name('laporan.unduh_excel');
 
     // Pengaturan Sistem (Khusus Superadmin)
-    Route::middleware('role:superadmin')->group(function () {
+    Route::middleware('role:owner')->group(function () {
         Route::get('/pengaturan/role',       [PengaturanController::class, 'roleIndex'])->name('pengaturan.role');
         Route::post('/pengaturan/role',      [PengaturanController::class, 'roleStore'])->name('pengaturan.role.store');
         Route::put('/pengaturan/role/{id}',  [PengaturanController::class, 'roleUpdate'])->name('pengaturan.role.update');

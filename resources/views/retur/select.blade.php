@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Pilih Transaksi untuk Retur')
+@section('title', 'Pilih Transaksi untuk Retur - Yourbaestyle')
 
 @section('content')
 <div class="container-fluid py-4" style="max-width: 1100px; margin: 0 auto;">
@@ -27,43 +27,78 @@
         </div>
     @endif
 
-    <!-- CARD PENCARIAN -->
+    <!-- CARD PENCARIAN & FILTER TERPADU -->
     <div class="card border-0 shadow-sm rounded-4 mb-4">
         <div class="card-header bg-white py-3 px-4 border-bottom" style="border-color: #F7E5EA;">
             <h6 class="mb-0 fw-bold text-dark">
-                <i class="bi bi-search me-2" style="color: #EC95A8;"></i>Cari Transaksi
+                <i class="bi bi-funnel-fill me-2" style="color: #EC95A8;"></i>Filter & Cari Transaksi
             </h6>
         </div>
         <div class="card-body p-4">
-            <div class="d-flex gap-2 flex-wrap align-items-center mb-3">
-                <form method="GET" action="{{ route('retur.select') }}" class="d-flex gap-2 flex-grow-1" id="mainSearchForm">
-                    <input type="text" name="search" class="form-control rounded-3 flex-grow-1" 
-                           placeholder="Cari nomor transaksi atau nama produk..." 
-                           value="{{ request('search', '') }}"
-                           id="searchInput">
+            <form method="GET" action="{{ route('retur.select') }}" id="mainSearchForm">
+                <!-- Baris 1: Filter Parameter -->
+                <div class="row g-3 mb-3">
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold small text-muted">Sesi Live (Khusus Online)</label>
+                        <select name="id_sesi_live" class="form-select rounded-3">
+                            <option value="">-- Semua Sesi Live --</option>
+                            @if(isset($sesiLive))
+                                @foreach($sesiLive as $sesi)
+                                    <option value="{{ $sesi->id }}" {{ request('id_sesi_live') == $sesi->id ? 'selected' : '' }}>
+                                        {{ $sesi->nama_sesi }} ({{ \Carbon\Carbon::parse($sesi->tanggal_live)->format('d/m/Y') }})
+                                    </option>
+                                @endforeach
+                            @endif
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold small text-muted">Tanggal Mulai</label>
+                        <input type="date" name="tanggal_mulai" class="form-control rounded-3" value="{{ request('tanggal_mulai') }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold small text-muted">Tanggal Selesai</label>
+                        <input type="date" name="tanggal_selesai" class="form-control rounded-3" value="{{ request('tanggal_selesai') }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold small text-muted">Tipe Transaksi</label>
+                        <select name="type" class="form-select rounded-3">
+                            <option value="">-- Semua Tipe --</option>
+                            <option value="pos" {{ request('type') == 'pos' ? 'selected' : '' }}>Kasir (POS)</option>
+                            <option value="online" {{ request('type') == 'online' ? 'selected' : '' }}>Pesanan Online</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Baris 2: Input Pencarian & Action Buttons -->
+                <div class="d-flex gap-2 flex-wrap align-items-center">
+                    <div class="flex-grow-1">
+                        <input type="text" name="search" class="form-control rounded-3" 
+                               placeholder="Cari nomor transaksi, resi, atau nama produk..." 
+                               value="{{ request('search', '') }}"
+                               id="searchInput" autofocus>
+                    </div>
                     <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">
-                        <i class="bi bi-search me-1"></i> Cari
+                        <i class="bi bi-search me-1"></i> Terapkan Filter
                     </button>
-                    @if(request('search'))
+                    @if(request()->hasAny(['search', 'id_sesi_live', 'tanggal_mulai', 'tanggal_selesai', 'type']))
                         <a href="{{ route('retur.select') }}" class="btn btn-outline-secondary rounded-pill px-4">
                             <i class="bi bi-x-lg me-1"></i> Reset
                         </a>
                     @endif
-                </form>
-                
-                <!-- TOMBOL SCAN BARCODE -->
-                <button type="button" class="btn btn-warning rounded-pill px-4 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#scanBarcodeModal">
-                    <i class="bi bi-upc-scan me-1"></i> Scan / Foto Barcode
-                </button>
-            </div>
+                    <!-- TOMBOL SCAN BARCODE -->
+                    <button type="button" class="btn btn-warning rounded-pill px-4 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#scanBarcodeModal">
+                        <i class="bi bi-upc-scan me-1"></i> Scan Barcode
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
     <!-- INFORMASI HASIL PENCARIAN -->
-    @if(request('search'))
+    @if(request()->hasAny(['search', 'id_sesi_live', 'tanggal_mulai', 'tanggal_selesai', 'type']))
         <div class="alert alert-info rounded-4 mb-4" style="background: #E8F4F8; border: none;">
             <i class="bi bi-info-circle me-2"></i>
-            Ditemukan <strong>{{ $transaksis->count() }}</strong> transaksi untuk pencarian "<strong>{{ request('search') }}</strong>"
+            Ditemukan <strong>{{ $transaksis->count() }}</strong> transaksi sesuai kriteria filter Anda.
         </div>
     @endif
 
@@ -86,7 +121,7 @@
                     <tr>
                         <td class="ps-4">
                             <code style="font-size: 11.5px; color: #EC95A8; background: #FFF0F3; padding: 4px 8px; border-radius: 6px;">
-                                {{ $tx->no_transaksi }}
+                                {{ $tx->no_transaksi ?? '-' }}
                             </code>
                         </td>
                         <td>
@@ -94,12 +129,14 @@
                                 {{ $tx->type === 'online' ? 'ONLINE' : 'POS' }}
                             </span>
                         </td>
-                        <td class="fw-semibold text-dark">{{ substr($tx->produk_nama, 0, 40) }}</td>
+                        <td class="fw-semibold text-dark" title="{{ $tx->produk_nama ?? '-' }}">
+                            {{ \Illuminate\Support\Str::limit($tx->produk_nama ?? '-', 45) }}
+                        </td>
                         <td class="text-end fw-bold" style="color: #4D3D43;">
-                            Rp {{ number_format($tx->total_harga, 0, ',', '.') }}
+                            Rp {{ number_format($tx->total_harga ?? 0, 0, ',', '.') }}
                         </td>
                         <td class="text-muted small">
-                            {{ \Carbon\Carbon::parse($tx->tanggal)->format('d-m-Y') }}
+                            {{ $tx->tanggal ? \Carbon\Carbon::parse($tx->tanggal)->format('d-m-Y H:i') : '-' }}
                         </td>
                         <td class="pe-4 text-center">
                             <a href="{{ route('retur.create', ['transaksi_id' => $tx->id, 'type' => $tx->type]) }}" 
@@ -115,13 +152,9 @@
                                 <div style="font-size: 3rem; color: #F6C9D3; margin-bottom: 10px;">
                                     <i class="bi bi-inbox"></i>
                                 </div>
-                                <h6 class="fw-bold text-dark mb-1">Belum ada transaksi</h6>
+                                <h6 class="fw-bold text-dark mb-1">Transaksi tidak ditemukan</h6>
                                 <small class="text-muted">
-                                    @if(request('search'))
-                                        Tidak ada transaksi yang cocok dengan pencarian Anda
-                                    @else
-                                        Mulai dengan membuat transaksi di halaman penjualan
-                                    @endif
+                                    Gunakan filter tanggal, sesi live, atau kata kunci pencarian di atas untuk menemukan transaksi
                                 </small>
                             </div>
                         </td>
@@ -140,7 +173,7 @@
                 <div class="d-flex justify-content-between align-items-start mb-3">
                     <div>
                         <code style="font-size: 12px; color: #EC95A8; background: #FFF0F3; padding: 4px 8px; border-radius: 6px;">
-                            {{ $tx->no_transaksi }}
+                            {{ $tx->no_transaksi ?? '-' }}
                         </code>
                         <br>
                         <span class="badge mt-1" style="background: {{ $tx->type === 'online' ? '#FFE6E6' : '#E8F7EE' }}; color: {{ $tx->type === 'online' ? '#DC3545' : '#52976D' }}; font-size: 11px;">
@@ -151,17 +184,17 @@
 
                 <div class="mb-3">
                     <small class="text-muted d-block" style="font-size: 11px;">Produk</small>
-                    <strong class="text-dark d-block">{{ $tx->produk_nama }}</strong>
+                    <strong class="text-dark d-block">{{ $tx->produk_nama ?? '-' }}</strong>
                 </div>
 
                 <div class="row g-2 mb-3">
                     <div class="col-6">
                         <small class="text-muted d-block" style="font-size: 11px;">Total</small>
-                        <strong style="color: #EC95A8; font-size: 15px;">Rp {{ number_format($tx->total_harga, 0) }}</strong>
+                        <strong style="color: #EC95A8; font-size: 15px;">Rp {{ number_format($tx->total_harga ?? 0, 0, ',', '.') }}</strong>
                     </div>
                     <div class="col-6">
                         <small class="text-muted d-block" style="font-size: 11px;">Tanggal</small>
-                        <strong class="text-dark">{{ \Carbon\Carbon::parse($tx->tanggal)->format('d-m-Y') }}</strong>
+                        <strong class="text-dark">{{ $tx->tanggal ? \Carbon\Carbon::parse($tx->tanggal)->format('d-m-Y') : '-' }}</strong>
                     </div>
                 </div>
 
@@ -176,13 +209,9 @@
             <div style="font-size: 3rem; color: #F6C9D3; margin-bottom: 10px;">
                 <i class="bi bi-inbox"></i>
             </div>
-            <h6 class="fw-bold text-dark mb-1">Belum ada transaksi</h6>
+            <h6 class="fw-bold text-dark mb-1">Transaksi tidak ditemukan</h6>
             <small class="text-muted">
-                @if(request('search'))
-                    Tidak ada transaksi yang cocok dengan pencarian Anda
-                @else
-                    Mulai dengan membuat transaksi di halaman penjualan
-                @endif
+                Gunakan filter di atas untuk menampilkan data transaksi
             </small>
         </div>
         @endforelse
@@ -248,7 +277,6 @@
                     </div>
                 </div>
 
-                <!-- ELEMEN RAHASIA (WAJIB ADA UNTUK MESIN PROSES GAMBAR) -->
                 <div id="scanner-hidden" style="display: none;"></div>
 
                 <!-- Manual Input Fallback -->
@@ -256,7 +284,7 @@
                     <label class="form-label fw-bold small text-muted mb-1">ATAU KETIK MANUAL:</label>
                     <form id="manualSearchForm" method="GET" action="{{ route('retur.select') }}" class="mb-0">
                         <div class="input-group">
-                            <input type="text" id="barcodeSearchInput" name="search" class="form-control" placeholder="Ketik nomor transaksi / resi..." autofocus>
+                            <input type="text" id="barcodeSearchInput" name="search" class="form-control" placeholder="Ketik nomor transaksi / resi...">
                             <button class="btn btn-primary" type="submit" id="searchBarcodeBtn">
                                 <i class="bi bi-search me-1"></i>Cari
                             </button>
@@ -271,133 +299,13 @@
     </div>
 </div>
 
-<!-- Library Modern Html5-QRCode (Mendukung QR Code 2D dan Barcode Garis 1D) -->
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-<script>
-window.addEventListener('DOMContentLoaded', function() {
-    const modalElement = document.getElementById('scanBarcodeModal');
-    let html5QrCode = null;
-    let isScanning = false;
-    
-    // 1. KONTROL LIVE CAMERA
-    function startLiveCamera() {
-        if (typeof Html5Qrcode === 'undefined' || isScanning) return;
-        
-        try {
-            html5QrCode = new Html5Qrcode("scanner");
-            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-
-            html5QrCode.start(
-                { facingMode: "environment" },
-                config,
-                function(decodedText) {
-                    stopLiveCamera();
-                    processDetectedBarcode(decodedText);
-                },
-                function(error) { /* Abaikan frame kosong */ }
-            ).then(() => {
-                isScanning = true;
-            }).catch((err) => {
-                console.error('Kamera error:', err);
-                document.querySelector('#scanner').innerHTML = '<div class="text-center text-danger p-4"><i class="bi bi-camera-video-off fs-1"></i><p class="small mb-0 mt-2">Gagal membuka kamera. Pastikan izin kamera aktif atau gunakan tab <strong>Upload / Ambil Foto</strong>.</p></div>';
-            });
-        } catch(e) {
-            console.error('Fatal Scanner:', e);
-        }
-    }
-
-    function stopLiveCamera() {
-        if (html5QrCode && isScanning) {
-            html5QrCode.stop().then(() => {
-                html5QrCode.clear();
-                isScanning = false;
-            }).catch((err) => console.error(err));
-        }
-    }
-
-    modalElement.addEventListener('show.bs.modal', function() {
-        const cameraTabBtn = document.querySelector('#camera-tab');
-        if (cameraTabBtn) bootstrap.Tab.getOrCreateInstance(cameraTabBtn).show();
-        
-        document.getElementById('imagePreviewArea').classList.add('d-none');
-        document.getElementById('barcodeFileInput').value = '';
-        
-        setTimeout(() => { startLiveCamera(); }, 300);
-    });
-
-    modalElement.addEventListener('hidden.bs.modal', function() {
-        stopLiveCamera();
-    });
-
-    const cameraTab = document.getElementById('camera-tab');
-    const fileTab = document.getElementById('file-tab');
-
-    if (cameraTab) cameraTab.addEventListener('shown.bs.tab', () => startLiveCamera());
-    if (fileTab) fileTab.addEventListener('shown.bs.tab', () => stopLiveCamera());
-
-    const fileInput = document.getElementById('barcodeFileInput');
-    if (fileInput) {
-        fileInput.addEventListener('change', function(e) {
-            if (!e.target.files || e.target.files.length === 0) return;
-            const file = e.target.files[0];
-
-            if (typeof Html5Qrcode === 'undefined') {
-                alert('Library scanner gagal dimuat dari internet (Pastikan online / download js-nya).');
-                return;
-            }
-
-            const imgURL = URL.createObjectURL(file);
-            const previewArea = document.getElementById('imagePreviewArea');
-            const previewImg = document.getElementById('previewImg');
-            const decodeStatus = document.getElementById('decodeStatus');
-
-            previewImg.src = imgURL;
-            previewArea.classList.remove('d-none');
-            decodeStatus.innerHTML = '<span class="text-primary"><i class="bi bi-hourglass-split me-1"></i>Sedang memindai QR Code / Barcode dari foto...</span>';
-
-            const fileScanner = new Html5Qrcode("scanner-hidden");
-            fileScanner.scanFile(file, true)
-                .then(decodedText => {
-                    decodeStatus.innerHTML = `<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>Berhasil! Terbaca: <strong>${decodedText}</strong></span>`;
-                    setTimeout(() => { processDetectedBarcode(decodedText); }, 800);
-                })
-                .catch(err => {
-                    decodeStatus.innerHTML = '<span class="text-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i>Kode tidak terbaca. Pastikan foto QR Code / Barcode terang, tidak buram, dan terlihat utuh.</span>';
-                    console.error("Gagal baca foto:", err);
-                });
-        });
-    }
-
-    function processDetectedBarcode(barcode) {
-        document.getElementById('barcodeSearchInput').value = barcode;
-        document.getElementById('searchInput').value = barcode;
-        
-        const modalInstance = bootstrap.Modal.getInstance(modalElement);
-        if (modalInstance) modalInstance.hide();
-        
-        const mainForm = document.getElementById('mainSearchForm');
-        if (mainForm) {
-            mainForm.submit();
-        } else {
-            window.location.href = `{{ route('retur.select') }}?search=${encodeURIComponent(barcode)}`;
-        }
-    }
-
-    document.getElementById('manualSearchForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const barcode = document.getElementById('barcodeSearchInput').value;
-        if (barcode.trim()) processDetectedBarcode(barcode);
-    });
-});
-</script>
-
 <style>
-    .form-control {
+    .form-control, .form-select {
         border-color: #E8D9E0;
         border-radius: 12px;
         font-size: 13px;
     }
-    .form-control:focus {
+    .form-control:focus, .form-select:focus {
         border-color: #EC95A8;
         box-shadow: 0 0 0 0.2rem rgba(236, 149, 168, 0.25);
     }
@@ -426,3 +334,133 @@ window.addEventListener('DOMContentLoaded', function() {
     }
 </style>
 @endsection
+
+@push('scripts')
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+window.addEventListener('DOMContentLoaded', function() {
+    const modalElement = document.getElementById('scanBarcodeModal');
+    let html5QrCode = null;
+    let isScanning = false;
+    
+    function startLiveCamera() {
+        if (typeof Html5Qrcode === 'undefined') {
+            document.querySelector('#scanner').innerHTML = '<div class="text-center text-danger p-4"><i class="bi bi-wifi-off fs-1"></i><p class="small mb-0 mt-2">Gagal memuat library pemindai. Pastikan koneksi internet aktif.</p></div>';
+            return;
+        }
+        if (isScanning) return;
+        
+        try {
+            html5QrCode = new Html5Qrcode("scanner");
+            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+            html5QrCode.start(
+                { facingMode: "environment" },
+                config,
+                function(decodedText) {
+                    stopLiveCamera();
+                    processDetectedBarcode(decodedText);
+                },
+                function(error) { }
+            ).then(() => {
+                isScanning = true;
+            }).catch((err) => {
+                console.error('Kamera error:', err);
+                document.querySelector('#scanner').innerHTML = '<div class="text-center text-danger p-4"><i class="bi bi-camera-video-off fs-1"></i><p class="small mb-0 mt-2">Gagal membuka kamera. Pastikan izin kamera aktif.</p></div>';
+            });
+        } catch(e) {
+            console.error('Fatal Scanner:', e);
+        }
+    }
+
+    function stopLiveCamera() {
+        if (html5QrCode && isScanning) {
+            html5QrCode.stop().then(() => {
+                html5QrCode.clear();
+                isScanning = false;
+            }).catch((err) => console.error(err));
+        }
+    }
+
+    if (modalElement) {
+        modalElement.addEventListener('show.bs.modal', function() {
+            const cameraTabBtn = document.querySelector('#camera-tab');
+            if (cameraTabBtn) bootstrap.Tab.getOrCreateInstance(cameraTabBtn).show();
+            
+            document.getElementById('imagePreviewArea').classList.add('d-none');
+            document.getElementById('barcodeFileInput').value = '';
+            
+            setTimeout(() => { startLiveCamera(); }, 300);
+        });
+
+        modalElement.addEventListener('hidden.bs.modal', function() {
+            stopLiveCamera();
+        });
+    }
+
+    const cameraTab = document.getElementById('camera-tab');
+    const fileTab = document.getElementById('file-tab');
+
+    if (cameraTab) cameraTab.addEventListener('shown.bs.tab', () => startLiveCamera());
+    if (fileTab) fileTab.addEventListener('shown.bs.tab', () => stopLiveCamera());
+
+    const fileInput = document.getElementById('barcodeFileInput');
+    if (fileInput) {
+        fileInput.addEventListener('change', function(e) {
+            if (!e.target.files || e.target.files.length === 0) return;
+            const file = e.target.files[0];
+
+            if (typeof Html5Qrcode === 'undefined') {
+                alert('Library scanner gagal dimuat.');
+                return;
+            }
+
+            const imgURL = URL.createObjectURL(file);
+            const previewArea = document.getElementById('imagePreviewArea');
+            const previewImg = document.getElementById('previewImg');
+            const decodeStatus = document.getElementById('decodeStatus');
+
+            previewImg.src = imgURL;
+            previewArea.classList.remove('d-none');
+            decodeStatus.innerHTML = '<span class="text-primary"><i class="bi bi-hourglass-split me-1"></i>Memindai barcode dari foto...</span>';
+
+            const fileScanner = new Html5Qrcode("scanner-hidden");
+            fileScanner.scanFile(file, true)
+                .then(decodedText => {
+                    decodeStatus.innerHTML = `<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>Terbaca: <strong>${decodedText}</strong></span>`;
+                    setTimeout(() => { processDetectedBarcode(decodedText); }, 800);
+                })
+                .catch(err => {
+                    decodeStatus.innerHTML = '<span class="text-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i>Kode tidak terbaca.</span>';
+                });
+        });
+    }
+
+    function processDetectedBarcode(barcode) {
+        document.getElementById('barcodeSearchInput').value = barcode;
+        document.getElementById('searchInput').value = barcode;
+        
+        if (modalElement) {
+            const modalInstance = bootstrap.Modal.getInstance(modalElement);
+            if (modalInstance) modalInstance.hide();
+        }
+        
+        const mainForm = document.getElementById('mainSearchForm');
+        if (mainForm) {
+            mainForm.submit();
+        } else {
+            window.location.href = `{{ route('retur.select') }}?search=${encodeURIComponent(barcode)}`;
+        }
+    }
+
+    const manualSearchForm = document.getElementById('manualSearchForm');
+    if (manualSearchForm) {
+        manualSearchForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const barcode = document.getElementById('barcodeSearchInput').value;
+            if (barcode.trim()) processDetectedBarcode(barcode);
+        });
+    }
+});
+</script>
+@endpush

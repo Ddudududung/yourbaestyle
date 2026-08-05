@@ -16,15 +16,56 @@
                 <label class="form-label">Nama Produk <span class="text-danger">*</span></label>
                 <input type="text" name="nama_produk" class="form-control" value="{{ old('nama_produk') }}" required>
             </div>
-            <div class="col-md-6">
-                <label class="form-label">Jenis Produk <span class="text-danger">*</span></label>
-<select name="jenis" id="jenis" class="form-select" required>
-    <option value="thrift" {{ old('jenis') == 'thrift' ? 'selected' : '' }}>Thrift</option>
-    <option value="rebranding" {{ old('jenis') == 'rebranding' ? 'selected' : '' }}>Rebranding</option>
-</select>
-            </div>
-        </div>
+           <!-- GANTI INPUT/SELECT LAMA 'JENIS' DENGAN 3 DROPDOWN MASTER DATA INI -->
+<div class="row g-3 mb-3">
+    <!-- 1. Dropdown Jenis Pakaian -->
+    <div class="col-md-4">
+        <label class="form-label fw-bold text-dark small">Jenis Pakaian <span class="text-danger">*</span></label>
+        <select name="id_jenis_pakaian" class="form-select rounded-3 @error('id_jenis_pakaian') is-invalid @enderror" required>
+            <option value="">-- Pilih Jenis --</option>
+            @foreach($jenisPakaian as $jp)
+                <option value="{{ $jp->id }}" {{ old('id_jenis_pakaian') == $jp->id ? 'selected' : '' }}>
+                    {{ $jp->nama }} ({{ $jp->kode }})
+                </option>
+            @endforeach
+        </select>
+        @error('id_jenis_pakaian') 
+            <small class="text-danger d-block mt-1" style="font-size: 11px;">{{ $message }}</small> 
+        @enderror
+    </div>
 
+    <!-- 2. Dropdown Warna -->
+    <div class="col-md-4">
+        <label class="form-label fw-bold text-dark small">Warna <span class="text-danger">*</span></label>
+        <select name="id_warna" class="form-select rounded-3 @error('id_warna') is-invalid @enderror" required>
+            <option value="">-- Pilih Warna --</option>
+            @foreach($warna as $w)
+                <option value="{{ $w->id }}" {{ old('id_warna') == $w->id ? 'selected' : '' }}>
+                    {{ $w->nama }} ({{ $w->kode }})
+                </option>
+            @endforeach
+        </select>
+        @error('id_warna') 
+            <small class="text-danger d-block mt-1" style="font-size: 11px;">{{ $message }}</small> 
+        @enderror
+    </div>
+
+    <!-- 3. Dropdown Model / Motif -->
+    <div class="col-md-4">
+        <label class="form-label fw-bold text-dark small">Model / Motif <span class="text-danger">*</span></label>
+        <select name="id_model" class="form-select rounded-3 @error('id_model') is-invalid @enderror" required>
+            <option value="">-- Pilih Model --</option>
+            @foreach($model as $m)
+                <option value="{{ $m->id }}" {{ old('id_model') == $m->id ? 'selected' : '' }}>
+                    {{ $m->nama }} ({{ $m->kode }})
+                </option>
+            @endforeach
+        </select>
+        @error('id_model') 
+            <small class="text-danger d-block mt-1" style="font-size: 11px;">{{ $message }}</small> 
+        @enderror
+    </div>
+</div>
         <div class="mb-3">
             <label class="form-label">Deskripsi</label>
             <textarea name="deskripsi" class="form-control" rows="2">{{ old('deskripsi') }}</textarea>
@@ -49,10 +90,17 @@
             </div>
         </div>
 
-        <div class="mb-3">
-            <label class="form-label">Foto Produk</label>
-            <input type="file" name="foto" class="form-control" accept="image/png,image/jpeg">
-        </div>
+       <div class="mb-3">
+    <label for="foto" class="form-label">Foto Produk</label>
+    <input 
+        type="file" 
+        name="foto" 
+        id="foto" 
+        class="form-control" 
+        accept="image/*"
+        capture="environment"
+    >
+</div>
 
         <p class="text-secondary small fw-bold text-uppercase mb-3 mt-4" style="letter-spacing:.4px">💰 Data Pembelian &amp; HPP</p>
         <div class="row g-3 mb-3">

@@ -90,13 +90,56 @@
                         <input type="text" name="nama_produk" class="form-control" value="{{ old('nama_produk', $produk->nama_produk) }}" required placeholder="Contoh: Knitwear Kuning Garis">
                     </div>
 
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold text-dark">Jenis Barang <span class="text-danger">*</span></label>
-                        <select name="jenis" class="form-select" required>
-                            <option value="thrift" {{ old('jenis', $produk->jenis) == 'thrift' ? 'selected' : '' }}>Thrift</option>
-                            <option value="rebranding" {{ old('jenis', $produk->jenis) == 'rebranding' ? 'selected' : '' }}>Rebranding</option>
-                        </select>
-                    </div>
+                    <!-- DROPDOWN MASTER DATA UNTUK HALAMAN EDIT -->
+<div class="row g-3 mb-3">
+    <!-- 1. Dropdown Jenis Pakaian -->
+    <div class="col-md-4">
+        <label class="form-label fw-bold text-dark small">Jenis Pakaian <span class="text-danger">*</span></label>
+        <select name="id_jenis_pakaian" class="form-select rounded-3 @error('id_jenis_pakaian') is-invalid @enderror" required>
+            <option value="">-- Pilih Jenis --</option>
+            @foreach($jenisPakaian as $jp)
+                <option value="{{ $jp->id }}" {{ (old('id_jenis_pakaian', $produk->id_jenis_pakaian) == $jp->id) ? 'selected' : '' }}>
+                    {{ $jp->nama }} ({{ $jp->kode }})
+                </option>
+            @endforeach
+        </select>
+        @error('id_jenis_pakaian') 
+            <small class="text-danger d-block mt-1" style="font-size: 11px;">{{ $message }}</small> 
+        @enderror
+    </div>
+
+    <!-- 2. Dropdown Warna -->
+    <div class="col-md-4">
+        <label class="form-label fw-bold text-dark small">Warna <span class="text-danger">*</span></label>
+        <select name="id_warna" class="form-select rounded-3 @error('id_warna') is-invalid @enderror" required>
+            <option value="">-- Pilih Warna --</option>
+            @foreach($warna as $w)
+                <option value="{{ $w->id }}" {{ (old('id_warna', $produk->id_warna) == $w->id) ? 'selected' : '' }}>
+                    {{ $w->nama }} ({{ $w->kode }})
+                </option>
+            @endforeach
+        </select>
+        @error('id_warna') 
+            <small class="text-danger d-block mt-1" style="font-size: 11px;">{{ $message }}</small> 
+        @enderror
+    </div>
+
+    <!-- 3. Dropdown Model -->
+    <div class="col-md-4">
+        <label class="form-label fw-bold text-dark small">Model / Motif <span class="text-danger">*</span></label>
+        <select name="id_model" class="form-select rounded-3 @error('id_model') is-invalid @enderror" required>
+            <option value="">-- Pilih Model --</option>
+            @foreach($model as $m)
+                <option value="{{ $m->id }}" {{ (old('id_model', $produk->id_model) == $m->id) ? 'selected' : '' }}>
+                    {{ $m->nama }} ({{ $m->kode }})
+                </option>
+            @endforeach
+        </select>
+        @error('id_model') 
+            <small class="text-danger d-block mt-1" style="font-size: 11px;">{{ $message }}</small> 
+        @enderror
+    </div>
+</div>
 
                     <div class="col-md-6">
                         <label class="form-label fw-bold text-dark">Pemasok <span class="text-danger">*</span></label>

@@ -6,22 +6,51 @@
 
 <div class="card-yb p-4" style="max-width:680px">
     <h6 class="fw-bold mb-4" style="font-family:'Quicksand',sans-serif">Import Pesanan Omnichannel</h6>
-@if(session('error'))
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        {{ session('error') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-@endif
+    
+    {{-- ✅ ERROR HANDLING - IMPROVED --}}
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <div class="d-flex gap-2">
+                <i class="bi bi-exclamation-circle-fill fs-5" style="flex-shrink: 0; margin-top: 2px;"></i>
+                <div style="flex: 1;">
+                    <strong>Error Import File</strong>
+                    <p class="mb-0 mt-1">{{ session('error') }}</p>
+                    
+                    {{-- Tampilkan error details kalau ada --}}
+                    @if(session('error_details'))
+                        <details class="mt-2 pt-2 border-top" style="font-size: 12px;">
+                            <summary style="cursor: pointer; color: #666;">
+                                <u>Lihat detail error</u>
+                            </summary>
+                            <pre style="margin-top: 10px; white-space: pre-wrap; background: rgba(0,0,0,0.05); padding: 10px; border-radius: 4px;">{{ session('error_details') }}</pre>
+                        </details>
+                    @endif
+                </div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
 
-<!-- Opsional: Tambahkan untuk pesan sukses -->
-@if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        {{ session('success') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-@endif
+    {{-- ✅ SUCCESS MESSAGE --}}
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+    {{-- ✅ VALIDATION ERRORS --}}
     @if($errors->any())
-        <div class="alert alert-danger">{{ $errors->first() }}</div>
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong><i class="bi bi-exclamation-triangle-fill me-1"></i>Format File Tidak Valid</strong>
+            <ul class="mb-0 mt-2" style="font-size: 14px;">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
     @endif
 
     <form action="{{ route('pesanan.preview') }}" method="POST" enctype="multipart/form-data">
@@ -51,7 +80,7 @@
         <div class="alert alert-info">
             Unduh file Excel dari Seller Center / TikTok Shop pada menu Pesanan → Export, lalu upload di sini.
             <label>Pilih Tanggal Live:</label>
-<input type="date" name="tanggal_live" class="form-control" required>
+            <input type="date" name="tanggal_live" class="form-control" required>
         </div>
 
         <p class="text-secondary small fw-bold text-uppercase mb-3 mt-3">2. Upload File Excel</p>

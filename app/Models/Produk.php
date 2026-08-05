@@ -8,8 +8,20 @@ class Produk extends Model
 {
     protected $table = 'produk';
     protected $fillable = [
-        'kode_produk', 'nama_produk', 'jenis', 'deskripsi', 'foto',
-        'harga_jual', 'hpp_otomatis', 'hpp_realisasi', 'stok', 'status'
+        'kode_produk',
+        'nama_produk',
+        'id_jenis_pakaian',
+        'id_warna',
+        'id_model',
+        'harga_jual',
+        'harga_beli_per_unit',
+        'hpp_otomatis',
+        'hpp_realisasi',
+        'stok',
+        'id_pemasok',
+        'foto',
+        'deskripsi',
+        'status',
     ];
 
     // HPP yang aktif digunakan saat transaksi
@@ -53,5 +65,25 @@ class Produk extends Model
     public function retur()
     {
         return $this->hasMany(Retur::class, 'id_produk');
+    }
+    // Tambahkan di dalam class Produk pada file app/Models/Produk.php:
+
+    public function jenisPakaian()
+    {
+        return $this->belongsTo(MsJenisPakaian::class, 'id_jenis_pakaian');
+    }
+
+    public function warna()
+    {
+        return $this->belongsTo(MsWarna::class, 'id_warna');
+    }
+
+    public function model()
+    {
+        return $this->belongsTo(MsModel::class, 'id_model');
+    }
+    public function sesiLive()
+    {
+        return $this->hasOne(\App\Models\SesiLive::class, 'id_produk')->where('status', 'aktif');
     }
 }

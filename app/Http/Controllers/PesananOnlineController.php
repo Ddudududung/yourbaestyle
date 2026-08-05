@@ -16,29 +16,27 @@ use App\Models\ReviewMappingManual;
 
 class PesananOnlineController extends Controller
 {
-    /**
-     * 🆕 HELPER: Cari header column dengan flexible matching
-     */
     private function findColumnKey(array $headers, array $aliases): ?string
-    {
-        foreach ($aliases as $alias) {
-            foreach ($headers as $key) {
-                if (strtolower(trim($key ?? '')) === strtolower(trim($alias ?? ''))) {
-                    return $key;
-                }
+{
+    foreach ($aliases as $alias) {
+        foreach ($headers as $key) {
+            // Case-insensitive matching
+            if (strtolower(trim($key ?? '')) === strtolower(trim($alias ?? ''))) {
+                return $key;
             }
         }
-        return null;
     }
+    return null;
+}
 
     /**
      * 🆕 HELPER: Get value dari data array dengan multiple alias support
      */
     private function getValueFromData(array $data, array $aliases, $default = null)
-    {
-        $key = $this->findColumnKey(array_keys($data), $aliases);
-        return $key ? ($data[$key] ?? $default) : $default;
-    }
+{
+    $key = $this->findColumnKey(array_keys($data), $aliases);
+    return $key ? ($data[$key] ?? $default) : $default;
+}
 
     public function importForm()
     {
@@ -46,175 +44,193 @@ class PesananOnlineController extends Controller
     }
 
     public function preview(Request $request)
-    {
-        $request->validate([
-            'platform'   => 'required|in:shopee,tiktok',
-            'format_csv' => 'required|in:shopee_standard,shopee_hemat_kargo,tiktok',
-            'file_csv'   => 'required|file|mimes:xlsx,xls,csv|max:5120',
-        ]);
+{
+    // ✅ STEP 1: Validasi input
+    $request->validate([
+        'platform'   => 'required|in:shopee,tiktok',  // Platform mana?
+        'format_csv' => 'required|in:shopee_standard,shopee_hemat_kargo,tiktok',
+        'file_csv'   => 'required|file|mimes:xlsx,xls,csv|max:5120',  // File, max 5MB
+    ]);
 
-        $file      = $request->file('file_csv');
-        $platform  = $request->platform;
-        $formatCsv = $request->format_csv;
+    $file      = $request->file('file_csv');
+    $platform  = $request->platform;
+    $formatCsv = $request->format_csv;
 
-        try {
-            $rows = Excel::toArray(new \stdClass(), $file)[0];
-            
-            if (empty($rows)) {
-                return back()->with('error', 'File Excel kosong atau tidak terbaca.');
-            }
-            
-            $header = array_shift($rows);
+    try {
+        // ✅ STEP 2: Parse Excel file
+        $rows = Excel::toArray(new \stdClass(), $file)[0];  // Ambil sheet pertama
+        
+        if (empty($rows)) {
+            return back()->with('error', 'File Excel kosong atau tidak terbaca.');
+        }
+        
+        // ✅ STEP 3: Pisahkan header dari data
+        $header = array_shift($rows);  // Baris pertama = header
 
-            $parsed = [];
-            $parseErrors = [];
-            
-            foreach ($rows as $rowIdx => $row) {
-                if (count($row) > count($header)) {
-                    $row = array_slice($row, 0, count($header));
-                } else {
-                    $row = array_pad($row, count($header), null);
-                }
-
-                $data = array_combine($header, $row);
-
-                $hasil = match ($formatCsv) {
-                    'shopee_standard'    => $this->parseShopeeStandardRobust($data),
-                    'shopee_hemat_kargo' => $this->parseShopeeHematKargoRobust($data),
-                    'tiktok'             => $this->parseTiktokRobust($data),
-                    default              => null,
-                };
-
-                if ($hasil) {
-                    $parsed[] = $hasil;
-                } else {
-                    $parseErrors[] = $rowIdx + 2;
-                }
+        $parsed = [];
+        $parseErrors = [];
+        
+        // ✅ STEP 4: Parse setiap row
+        foreach ($rows as $rowIdx => $row) {
+            // Pastikan kolom sesuai dengan header
+            if (count($row) > count($header)) {
+                $row = array_slice($row, 0, count($header));
+            } else {
+                $row = array_pad($row, count($header), null);
             }
 
-            if (empty($parsed)) {
-                $errorMsg = 'Tidak ada baris yang berhasil di-parse. ';
-                $errorMsg .= 'Periksa: 1) Header kolom sesuai format? ';
-                $errorMsg .= '2) Ada kolom No. Pesanan/Order ID? ';
-                $errorMsg .= '3) Data di kolom wajib lengkap?';
-                
-                if (!empty($parseErrors)) {
-                    $errorMsg .= ' (Baris error: ' . implode(', ', array_slice($parseErrors, 0, 5)) . ')';
-                }
-                
-                Log::error('Parse error - no rows parsed', [
-                    'platform' => $platform,
-                    'format' => $formatCsv,
-                    'file' => $file->getClientOriginalName(),
-                    'error_rows' => $parseErrors,
-                ]);
-                
-                return back()->with('error', $errorMsg);
-            }
+            // Combine header dengan row data → jadi array key:value
+            $data = array_combine($header, $row);
 
-            // Deteksi mapping otomatis
-            $tanggalLiveDefault = date('Y-m-d');
+            // ✅ STEP 5: Pilih parser sesuai format
+            $hasil = match ($formatCsv) {
+                'shopee_standard'    => $this->parseShopeeStandardRobust($data),
+                'shopee_hemat_kargo' => $this->parseShopeeHematKargoRobust($data),
+                'tiktok'             => $this->parseTiktokRobust($data),
+                default              => null,
+            };
+
+            if ($hasil) {
+                $parsed[] = $hasil;  // Sukses → masukkan ke array parsed
+            } else {
+                $parseErrors[] = $rowIdx + 2;  // Error → catat row number (1-indexed + header)
+            }
+        }
+
+        // ✅ STEP 6: Cek apakah ada baris yang berhasil di-parse
+        if (empty($parsed)) {
+            $errorMsg = 'Tidak ada baris yang berhasil di-parse. ';
+            $errorMsg .= 'Periksa: 1) Header kolom sesuai format? ';
+            $errorMsg .= '2) Ada kolom No. Pesanan/Order ID? ';
+            $errorMsg .= '3) Data di kolom wajib lengkap?';
             
-            foreach ($parsed as &$item) {
-                $variasiLive = $item['variasi'];
-                
-                if (!empty($variasiLive)) {
-                    $katalog = KatalogLive::where('kode_live', $variasiLive)
-                                          ->whereDate('tanggal_live', $tanggalLiveDefault)
-                                          ->with('produk')
-                                          ->first();
-                    
-                    if ($katalog && $katalog->produk && $katalog->produk->status === 'aktif') {
-                        $item['mapping_status'] = 'auto_found';
-                        $item['id_produk_auto'] = $katalog->produk->id;
-                        $item['nama_produk_auto'] = $katalog->produk->nama_produk;
-                    } else {
-                        $item['mapping_status'] = 'not_found';
-                        $item['id_produk_auto'] = null;
-                    }
-                } else {
-                    $item['mapping_status'] = 'no_kode';
-                    $item['id_produk_auto'] = null;
-                }
+            if (!empty($parseErrors)) {
+                $errorMsg .= ' (Baris error: ' . implode(', ', array_slice($parseErrors, 0, 5)) . ')';
             }
             
-            $produkAktif = Produk::where('status', 'aktif')->orderBy('nama_produk', 'asc')->get();
-            session(['csv_platform' => $platform, 'csv_format' => $formatCsv]);
-
-            Log::info('Preview success', ['rows_parsed' => count($parsed), 'platform' => $platform]);
-
-            return view('pesanan.preview', compact('parsed', 'platform', 'formatCsv', 'produkAktif'));
-            
-        } catch (\Exception $e) {
-            Log::error('Preview error', [
-                'error' => $e->getMessage(),
+            Log::error('Parse error - no rows parsed', [
+                'platform' => $platform,
+                'format' => $formatCsv,
                 'file' => $file->getClientOriginalName(),
-                'line' => $e->getLine(),
+                'error_rows' => $parseErrors,
             ]);
             
-            return back()->with('error', 'Error membaca file: ' . $e->getMessage());
+            return back()->with('error', $errorMsg);  // Kembali ke form dengan error
         }
+
+        // ✅ STEP 7: Deteksi mapping otomatis (cari di katalog_live)
+        $tanggalLiveDefault = date('Y-m-d');
+        
+        foreach ($parsed as &$item) {
+            $variasiLive = $item['variasi'];  // Kode variasi dari Excel (FIX 10, dll)
+            
+            if (!empty($variasiLive)) {
+                // Cari di katalog_live tabel (sudah di-map sebelumnya)
+                $katalog = KatalogLive::where('kode_live', $variasiLive)
+                                      ->whereDate('tanggal_live', $tanggalLiveDefault)
+                                      ->with('produk')
+                                      ->first();
+                
+                if ($katalog && $katalog->produk && $katalog->produk->status === 'aktif') {
+                    // Produk sudah di-map! Auto-found!
+                    $item['mapping_status'] = 'auto_found';
+                    $item['id_produk_auto'] = $katalog->produk->id;
+                    $item['nama_produk_auto'] = $katalog->produk->nama_produk;
+                } else {
+                    // Kode tidak ada di katalog
+                    $item['mapping_status'] = 'not_found';
+                    $item['id_produk_auto'] = null;
+                }
+            } else {
+                // Tidak ada kode variasi
+                $item['mapping_status'] = 'no_kode';
+                $item['id_produk_auto'] = null;
+            }
+        }
+        
+        // ✅ STEP 8: Ambil produk aktif (untuk manual mapping di preview page)
+        $produkAktif = Produk::where('status', 'aktif')
+                             ->orderBy('nama_produk', 'asc')
+                             ->get();
+        
+        // ✅ STEP 9: Simpan ke session (buat nanti dipakai di importProses())
+        session(['csv_platform' => $platform, 'csv_format' => $formatCsv]);
+
+        Log::info('Preview success', ['rows_parsed' => count($parsed), 'platform' => $platform]);
+
+        // ✅ STEP 10: Return view dengan parsed data
+        return view('pesanan.preview', compact('parsed', 'platform', 'formatCsv', 'produkAktif'));
+        
+    } catch (\Exception $e) {
+        Log::error('Preview error', [
+            'error' => $e->getMessage(),
+            'file' => $file->getClientOriginalName(),
+            'line' => $e->getLine(),
+        ]);
+        
+        return back()->with('error', 'Error membaca file: ' . $e->getMessage());
     }
+}
 
     /**
      * 🆕 ROBUST PARSER: Shopee Standard
      */
     private function parseShopeeStandardRobust(array $data): ?array
-    {
-        $noPesanan = trim((string)$this->getValueFromData($data, [
-            'No. Pesanan', 'No.Pesanan', 'NoPesanan',
-            'Order ID', 'OrderID', 'order_id',
-            'Nomor Pesanan', 'ID Pesanan'
-        ], ''));
-        
-        if (empty($noPesanan)) return null;
+{
+    // ✅ Extract "No. Pesanan" (bisa juga "No.Pesanan", "NoPesanan", "Order ID", dll)
+    $noPesanan = trim((string)$this->getValueFromData($data, [
+        'No. Pesanan', 'No.Pesanan', 'NoPesanan',
+        'Order ID', 'OrderID', 'order_id',
+        'Nomor Pesanan', 'ID Pesanan'
+    ], ''));
+    
+    // Kalau tidak ada nomor pesanan → null (parse gagal)
+    if (empty($noPesanan)) return null;
 
-        return [
-            'no_pesanan'   => $noPesanan,
-            'nama_pembeli' => trim((string)$this->getValueFromData($data, [
-                'Nama Penerima', 'NamaPenerima',
-                'Recipient', 'Pembeli',
-                'Username (Pembeli)', 'Buyer Name', 'buyer_name'
-            ], '-')),
-            'tanggal'      => $this->parseTanggal($this->getValueFromData($data, [
-                'Waktu Pesanan Dibuat', 'WaktuPesananDibuat',
-                'Tanggal Pesanan', 'TanggalPesanan',
-                'Created Time', 'Order Date', 'Waktu'
-            ])),
-            'nama_produk'  => trim((string)$this->getValueFromData($data, [
-                'Nama Produk', 'NamaProduk',
-                'Product Name', 'Product', 'Produk'
-            ], '')),
-            'variasi'      => trim((string)$this->getValueFromData($data, [
-                'Nama Variasi', 'NamaVariasi',
-                'Variasi', 'SKU Name', 'SKU', 'Varian',
-                'Variant', 'SKU Code'
-            ], '')) ?: null,
-            'qty'          => (int)($this->getValueFromData($data, [
-                'Jumlah', 'Quantity', 'Qty',
-                'Jumlah Produk', 'JumlahProduk'
-            ], 1)),
-            'harga_satuan' => $this->parseHarga($this->getValueFromData($data, [
-                'Harga Setelah Diskon', 'HargaSetelahDiskon',
-                'Unit Price', 'Price', 'Harga',
-                'Harga per Item'
-            ], 0)),
-            'total_harga'  => $this->parseHarga($this->getValueFromData($data, [
-                'Total Pembayaran', 'TotalPembayaran',
-                'Total', 'Order Amount', 'Total Price',
-                'Subtotal'
-            ], 0)),
-            'ongkir'       => $this->parseHarga($this->getValueFromData($data, [
-                'Ongkos Kirim Dibayar oleh Pembeli', 'OngkosKirim',
-                'Shipping Fee', 'Ongkir', 'Biaya Kirim',
-                'Shipping Cost'
-            ], 0)),
-            'no_resi'      => trim((string)$this->getValueFromData($data, [
-                'No. Resi', 'NoResi', 'Tracking Number',
-                'Resi', 'Tracking Code'
-            ], '')) ?: null,
-        ];
-    }
+    // ✅ Extract semua field yang perlu
+    return [
+        'no_pesanan'   => $noPesanan,
+        'nama_pembeli' => trim((string)$this->getValueFromData($data, [
+            'Nama Penerima', 'NamaPenerima',
+            'Recipient', 'Pembeli',
+            'Username (Pembeli)', 'Buyer Name', 'buyer_name'
+        ], '-')),
+        'tanggal'      => $this->parseTanggal($this->getValueFromData($data, [
+            'Waktu Pesanan Dibuat', 'WaktuPesananDibuat',
+            'Tanggal Pesanan', 'TanggalPesanan',
+            'Created Time', 'Order Date', 'Waktu'
+        ])),
+        'nama_produk'  => trim((string)$this->getValueFromData($data, [
+            'Nama Produk', 'NamaProduk',
+            'Product Name', 'Product', 'Produk'
+        ], '')),
+        // ✅ Ini yang paling penting! Kode variasi untuk mapping
+        'variasi'      => trim((string)$this->getValueFromData($data, [
+            'Nama Variasi', 'NamaVariasi',
+            'Variasi', 'SKU Name', 'SKU', 'Varian',
+            'Variant', 'SKU Code'
+        ], '')) ?: null,
+        'qty'          => (int)($this->getValueFromData($data, [
+            'Jumlah', 'Quantity', 'Qty',
+            'Jumlah Produk', 'JumlahProduk'
+        ], 1)),
+        'harga_satuan' => $this->parseHarga($this->getValueFromData($data, [
+            'Harga Setelah Diskon', 'HargaSetelahDiskon',
+            'Unit Price', 'Price', 'Harga',
+            'Harga per Item'
+        ], 0)),
+        'total_harga'  => $this->parseHarga($this->getValueFromData($data, [
+            'Total Pembayaran', 'TotalPembayaran',
+            'Total', 'Order Amount', 'Total Price',
+            'Subtotal'
+        ], 0)),
+        'ongkir'       => $this->parseHarga($this->getValueFromData($data, [
+            'Ongkos Kirim Dibayar oleh Pembeli', 'OngkosKirim',
+            'Shipping Fee', 'Ongkir', 'Biaya Kirim',
+            'Shipping Cost'
+        ], 0)),
+    ];
+}
 
     private function parseShopeeHematKargoRobust(array $data): ?array
     {
@@ -339,379 +355,293 @@ class PesananOnlineController extends Controller
     /**
      * 🆕 IMPORT PROSES - DENGAN VERBOSE ERROR HANDLING
      */
-    public function importProses(Request $request)
-    {
-        Log::info('=== IMPORT PROSES START ===', [
-            'user_id' => Auth::id(),
-            'timestamp' => now(),
-        ]);
+   public function importProses(Request $request)
+{
+    // ✅ STEP 1: Validasi input
+    $validated = $request->validate([
+        'pesanan' => 'required|array',
+        'pesanan.*.no_pesanan' => 'required|string',
+        'pesanan.*.nama_pembeli' => 'required|string',
+        'pesanan.*.harga_satuan' => 'required|numeric|min:1000',
+    ]);
 
-        $pesananDataStr = $request->input('data_pesanan_mentah');
-        
-        if (empty($pesananDataStr)) {
-            Log::warning('No data_pesanan_mentah provided');
-            return redirect()->route('pesanan.import')
-                ->with('error', 'Tidak ada data pesanan mentah yang diproses. Silakan upload file lagi.');
-        }
+    // ✅ STEP 2: Get platform dari session
+    $platform = session('csv_platform') ?? 'shopee';
 
-        try {
-            $pesananData = json_decode($pesananDataStr, true);
-            
-            if (!is_array($pesananData)) {
-                throw new \Exception('Data pesanan bukan array yang valid');
-            }
-            
-            Log::info('Data pesanan decoded', ['count' => count($pesananData)]);
-            
-        } catch (\Exception $e) {
-            Log::error('JSON decode error', ['error' => $e->getMessage()]);
-            return redirect()->route('pesanan.import')
-                ->with('error', 'Error parsing data pesanan: ' . $e->getMessage());
-        }
+    // ⚠️ STEP 3: Mulai transaction (sudah ada, tapi bisa lebih robust)
+    DB::beginTransaction();
+    
+    try {
+        $pesananBerhasil = 0;
+        $pesananGagal = 0;
+        $pesananSkip = 0;
 
-        $platform = session('csv_platform');
-        $tanggalLive = $request->input('tanggal_live');
-        
-        if (empty($platform)) {
-            Log::error('Platform not in session');
-            return redirect()->route('pesanan.import')
-                ->with('error', 'Session expired. Silakan upload file lagi.');
-        }
-        
-        if (empty($tanggalLive)) {
-            Log::warning('tanggal_live not provided');
-            return back()->with('error', 'Tanggal Live wajib diisi!');
-        }
+        // ✅ STEP 4: Loop setiap pesanan
+        foreach ($validated['pesanan'] as $idx => $row) {
+            $noPesanan = $row['no_pesanan'] ?? null;
+            $variasiLive = $row['variasi'] ?? null;
+            $tanggalLive = $row['tanggal'] ?? date('Y-m-d');
 
-        Log::info('Import parameters', [
-            'platform' => $platform,
-            'tanggal_live' => $tanggalLive,
-            'total_pesanan' => count($pesananData),
-        ]);
+            try {
+                // ✅ STEP 5A: Cari atau bikin pesanan
+                $pesanan = PesananOnline::firstOrCreate(
+                    ['no_pesanan' => $noPesanan],  // Cari berdasarkan no_pesanan
+                    [
+                        'platform'   => $platform,
+                        'status'     => 'draft',  // Status awal: draft
+                        'total_harga' => $row['total_harga'] ?? 0,
+                        'total_hpp'   => 0,
+                    ]
+                );
 
-        $mappingDataStr = $request->input('mapping_data');
-        $mappingData = $mappingDataStr ? json_decode($mappingDataStr, true) : [];
+                // ✅ STEP 5B: Cari produk via mapping (katalog_live)
+                $produk = null;
+                $mapping_status = 'not_found';
 
-        DB::beginTransaction();
-        try {
-            $pesananBerhasil = 0;
-            $pesananGagal = 0;
-            $pesananSkip = 0;
+                if (!empty($variasiLive)) {
+                    // Cari di katalog_live
+                    $katalog = KatalogLive::where('kode_live', $variasiLive)
+                                          ->whereDate('tanggal_live', date('Y-m-d', strtotime($tanggalLive)))
+                                          ->with('produk')
+                                          ->first();
 
-            foreach ($pesananData as $idx => $row) {
-                try {
-                    $variasiLive = $row['variasi'];
-                    $noPesanan = $row['no_pesanan'];
-                    $produk = null;
-                    
-                    Log::debug("Processing pesanan {$noPesanan}", [
-                        'kode_variasi' => $variasiLive,
-                        'qty' => $row['qty'],
-                    ]);
-
-                    // 1. Cek mapping dari dropdown
-                    if (isset($mappingData[$idx]) && !empty($mappingData[$idx])) {
-                        $idProdukPilih = $mappingData[$idx];
-                        
-                        if ($idProdukPilih === 'skip') {
-                            Log::info("Pesanan {$noPesanan} skipped by user");
-                            $pesananSkip++;
-                            continue;
-                        }
-                        
-                        $produk = Produk::find($idProdukPilih);
-                        if ($produk) {
-                            Log::debug("Found from mapping dropdown: {$produk->nama_produk}");
-                        }
-                    } 
-                    // 2. Cek dari auto_found
-                    else if (isset($row['mapping_status']) && $row['mapping_status'] === 'auto_found') {
-                        $produk = Produk::find($row['id_produk_auto'] ?? null);
-                        if ($produk) {
-                            Log::debug("Found from auto-detection: {$produk->nama_produk}");
-                        }
+                    if ($katalog && $katalog->produk) {
+                        $produk = $katalog->produk;
+                        $mapping_status = 'auto_found';
                     }
-                    // 3. Fallback ke katalog_live
-                    else if (!empty($variasiLive)) {
-                        $kamus = KatalogLive::where('kode_live', $variasiLive)
-                                            ->whereDate('tanggal_live', \Carbon\Carbon::parse($tanggalLive)->toDateString())
-                                            ->with('produk')
-                                            ->first();
-                        
-                        if ($kamus && $kamus->produk) {
-                            $produk = $kamus->produk;
-                            Log::debug("Found from katalog_live: {$produk->nama_produk}");
-                        }
-                    }
-
-                    // JIKA TETAP TIDAK ADA MAPPING
-                    if (!$produk) {
-                        Log::warning("No product found for pesanan {$noPesanan}, kode: {$variasiLive}");
-                        $pesananGagal++;
-                        
-                        // Catat ke review_mapping_manual
-                        ReviewMappingManual::create([
-                            'tanggal_live'     => $tanggalLive,
-                            'platform'         => $platform,
-                            'kode_live_raw'    => $variasiLive,
-                            'qty_order'        => $row['qty'],
-                            'no_pesanan'       => $noPesanan,
-                            'nama_pembeli'     => $row['nama_pembeli'],
-                            'id_user_uploader' => Auth::id() ?? 1,
-                            'status_resolusi'  => 'pending'
-                        ]);
-
-                        $pesanan = PesananOnline::create([
-                            'no_pesanan'     => $noPesanan,
-                            'id_user'        => Auth::id() ?? 1,
-                            'platform'       => $platform,
-                            'nama_pembeli'   => $row['nama_pembeli'],
-                            'tanggal'        => $row['tanggal'],
-                            'total_harga'    => $row['total_harga'],
-                            'total_hpp'      => 0,
-                            'status'         => 'hold_review',
-                            'kode_live_raw'  => $variasiLive,
-                            'status_mapping' => 'gagal_kode',
-                            'pesan_mapping'  => 'Kode variasi [' . $variasiLive . '] tidak ter-map.'
-                        ]);
-
-                        DetailPesananOnline::create([
-                            'id_pesanan'   => $pesanan->id,
-                            'id_produk'    => null,
-                            'qty'          => $row['qty'],
-                            'harga_satuan' => $row['harga_satuan'],
-                            'hpp_satuan'   => 0,
-                            'variasi'      => $variasiLive,
-                        ]);
-
-                        continue;
-                    }
-
-                    // VALIDASI STOK
-                    if ($produk->stok < $row['qty']) {
-                        Log::error("Stok tidak cukup untuk {$produk->nama_produk}", [
-                            'required' => $row['qty'],
-                            'available' => $produk->stok,
-                            'pesanan' => $noPesanan,
-                        ]);
-                        throw new \Exception("Stok untuk {$produk->nama_produk} (Kode: {$variasiLive}) tidak mencukupi! Sisa: {$produk->stok}, Diminta: {$row['qty']}");
-                    }
-
-                    // SIMPAN PESANAN (BERHASIL)
-                    $pesanan = PesananOnline::create([
-                        'no_pesanan'     => $noPesanan,
-                        'id_user'        => Auth::id(),
-                        'platform'       => $platform,
-                        'nama_pembeli'   => $row['nama_pembeli'],
-                        'tanggal'        => $row['tanggal'],
-                        'total_harga'    => $row['total_harga'],
-                        'total_hpp'      => $produk->hpp_otomatis * $row['qty'],
-                        'status'         => 'diproses',
-                        'status_mapping' => 'sukses',
-                        'pesan_mapping'  => 'Berhasil dimapping otomatis',
-                    ]);
-
-                    DetailPesananOnline::create([
-                        'id_pesanan'   => $pesanan->id,
-                        'id_produk'    => $produk->id,
-                        'qty'          => $row['qty'],
-                        'harga_satuan' => $row['harga_satuan'],
-                        'hpp_satuan'   => $produk->hpp_otomatis,
-                        'variasi'      => $variasiLive,
-                    ]);
-
-                    // POTONG STOK
-                    $produk->decrement('stok', $row['qty']);
-                    
-                    // SIMPAN KE KATALOG_LIVE
-                    KatalogLive::firstOrCreate(
-                        ['kode_live' => $variasiLive, 'tanggal_live' => date('Y-m-d', strtotime($tanggalLive))],
-                        ['id_produk' => $produk->id, 'harga_live' => $produk->harga_jual]
-                    );
-
-                    $pesananBerhasil++;
-                    Log::info("Pesanan {$noPesanan} berhasil disimpan");
-
-                } catch (\Exception $e) {
-                    Log::error("Error processing row {$idx}", [
-                        'error' => $e->getMessage(),
-                        'pesanan' => $row['no_pesanan'] ?? 'unknown',
-                    ]);
-                    throw $e; // Re-throw untuk rollback transaction
                 }
+
+                // ✅ STEP 5C: Kalau tidak ketemu, catat error
+                if (!$produk) {
+                    // ❌ Produk tidak ketemu → akan dihandle di review_manual nanti
+                    ReviewMappingManual::create([
+                        'no_pesanan' => $noPesanan,
+                        'kode_live_raw' => $variasiLive,
+                        'tanggal_live' => $tanggalLive,
+                        'qty_order' => $row['qty'] ?? 1,
+                        'status_resolusi' => 'pending',
+                    ]);
+                    
+                    $pesananSkip++;
+                    Log::warning("Kode {$variasiLive} tidak ditemukan di katalog");
+                    continue;  // Skip ke pesanan berikutnya
+                }
+
+                // ✅ STEP 5D: Create detail pesanan
+                PesananOnline::where('id', $pesanan->id)->update([
+                    'status'         => 'diproses',
+                    'status_mapping' => 'sukses',
+                    'pesan_mapping'  => 'Berhasil dimapping otomatis',
+                ]);
+
+                DetailPesananOnline::create([
+                    'id_pesanan'   => $pesanan->id,
+                    'id_produk'    => $produk->id,
+                    'qty'          => $row['qty'],
+                    'harga_satuan' => $row['harga_satuan'],
+                    'hpp_satuan'   => $produk->hpp_otomatis,  // ✅ Snapshot HPP!
+                    'variasi'      => $variasiLive,
+                ]);
+
+                // ✅ STEP 5E: Potong stok
+                $produk->decrement('stok', $row['qty']);
+                
+                // ✅ STEP 5F: Simpan ke katalog_live (kalau belum ada)
+                KatalogLive::firstOrCreate(
+                    ['kode_live' => $variasiLive, 'tanggal_live' => date('Y-m-d', strtotime($tanggalLive))],
+                    ['id_produk' => $produk->id, 'harga_live' => $produk->harga_jual]
+                );
+
+                $pesananBerhasil++;
+                Log::info("Pesanan {$noPesanan} berhasil disimpan");
+
+            } catch (\Exception $e) {
+                Log::error("Error processing row {$idx}", [
+                    'error' => $e->getMessage(),
+                    'pesanan' => $row['no_pesanan'] ?? 'unknown',
+                ]);
+                throw $e;  // ✅ Throw ke outer catch (rollback)
             }
-
-            DB::commit();
-
-            $pesan = "✅ Import selesai! Berhasil: {$pesananBerhasil}, Gagal: {$pesananGagal}";
-            if ($pesananSkip > 0) {
-                $pesan .= ", Dilewati: {$pesananSkip}";
-            }
-
-            Log::info('Import completed successfully', [
-                'berhasil' => $pesananBerhasil,
-                'gagal' => $pesananGagal,
-                'skip' => $pesananSkip,
-            ]);
-
-            session()->forget(['csv_platform', 'csv_format']);
-
-            return redirect()->route('pesanan.index')->with('success', $pesan);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            
-            Log::error('Import proses failed', [
-                'error' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-            
-            return back()->with('error', '❌ Gagal Menyimpan: ' . $e->getMessage());
         }
-    }
 
+        // ✅ STEP 6: Commit transaction (semua berhasil)
+        DB::commit();
+
+        $pesan = "✅ Import selesai! Berhasil: {$pesananBerhasil}, Gagal: {$pesananGagal}";
+        if ($pesananSkip > 0) {
+            $pesan .= ", Dilewati: {$pesananSkip}";
+        }
+
+        Log::info('Import completed successfully', [
+            'berhasil' => $pesananBerhasil,
+            'gagal' => $pesananGagal,
+            'skip' => $pesananSkip,
+        ]);
+
+        session()->forget(['csv_platform', 'csv_format']);
+
+        return redirect()->route('pesanan.index')->with('success', $pesan);
+
+    } catch (\Exception $e) {
+        // ✅ STEP 7: Rollback jika error!
+        DB::rollBack();
+        
+        Log::error('Import proses failed', [
+            'error' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'trace' => $e->getTraceAsString(),
+        ]);
+        
+        return back()->with('error', '❌ Gagal Menyimpan: ' . $e->getMessage());
+    }
+}
     // ============================================================
     // HELPERS
     // ============================================================
-    private function ekstrakField(string $text, string $key): ?string
-    {
-        $pattern = '/' . preg_quote($key, '/') . '\s*:\s*([^;]*)/i';
-        return preg_match($pattern, $text, $m) ? trim($m[1]) : null;
-    }
+    // ✅ Ekstrak field dari text (untuk TikTok format yang text-based)
+private function ekstrakField(string $text, string $key): ?string
+{
+    $pattern = '/' . preg_quote($key, '/') . '\s*:\s*([^;]*)/i';
+    return preg_match($pattern, $text, $m) ? trim($m[1]) : null;
+}
 
-    private function parseHarga($value): float
-    {
-        if ($value === null) return 0;
-        $clean = preg_replace('/[^0-9]/', '', (string)$value);
-        return (float)($clean ?: 0);
-    }
+// ✅ Parse harga (handle "Rp 100.000" → 100000)
+private function parseHarga($value): float
+{
+    if ($value === null) return 0;
+    $clean = preg_replace('/[^0-9]/', '', (string)$value);  // Hapus non-digit
+    return (float)($clean ?: 0);
+}
 
-    private function parseTanggal($value): string
-    {
-        if (empty($value)) return now()->toDateTimeString();
-        if (is_numeric($value)) {
-            try {
-                return \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($value)
-                         ->format('Y-m-d H:i:s');
-            } catch (\Exception $e) {}
-        }
+// ✅ Parse tanggal (handle Excel date format)
+private function parseTanggal($value): string
+{
+    if (empty($value)) return now()->toDateTimeString();
+    
+    if (is_numeric($value)) {
         try {
-            return Carbon::parse($value)->toDateTimeString();
-        } catch (\Exception $e) {
-            return now()->toDateTimeString();
-        }
-    }
-
-    // ============================================================
-    // INDEX, SHOW, REVIEW MANUAL
-    // ============================================================
-    public function index(Request $request)
-    {
-        $query = PesananOnline::with('user');
-
-        if ($request->filled('platform'))
-            $query->where('platform', $request->platform);
-        if ($request->filled('status'))
-            $query->where('status', $request->status);
-        if ($request->filled('tanggal'))
-            $query->whereDate('tanggal', $request->tanggal);
-        if ($request->filled('search')) {
-            $query->where(function($q) use ($request) {
-                $q->where('no_pesanan', 'like', '%' . $request->search . '%')
-                  ->orWhere('nama_pembeli', 'like', '%' . $request->search . '%');
-            });
-        }
-
-        $pesanan = $query->orderBy('tanggal', 'desc')->paginate(15);
-        return view('pesanan.index', compact('pesanan'));
-    }
-
-    public function show(string $id)
-    {
-        $pesanan = PesananOnline::with(['user', 'detail.produk'])->findOrFail($id);
-        return view('pesanan.show', compact('pesanan'));
+            // Excel serial date → convert
+            return \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($value)
+                     ->format('Y-m-d H:i:s');
+        } catch (\Exception $e) {}
     }
     
+    try {
+        return Carbon::parse($value)->toDateTimeString();
+    } catch (\Exception $e) {
+        return now()->toDateTimeString();
+    }
+}
+
+   public function index(Request $request)
+{
+    $query = PesananOnline::with('user');
+
+    // Filter by platform
+    if ($request->filled('platform'))
+        $query->where('platform', $request->platform);
+    
+    // Filter by status
+    if ($request->filled('status'))
+        $query->where('status', $request->status);
+    
+    // Filter by date
+    if ($request->filled('tanggal'))
+        $query->whereDate('tanggal', $request->tanggal);
+    
+    // Search by nomor pesanan atau nama pembeli
+    if ($request->filled('search')) {
+        $query->where(function($q) use ($request) {
+            $q->where('no_pesanan', 'like', '%' . $request->search . '%')
+              ->orWhere('nama_pembeli', 'like', '%' . $request->search . '%');
+        });
+    }
+
+    $pesanan = $query->orderBy('tanggal', 'desc')->paginate(15);
+    return view('pesanan.index', compact('pesanan'));
+}
+   public function show(string $id)
+{
+    $pesanan = PesananOnline::with(['user', 'detail.produk'])->findOrFail($id);
+    return view('pesanan.show', compact('pesanan'));
+}
     public function reviewManual()
-    {
-        $reviews = ReviewMappingManual::where('status_resolusi', 'pending')
-                    ->orderBy('tanggal_live', 'desc')
-                    ->paginate(10);
+{
+    // Tampilkan semua pesanan yang belum di-map (kode tidak ketemu)
+    $reviews = ReviewMappingManual::where('status_resolusi', 'pending')
+                ->orderBy('tanggal_live', 'desc')
+                ->paginate(10);
 
-        $produks = Produk::where('status', 'aktif')->orderBy('nama_produk', 'asc')->get();
-        return view('pesanan.review_manual', compact('reviews', 'produks'));
+    $produks = Produk::where('status', 'aktif')->orderBy('nama_produk', 'asc')->get();
+    return view('pesanan.review_manual', compact('reviews', 'produks'));
+}
+
+public function resolveManual(Request $request, $id)
+{
+    $review = ReviewMappingManual::findOrFail($id);
+    $action = $request->input('action');
+
+    if ($action === 'mapped') {
+        // ✅ User pilih produk untuk di-map
+        $request->validate(['id_produk_mapping' => 'required|exists:produk,id']);
+        
+        $produk = Produk::findOrFail($request->id_produk_mapping);
+        
+        if ($produk->stok < $review->qty_order) {
+            return redirect()->back()->with('error', 'Stok produk tidak mencukupi!');
+        }
+
+        // Update review record
+        $review->update([
+            'id_produk_mapping' => $produk->id,
+            'status_resolusi'   => 'mapped',
+            'id_user_resolver'  => Auth::id() ?? 1,
+            'tanggal_resolusi'  => now(),
+        ]);
+
+        // Update pesanan
+        $pesanan = PesananOnline::where('no_pesanan', $review->no_pesanan)->first();
+        if ($pesanan) {
+            $pesanan->update([
+                'status_mapping' => 'manual',
+                'status'         => 'diproses',
+                'total_hpp'      => $produk->hpp_otomatis * $review->qty_order
+            ]);
+
+            DetailPesananOnline::where('id_pesanan', $pesanan->id)->update([
+                'id_produk'  => $produk->id,
+                'hpp_satuan' => $produk->hpp_otomatis
+            ]);
+        }
+
+        $produk->decrement('stok', $review->qty_order);
+
+        Log::info("Manual mapping resolved for {$review->no_pesanan}");
+        return redirect()->back()->with('success', 'Mapping berhasil!');
+    }
+    
+    elseif ($action === 'skip') {
+        // Skip pesanan ini
+        $review->update([
+            'status_resolusi'  => 'skip',
+            'id_user_resolver' => Auth::id() ?? 1,
+            'tanggal_resolusi' => now(),
+        ]);
+        return redirect()->back()->with('success', 'Dilewati.');
+    }
+    
+    elseif ($action === 'reject') {
+        // Tolak pesanan
+        $review->update([
+            'status_resolusi'  => 'reject',
+            'id_user_resolver' => Auth::id() ?? 1,
+            'tanggal_resolusi' => now(),
+        ]);
+        PesananOnline::where('no_pesanan', $review->no_pesanan)->update(['status' => 'cancel']);
+        return redirect()->back()->with('success', 'Ditolak.');
     }
 
-    public function resolveManual(Request $request, $id)
-    {
-        $review = ReviewMappingManual::findOrFail($id);
-        $action = $request->input('action');
-
-        if ($action === 'mapped') {
-            $request->validate([
-                'id_produk_mapping' => 'required|exists:produk,id'
-            ]);
-
-            $produk = Produk::findOrFail($request->id_produk_mapping);
-
-            if ($produk->stok < $review->qty_order) {
-                return redirect()->back()->with('error', 'Stok produk tidak mencukupi!');
-            }
-
-            $review->update([
-                'id_produk_mapping' => $produk->id,
-                'status_resolusi'   => 'mapped',
-                'id_user_resolver'  => Auth::id() ?? 1,
-                'tanggal_resolusi'  => now(),
-            ]);
-
-            $pesanan = PesananOnline::where('no_pesanan', $review->no_pesanan)->first();
-            if ($pesanan) {
-                $pesanan->update([
-                    'status_mapping' => 'manual',
-                    'status'         => 'diproses',
-                    'total_hpp'      => $produk->hpp_otomatis * $review->qty_order
-                ]);
-
-                DetailPesananOnline::where('id_pesanan', $pesanan->id)->update([
-                    'id_produk'  => $produk->id,
-                    'hpp_satuan' => $produk->hpp_otomatis
-                ]);
-            }
-
-            $produk->decrement('stok', $review->qty_order);
-
-            KatalogLive::firstOrCreate(
-                ['kode_live' => $review->kode_live_raw, 'tanggal_live' => $review->tanggal_live],
-                ['id_produk' => $produk->id, 'harga_live' => $produk->harga_jual]
-            );
-
-            Log::info("Manual mapping resolved for {$review->no_pesanan}");
-
-            return redirect()->back()->with('success', 'Mapping berhasil!');
-        }
-
-        elseif ($action === 'skip') {
-            $review->update([
-                'status_resolusi'  => 'skip',
-                'id_user_resolver' => Auth::id() ?? 1,
-                'tanggal_resolusi' => now(),
-            ]);
-            return redirect()->back()->with('success', 'Dilewati.');
-        }
-
-        elseif ($action === 'reject') {
-            $review->update([
-                'status_resolusi'  => 'reject',
-                'id_user_resolver' => Auth::id() ?? 1,
-                'tanggal_resolusi' => now(),
-            ]);
-            PesananOnline::where('no_pesanan', $review->no_pesanan)->update(['status' => 'cancel']);
-            return redirect()->back()->with('success', 'Ditolak.');
-        }
-
-        return redirect()->back();
-    }
+    return redirect()->back();
+  }
 }

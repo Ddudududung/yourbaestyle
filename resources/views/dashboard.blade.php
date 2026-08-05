@@ -5,6 +5,8 @@
 @section('content')
 
 <div class="container-fluid" style="max-width: 1400px; margin: 0 auto; padding: 20px;">
+    
+    <!-- 1. STAT CARDS (HARI INI, REVENUE, STOK, ALERT) -->
     <div class="row g-3 mb-4">
         <div class="col-12 col-sm-6 col-lg-3">
             <div class="stat-card shadow-sm border-0 h-100" style="border-radius: 16px; background: linear-gradient(135deg, #FFF5F7, #fff); overflow: hidden; border-left: 4px solid #EC95A8;">
@@ -59,6 +61,7 @@
         </div>
     </div>
 
+    <!-- 2. BREAKDOWN SESI LIVE HARI INI -->
     @if($sesiHariIni && count($sesiHariIni) > 0)
     <div class="mb-4">
         <div class="d-flex align-items-center justify-content-between mb-3">
@@ -70,14 +73,14 @@
         <div class="row g-3">
             @foreach($sesiHariIni as $sesi)
             <div class="col-12 col-md-4">
-                <div class="card border-0 shadow-sm rounded-3 h-100" style="background: #fff; overflow: hidden;">
-                    <div class="card-body p-4">
+                <div class="card border-0 shadow-sm rounded-3 h-100" style="background: #fff; overflow: hidden; border-top: 3px solid #EC95A8;">
+                    <div class="card-body p-4 d-flex flex-column">
                         <div class="d-flex justify-content-between align-items-start mb-3">
                             <div>
                                 <h6 class="mb-0 fw-bold" style="color: #4D3D43;">{{ $sesi->nama_sesi }}</h6>
                                 <small class="text-muted" style="font-size: 11px;">{{ $sesi->jam_mulai }}</small>
                             </div>
-                            <span class="badge" style="font-size: 10px; background: {{ $sesi->status === 'ongoing' ? '#D4EDDA' : ($sesi->status === 'completed' ? '#D1ECF1' : '#F8F9FA') }}; color: {{ $sesi->status === 'ongoing' ? '#155724' : ($sesi->status === 'completed' ? '#0C5460' : '#6C757D') }};">
+                            <span class="badge px-2.5 py-1" style="font-size: 10px; background: {{ $sesi->status === 'ongoing' ? '#D4EDDA' : ($sesi->status === 'completed' ? '#D1ECF1' : '#F8F9FA') }}; color: {{ $sesi->status === 'ongoing' ? '#155724' : ($sesi->status === 'completed' ? '#0C5460' : '#6C757D') }};">
                                 {{ ucfirst($sesi->status) }}
                             </span>
                         </div>
@@ -97,28 +100,23 @@
                             </div>
                         </div>
 
-                        <div class="p-2 rounded-2" style="background: #E8F4F8; text-align: center;">
+                        <div class="p-2 rounded-2 mb-3" style="background: #E8F4F8; text-align: center;">
                             <small class="text-muted d-block" style="font-size: 10px;">Profit</small>
                             <strong style="color: #0277BD; font-size: 16px;">Rp {{ number_format($sesi->total_profit, 0) }}</strong>
                         </div>
 
-                        <a href="#" class="btn btn-sm btn-outline-primary w-100 mt-3 rounded-2" style="font-size: 11px;">
-                            Lihat Detail
-                        </a>
-                        <div class="d-flex gap-2 mt-3">
-    <a href="{{ url('/sesi-live?filter_sesi=' . $sesi->id) }}" class="btn btn-outline-primary btn-sm rounded-pill flex-grow-1 fw-bold">
-        <i class="bi bi-eye me-1"></i> Lihat Detail
-    </a>
-
-    <!-- Tombol Hapus Sesi (Jika salah bikin / ga jadi) -->
-    <form action="{{ route('sesi_live.destroy_jadwal', $sesi->id) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus sesi [{{ $sesi->nama_sesi }}]?\n\nJika dihapus, sesi ini akan hilang dari Dashboard dan Dropdown Co-Host.');">
-        @csrf
-        @method('DELETE')
-        <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-bold" title="Hapus jika salah bikin">
-            <i class="bi bi-trash me-1"></i> Hapus
-        </button>
-    </form>
-</div>
+                        <div class="d-flex gap-2 mt-auto pt-2">
+                            <a href="{{ url('/sesi-live?filter_sesi=' . $sesi->id) }}" class="btn btn-outline-primary btn-sm rounded-pill flex-grow-1 fw-bold">
+                                <i class="bi bi-eye me-1"></i> Lihat Detail
+                            </a>
+                            <form action="{{ route('sesi_live.destroy_jadwal', $sesi->id) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus sesi [{{ $sesi->nama_sesi }}]?\n\nJika dihapus, sesi ini akan hilang dari Dashboard dan Dropdown Co-Host.');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-bold" title="Hapus jika salah bikin">
+                                    <i class="bi bi-trash me-1"></i> Hapus
+                                </button>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -132,13 +130,14 @@
     </div>
     @endif
 
+    <!-- 3. TABEL TRANSAKSI TERAKHIR -->
     <div class="card shadow-sm border-0 mb-4" style="border-radius: 16px; overflow: hidden;">
         <div class="card-header bg-white" style="padding: 20px 24px; border-bottom: 1px solid #F7E5EA;">
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <h6 class="mb-0 fw-bold" style="color: #4D3D43; font-family: 'Quicksand', sans-serif; font-size: 15px;">
                     <i class="bi bi-receipt me-2" style="color: #EC95A8;"></i>Transaksi Terakhir
                 </h6>
-                <a href="#" class="btn btn-sm btn-outline-primary rounded-pill px-3" style="font-size: 12px;">
+                <a href="{{ url('/transaksi') }}" class="btn btn-sm btn-outline-primary rounded-pill px-3" style="font-size: 12px;">
                     Lihat Semua <i class="bi bi-arrow-right ms-1"></i>
                 </a>
             </div>
@@ -146,7 +145,7 @@
         <div class="card-body p-0">
             <div class="d-none d-md-block">
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0" style="font-size: 13.5px;">
+                    <table class="table align-middle mb-0" style="font-size: 13.5px;">
                         <thead style="background-color: #FFF5F7; color: #7A686D; font-size: 11.5px; text-transform: uppercase; font-weight: 700;">
                             <tr>
                                 <th class="py-3 ps-4 border-0">No. Transaksi</th>
@@ -159,7 +158,8 @@
                         </thead>
                         <tbody style="border-top: 1px solid #F7E5EA;">
                             @forelse($recentTransactions ?? [] as $tx)
-                            <tr style="transition: all 0.2s ease;">
+                            <!-- AMAN: Digunakan null-coalescing ($tx->id ?? $tx->id_transaksi ?? ...) agar tidak error 500 -->
+                            <tr class="clickable-row" onclick="window.location.href='{{ url('/transaksi/' . ($tx->id ?? $tx->id_transaksi ?? $tx->no_transaksi ?? '')) }}'">
                                 <td class="ps-4">
                                     <code style="font-size: 11.5px; color: #EC95A8; font-weight: 700; background: #FFF0F3; padding: 4px 8px; border-radius: 6px;">
                                         {{ $tx->no_transaksi ?? '-' }}
@@ -170,7 +170,7 @@
                                 <td class="text-end fw-bold" style="color: #4D3D43;">Rp {{ number_format($tx->total ?? 0, 0, ',', '.') }}</td>
                                 <td class="text-end text-muted"><small>{{ $tx->created_at?->diffForHumans() ?? '-' }}</small></td>
                                 <td class="pe-4 text-end">
-                                    <span class="badge" style="background: {{ $tx->user_name === 'SHOPEE' || $tx->user_name === 'TIKTOK' ? '#FFE6E6' : '#E8F7EE' }}; color: {{ $tx->user_name === 'SHOPEE' || $tx->user_name === 'TIKTOK' ? '#DC3545' : '#52976D' }}; font-size: 10px;">
+                                    <span class="badge" style="background: {{ ($tx->user_name ?? '') === 'SHOPEE' || ($tx->user_name ?? '') === 'TIKTOK' ? '#FFE6E6' : '#E8F7EE' }}; color: {{ ($tx->user_name ?? '') === 'SHOPEE' || ($tx->user_name ?? '') === 'TIKTOK' ? '#DC3545' : '#52976D' }}; font-size: 10px;">
                                         {{ $tx->user_name ?? '-' }}
                                     </span>
                                 </td>
@@ -193,9 +193,10 @@
                 </div>
             </div>
 
+            <!-- Tampilan Mobile -->
             <div class="d-md-none p-3">
                 @forelse($recentTransactions ?? [] as $tx)
-                <div style="padding: 12px 0; border-bottom: 1px solid #F7E5EA;">
+                <div class="clickable-row p-2 rounded-3 mb-2" onclick="window.location.href='{{ url('/transaksi/' . ($tx->id ?? $tx->id_transaksi ?? $tx->no_transaksi ?? '')) }}'" style="border-bottom: 1px solid #F7E5EA;">
                     <div class="d-flex justify-content-between align-items-start gap-2">
                         <div style="flex: 1;">
                             <code style="font-size: 11px; color: #EC95A8; background: #FFF0F3; padding: 3px 6px; border-radius: 4px;">{{ $tx->no_transaksi ?? '-' }}</code>
@@ -220,13 +221,14 @@
         </div>
     </div>
 
+    <!-- 4. TABEL PRODUK STOK RENDAH -->
     <div class="card shadow-sm border-0" style="border-radius: 16px; overflow: hidden;">
         <div class="card-header bg-white" style="padding: 20px 24px; border-bottom: 1px solid #F7E5EA;">
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <h6 class="mb-0 fw-bold" style="color: #4D3D43; font-family: 'Quicksand', sans-serif; font-size: 15px;">
                     <i class="bi bi-exclamation-triangle-fill me-2" style="color: #F39C12;"></i>Produk Stok Rendah
                 </h6>
-                <a href="#" class="btn btn-sm btn-outline-warning rounded-pill px-3" style="font-size: 12px;">
+                <a href="{{ url('/produk') }}" class="btn btn-sm btn-outline-warning rounded-pill px-3" style="font-size: 12px;">
                     Kelola Stok <i class="bi bi-arrow-right ms-1"></i>
                 </a>
             </div>
@@ -234,7 +236,7 @@
         <div class="card-body p-0">
             <div class="d-none d-md-block">
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0" style="font-size: 13.5px;">
+                    <table class="table align-middle mb-0" style="font-size: 13.5px;">
                         <thead style="background-color: #FFF9E6; color: #7A686D; font-size: 11.5px; text-transform: uppercase; font-weight: 700;">
                             <tr>
                                 <th class="py-3 ps-4 border-0">Produk</th>
@@ -246,10 +248,10 @@
                         </thead>
                         <tbody style="border-top: 1px solid #F7E5EA;">
                             @forelse($lowStockProducts ?? [] as $prod)
-                            <tr>
+                            <tr class="clickable-row" onclick="window.location.href='{{ route('produk.edit', $prod->id) }}'">
                                 <td class="ps-4 fw-semibold" style="color: #4D3D43;">{{ substr($prod->nama_produk, 0, 40) }}</td>
                                 <td class="text-center">
-                                    <span class="badge bg-danger text-white">{{ $prod->stok }} pcs</span>
+                                    <span class="badge bg-danger text-white px-3 py-1">{{ $prod->stok }} pcs</span>
                                 </td>
                                 <td class="text-center text-muted">5 pcs</td>
                                 <td>
@@ -259,9 +261,9 @@
                                         <span class="badge bg-warning text-dark">Rendah</span>
                                     @endif
                                 </td>
-                                <td class="pe-4 text-end">
-                                    <a href="{{ route('produk.edit', $prod->id) }}" class="btn btn-sm btn-outline-primary rounded-pill px-2" style="font-size: 11px;">
-                                        <i class="bi bi-pencil-fill"></i>
+                                <td class="pe-4 text-end" onclick="event.stopPropagation();">
+                                    <a href="{{ route('produk.edit', $prod->id) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3" style="font-size: 11px;">
+                                        <i class="bi bi-pencil-fill me-1"></i> Edit
                                     </a>
                                 </td>
                             </tr>
@@ -283,9 +285,10 @@
                 </div>
             </div>
 
+            <!-- Tampilan Mobile -->
             <div class="d-md-none p-3">
                 @forelse($lowStockProducts ?? [] as $prod)
-                <div style="padding: 12px 0; border-bottom: 1px solid #F7E5EA;">
+                <div class="clickable-row p-2 rounded-3 mb-2" onclick="window.location.href='{{ route('produk.edit', $prod->id) }}'" style="border-bottom: 1px solid #F7E5EA;">
                     <div class="d-flex justify-content-between align-items-start gap-2">
                         <div style="flex: 1;">
                             <div class="fw-bold text-dark" style="font-size: 13px;">{{ substr($prod->nama_produk, 0, 25) }}</div>
@@ -295,7 +298,7 @@
                             <span class="badge" style="background: {{ $prod->stok === 0 ? '#DC3545' : '#F39C12' }}; color: #fff; font-size: 10px;">
                                 {{ $prod->stok === 0 ? 'Habis' : 'Rendah' }}
                             </span>
-                            <a href="{{ route('produk.edit', $prod->id) }}" class="btn btn-sm btn-outline-primary rounded-pill px-2 mt-1" style="font-size: 10px;">
+                            <a href="{{ route('produk.edit', $prod->id) }}" class="btn btn-sm btn-outline-primary rounded-pill px-2 mt-1 d-block" style="font-size: 10px;">
                                 Edit
                             </a>
                         </div>
@@ -315,19 +318,24 @@
 
 </div>
 
+<!-- 5. KUSTOMISASI CSS INTERAKTIF -->
 <style>
     .stat-card {
         transition: all 0.3s ease;
     }
     .stat-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(236, 149, 168, 0.1) !important;
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(236, 149, 168, 0.15) !important;
     }
     .table tbody tr {
         border-bottom: 1px solid #F7E5EA;
+        transition: background-color 0.15s ease;
     }
-    .table tbody tr:hover {
-        background-color: #FFF5F7;
+    .clickable-row {
+        cursor: pointer;
+    }
+    .table tbody tr.clickable-row:hover {
+        background-color: #FFF0F3 !important;
     }
     .badge {
         font-weight: 600;

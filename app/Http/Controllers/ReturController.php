@@ -37,51 +37,28 @@ class ReturController extends Controller
     // SELECT TRANSAKSI — Halaman untuk pilih transaksi dulu
     // ============================================================
     public function selectTransaksi(Request $request)
-    {
-        $search = $request->input('search', '');
-        
-        // Ambil transaksi POS terbaru
-        $pos = TransaksiPos::with('detail.produk')
-            ->orderBy('tanggal', 'desc')
-            ->get()
-            ->map(fn($t) => (object)[
-                'id' => $t->id,
-                'type' => 'pos',
-                'no_transaksi' => $t->kode_transaksi,
-                'produk_nama' => $t->detail->first()?->produk?->nama_produk ?? 'Beragam Produk',
-                'total_harga' => $t->total_harga,
-                'tanggal' => $t->tanggal,
-            ]);
-        
-        // Ambil transaksi Online terbaru
-        $online = PesananOnline::with('detail.produk')
-            ->where('status', '!=', 'cancelled')
-            ->orderBy('tanggal', 'desc')
-            ->get()
-            ->map(fn($t) => (object)[
-                'id' => $t->id,
-                'type' => 'online',
-                'no_transaksi' => $t->no_pesanan,
-                'produk_nama' => $t->detail->first()?->produk?->nama_produk ?? 'Produk Online',
-                'total_harga' => $t->total_harga,
-                'tanggal' => $t->tanggal,
-            ]);
-        
-        // Gabung dan urutkan
-        $transaksis = $pos->concat($online)
-            ->sortByDesc('tanggal')
-            ->values();
-        
-        // Filter jika ada search
-        if (!empty($search)) {
-            $transaksis = $transaksis->filter(fn($t) => 
-                stripos($t->no_transaksi, $search) !== false || 
-                stripos($t->produk_nama, $search) !== false
-            )->values();
-        }
-        
-        return view('retur.select', compact('transaksis', 'search'));
+{
+    // 1. Ambil data Sesi Live untuk dropdown filter
+    $sesiLive = \App\Models\SesiLive::orderBy('tanggal_live', 'desc')->get();
+
+    // 2. Query Transaksi (Contoh query gabungan atau salah satu tabel)
+    // Sesuaikan logika query transaksi Anda di sini
+    $query = \App\Models\TransaksiPos::query(); 
+
+    if ($request->filled('search')) {
+        $query->where('nomor_transaksi', 'like', '%' . $request->search . '%');
     }
+
+    if ($request->filled('id_sesi_live')) {
+        $query->where('id_sesi_live', $request->id_sesi_live);
+    }
+
+    // Pastikan nama variabelnya $transaksis (pake S)
+    $transaksis = $query->orderBy('tanggal', 'desc')->get();
+
+    // 3. Kirim ke View dengan nama $transaksis dan $sesiLive
+    return view('retur.select', compact('transaksis', 'sesiLive'));
+}
 
     // ============================================================
     // CREATE — Form retur (setelah pilih transaksi)

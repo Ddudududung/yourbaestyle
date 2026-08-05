@@ -8,6 +8,8 @@ use App\Models\Retur;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\LaporanPenjualanExport;
 
 class LaporanController extends Controller
 {
@@ -100,6 +102,31 @@ class LaporanController extends Controller
     // 7. Download file PDF
     return $pdf->download('Laporan_Penjualan_' . $tgl_mulai . '_sd_' . $tgl_selesai . '.pdf');
 }
+
+    // Unduh laporan sebagai Excel (.xlsx)
+    public function unduhExcel(Request $request)
+    {
+        $tgl_mulai = $request->input('dari', $request->input('tgl_mulai', date('Y-m-01')));
+        $tgl_selesai = $request->input('sampai', $request->input('tgl_selesai', date('Y-m-d')));
+
+        $pos = \App\Models\TransaksiPos::whereDate('tanggal', '>=', $tgl_mulai)
+            ->whereDate('tanggal', '<=', $tgl_selesai)
+            ->get()
+            ->map(function ($item) {
+                $item->platform = 'pos';
+                return $item;
+            });
+
+        $online = \App\Models\PesananOnline::whereDate('tanggal', '>=', $tgl_mulai)
+            ->whereDate('tanggal', '<=', $tgl_selesai)
+            ->get();
+
+        $data = $pos->concat($online)->sortByDesc('tanggal')->values();
+
+        $fileName = 'Laporan_Penjualan_' . $tgl_mulai . '_sd_' . $tgl_selesai . '.xlsx';
+
+        return Excel::download(new LaporanPenjualanExport($data), $fileName);
+    }
 
     private function dataLaporan(string $dari, string $sampai): array
     {

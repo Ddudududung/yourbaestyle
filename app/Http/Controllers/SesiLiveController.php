@@ -6,6 +6,7 @@ use App\Models\KatalogLive;
 use App\Models\Produk;
 use App\Models\SesiLive;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class SesiLiveController extends Controller
 {
@@ -94,36 +95,47 @@ class SesiLiveController extends Controller
     /**
      * Membuat jadwal Sesi Live baru (Master Sesi) langsung dari halaman mapping
      */
-    public function storeJadwal(Request $request)
-    {
-        $request->validate([
-            'nama_sesi'    => 'required|string|max:100',
-            'platform'     => 'required|in:shopee,tiktok',
-            'tanggal_live' => 'required|date',
-            'jam_mulai'    => 'required',
-            'jam_selesai'  => 'nullable',
-        ]);
+   public function storeJadwal(Request $request)
+{
+    $request->validate([
+        'nama_sesi'    => 'required|string|max:100',
+        'platform'     => 'required|in:shopee,tiktok',
+        'tanggal_live' => 'required|date',
+        'jam_mulai'    => 'required',
+        'jam_selesai'  => 'nullable',
+    ]);
 
-        // 💡 PERBAIKAN ERROR 1452 (Foreign Key Constraint):
-        // Karena sistem login Yourbaestyle memakai tabel 'ms_user', sedangkan MySQL mengecek ke tabel 'users',
-        // Kita validasi dulu ID-nya agar tidak ditolak oleh database.
-        $userId = \Illuminate\Support\Facades\Auth::id();
-        $validUserId = \Illuminate\Support\Facades\DB::table('users')->where('id', $userId)->exists()
-                        ? $userId
-                        : \Illuminate\Support\Facades\DB::table('users')->value('id'); // Ambil ID pertama di tabel users, atau null jika kosong
+    // ✅ PERBAIKAN: Langsung pakai Auth::id(), lebih simple
+    $userId = Auth::id();
+    
+    if (!$userId) {
+        return back()->withError('❌ Anda harus login terlebih dahulu!');
+    }
 
+    // ✅ PERBAIKAN: Buat tanpa fallback logic
+    try {
         \App\Models\SesiLive::create([
             'nama_sesi'    => $request->nama_sesi,
             'platform'     => $request->platform,
             'tanggal_live' => $request->tanggal_live,
             'jam_mulai'    => $request->jam_mulai,
             'jam_selesai'  => $request->jam_selesai,
-            'status'       => 'ongoing', // Langsung disetel aktif
-            'created_by'   => $validUserId, // <-- Menggunakan ID yang sudah divalidasi agar aman dari error MySQL
+            'status'       => 'ongoing',
+            'created_by'   => $userId,  // ✅ Simple & clear
         ]);
-
-        return redirect()->back()->with('success', '✅ Jadwal Sesi Live [' . $request->nama_sesi . '] berhasil dibuat!');
+        
+        return redirect()->back()
+            ->with('success', '✅ Jadwal Sesi Live [' . $request->nama_sesi . '] berhasil dibuat!');
+            
+    } catch (\Exception $e) {
+        \Illuminate\Support\Facades\Log::error('Sesi live creation failed', [
+            'error' => $e->getMessage(),
+            'user_id' => $userId,
+        ]);
+        
+        return back()->withError('❌ Gagal membuat jadwal: ' . $e->getMessage());
     }
+}
     public function destroyJadwal($id)
     {
         $sesi = \App\Models\SesiLive::findOrFail($id);
