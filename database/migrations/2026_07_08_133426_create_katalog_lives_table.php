@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
-        Schema::create('katalog_lives', function (Blueprint $table) {
+        Schema::create('katalog_live', function (Blueprint $table) {
             $table->id();
             $table->date('tanggal_live'); // Sesuai kata Nizar: Relasi berdasarkan tanggal
             $table->string('kode_live');  // Contoh: "102", "YB 39"
@@ -22,6 +22,6 @@ return new class extends Migration
 
     public function down()
     {
-        Schema::dropIfExists('katalog_lives');
+        Schema::dropIfExists('katalog_live');
     }
 };

@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('sesi_lives', function (Blueprint $table) {
+        Schema::create('sesi_live', function (Blueprint $table) {
             $table->id();
             $table->timestamps();
         });
@@ -22,6 +22,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('sesi_lives');
+        Schema::dropIfExists('sesi_live');
     }
 };
