@@ -31,15 +31,28 @@ class Produk extends Model
         return $this->hpp_realisasi ?? $this->hpp_otomatis;
     }
 
-    // Generate kode produk otomatis
-    public static function generateKode(string $jenis): string
+    // Generate kode produk otomatis (guaranteed unique & non-duplicate)
+    public static function generateKode(string $jenis = 'rebranding'): string
     {
         $prefix = $jenis === 'thrift' ? 'PRD-THFT' : 'PRD-RBRN';
-        $last = self::where('kode_produk', 'like', $prefix . '%')
-                    ->orderBy('id', 'desc')
-                    ->first();
-        $nomor = $last ? (int) substr($last->kode_produk, -4) + 1 : 1;
-        return $prefix . '-' . str_pad($nomor, 4, '0', STR_PAD_LEFT);
+        
+        $existingCodes = self::where('kode_produk', 'like', $prefix . '-%')->pluck('kode_produk');
+        $maxNomor = 0;
+        foreach ($existingCodes as $c) {
+            $parts = explode('-', $c);
+            $num = (int) end($parts);
+            if ($num > $maxNomor) {
+                $maxNomor = $num;
+            }
+        }
+
+        $nomor = $maxNomor + 1;
+        do {
+            $kode = $prefix . '-' . str_pad($nomor, 4, '0', STR_PAD_LEFT);
+            $nomor++;
+        } while (self::where('kode_produk', $kode)->exists());
+
+        return $kode;
     }
     public function pemasok()
 {

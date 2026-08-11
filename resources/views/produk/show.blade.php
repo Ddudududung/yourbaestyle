@@ -113,13 +113,25 @@
                     </thead>
                     <tbody>
                         @forelse($riwayat as $r)
-                        <tr>
-                            <td class="fw-semibold">{{ \Carbon\Carbon::parse($r->tanggal)->format('d M Y') }}</td>
-                            <td>{{ $r->pemasok->nama_pemasok ?? 'Tidak Diketahui' }}</td>
-                            <td><span class="badge bg-success">+{{ $r->jumlah }} pcs</span></td>
-                            <td>Rp {{ number_format($r->harga_beli_per_unit, 0, ',', '.') }}</td>
-                            <td class="text-end fw-bold" style="color: var(--ink);">Rp {{ number_format($r->total_modal, 0, ',', '.') }}</td>
-                        </tr>
+                            @php
+                                $rawDate = $r->tanggal_pembelian ?? $r->tanggal ?? $r->created_at;
+                                $tanggalDisplay = $rawDate ? \Carbon\Carbon::parse($rawDate)->format('d M Y') : '-';
+                                $namaPemasok = $r->pemasok->nama_pemasok ?? $produk->pemasok->nama_pemasok ?? 'Pemasok Utama';
+                                $qtyMasuk = $r->qty ?? $r->jumlah ?? 0;
+                                $hargaUnit = $r->harga_beli_per_unit ?? $r->harga_satuan ?? 0;
+                                $totalModal = ($r->total_harga > 0 ? $r->total_harga : ($r->total_modal > 0 ? $r->total_modal : ($qtyMasuk * $hargaUnit)));
+                            @endphp
+                            <tr>
+                                <td class="fw-semibold">{{ $tanggalDisplay }}</td>
+                                <td>
+                                    <span class="badge rounded-pill bg-light text-dark fw-bold border" style="font-size: 11px;">
+                                        <i class="bi bi-truck me-1" style="color: var(--pink-primary);"></i>{{ $namaPemasok }}
+                                    </span>
+                                </td>
+                                <td><span class="badge bg-success" style="font-size: 11.5px; padding: 6px 12px;">+{{ number_format($qtyMasuk) }} pcs</span></td>
+                                <td>Rp {{ number_format($hargaUnit, 0, ',', '.') }}</td>
+                                <td class="text-end fw-bold" style="color: var(--ink);">Rp {{ number_format($totalModal, 0, ',', '.') }}</td>
+                            </tr>
                         @empty
                         <tr>
                             <td colspan="5" class="text-center text-muted py-5">

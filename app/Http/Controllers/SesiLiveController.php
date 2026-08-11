@@ -49,8 +49,10 @@ class SesiLiveController extends Controller
      */
     public function store(Request $request)
     {
-        if ($request->has('harga_live')) {
+        if ($request->filled('harga_live')) {
             $request->merge(['harga_live' => str_replace('.', '', $request->harga_live)]);
+        } else {
+            $request->merge(['harga_live' => null]);
         }
 
         $request->validate([

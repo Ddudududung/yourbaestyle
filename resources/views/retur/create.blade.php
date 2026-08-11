@@ -23,17 +23,7 @@
         </div>
 
         <div class="card-body p-4">
-            
-            <!-- ERROR MESSAGES -->
-            @if ($errors->any())
-                <div class="alert alert-danger rounded-3 mb-4">
-                    <ul class="mb-0 ps-3">
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
+
 
             <!-- INFO TRANSAKSI YANG DIPILIH -->
             @if($transaksi)

@@ -39,8 +39,9 @@ class ProdukController extends Controller
             $query->where('id_model', $request->id_model);
         }
 
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
+        $statusFilter = $request->get('status', 'aktif');
+        if ($statusFilter !== 'semua') {
+            $query->where('status', $statusFilter);
         }
 
         if ($request->filled('stok')) {
@@ -53,9 +54,9 @@ class ProdukController extends Controller
 
         $produk = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
         
-        $jenisPakaian = MsJenisPakaian::orderBy('nama_jenis')->get();
-        $warna = MsWarna::orderBy('nama_warna')->get();
-        $model = MsModel::orderBy('nama_model')->get();
+        $jenisPakaian = MsJenisPakaian::orderBy('nama')->get();
+        $warna = MsWarna::orderBy('nama')->get();
+        $model = MsModel::orderBy('nama')->get();
 
         return view('produk.index', compact('produk', 'jenisPakaian', 'warna', 'model'));
     }
@@ -66,11 +67,56 @@ class ProdukController extends Controller
     public function create()
     {
         $pemasok = Pemasok::orderBy('nama_pemasok')->get();
-        $jenisPakaian = MsJenisPakaian::orderBy('nama_jenis')->get();
-        $warna = MsWarna::orderBy('nama_warna')->get();
-        $model = MsModel::orderBy('nama_model')->get();
+        $jenisPakaian = MsJenisPakaian::orderBy('nama')->get();
+        $warna = MsWarna::orderBy('nama')->get();
+        $model = MsModel::orderBy('nama')->get();
 
         return view('produk.create', compact('pemasok', 'jenisPakaian', 'warna', 'model'));
+    }
+
+    // ============================================================
+    // HELPER ON-THE-FLY MASTER DATA
+    // ============================================================
+    private function resolveMasterData(Request $request)
+    {
+        // 1. Jenis Pakaian
+        $idJenisPakaian = $request->id_jenis_pakaian;
+        if ($idJenisPakaian === '__NEW__' || !empty($request->nama_jenis_pakaian_baru)) {
+            $nama = trim($request->nama_jenis_pakaian_baru ?? '');
+            if (!empty($nama)) {
+                $kode = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $nama), 0, 4)) ?: 'JNS';
+                $jenisObj = MsJenisPakaian::firstOrCreate(['nama' => $nama], ['kode' => $kode]);
+                $idJenisPakaian = $jenisObj->id;
+            }
+        }
+
+        // 2. Warna
+        $idWarna = $request->id_warna;
+        if ($idWarna === '__NEW__' || !empty($request->nama_warna_baru)) {
+            $nama = trim($request->nama_warna_baru ?? '');
+            if (!empty($nama)) {
+                $kode = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $nama), 0, 4)) ?: 'WRN';
+                $warnaObj = MsWarna::firstOrCreate(['nama' => $nama], ['kode' => $kode]);
+                $idWarna = $warnaObj->id;
+            }
+        }
+
+        // 3. Model
+        $idModel = $request->id_model;
+        if ($idModel === '__NEW__' || !empty($request->nama_model_baru)) {
+            $nama = trim($request->nama_model_baru ?? '');
+            if (!empty($nama)) {
+                $kode = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $nama), 0, 4)) ?: 'MDL';
+                $modelObj = MsModel::firstOrCreate(['nama' => $nama], ['kode' => $kode]);
+                $idModel = $modelObj->id;
+            }
+        }
+
+        return [
+            'id_jenis_pakaian' => $idJenisPakaian,
+            'id_warna'         => $idWarna,
+            'id_model'         => $idModel,
+        ];
     }
 
     // ============================================================
@@ -80,32 +126,40 @@ class ProdukController extends Controller
     {
         try {
             // BERSIHKAN TITIK DARI VALUE RUPIAH SEBELUM VALIDASI
-            if ($request->has('harga_jual')) {
+            if ($request->filled('harga_jual')) {
                 $request->merge(['harga_jual' => str_replace('.', '', $request->harga_jual)]);
             }
-            if ($request->has('harga_beli_per_unit')) {
+            if ($request->filled('harga_beli_per_unit')) {
                 $request->merge(['harga_beli_per_unit' => str_replace('.', '', $request->harga_beli_per_unit)]);
             }
-            if ($request->has('hpp_realisasi')) {
+            if ($request->filled('hpp_realisasi')) {
                 $request->merge(['hpp_realisasi' => str_replace('.', '', $request->hpp_realisasi)]);
+            } else {
+                $request->merge(['hpp_realisasi' => null]);
             }
 
             // VALIDASI
             $request->validate([
-                'nama_produk'        => 'required|string|max:150',
-                'id_jenis_pakaian'   => 'required|exists:ms_jenis_pakaian,id',
-                'id_warna'           => 'required|exists:ms_warna,id',
-                'id_model'           => 'required|exists:ms_model,id',
-                'harga_jual'         => 'required|numeric|min:0',
-                'id_pemasok'         => 'required|exists:pemasok,id',
-                'jumlah'             => 'required|integer|min:1',
-                'harga_beli_per_unit'=> 'required|numeric|min:0',
-                'hpp_realisasi'      => 'nullable|numeric|min:0',
-                'foto'               => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5000',
-                'deskripsi'          => 'nullable|string',
+                'nama_produk'             => 'required|string|max:150',
+                'id_jenis_pakaian'        => 'required',
+                'nama_jenis_pakaian_baru' => 'nullable|string|max:100',
+                'id_warna'                => 'required',
+                'nama_warna_baru'         => 'nullable|string|max:100',
+                'id_model'                => 'required',
+                'nama_model_baru'         => 'nullable|string|max:100',
+                'harga_jual'              => 'required|numeric|min:0',
+                'id_pemasok'              => 'required|exists:pemasok,id',
+                'jumlah'                  => 'required|integer|min:1',
+                'harga_beli_per_unit'     => 'required|numeric|min:0',
+                'hpp_realisasi'           => 'nullable|numeric|min:0',
+                'foto'                    => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5000',
+                'deskripsi'               => 'nullable|string',
             ]);
 
             DB::beginTransaction();
+
+            // PROSES OTOMATIS TAMBAH/RESOLVE MASTER DATA (JENIS, WARNA, MODEL)
+            $masterData = $this->resolveMasterData($request);
 
             // HITUNG HPP OTOMATIS
             $totalModal  = $request->jumlah * $request->harga_beli_per_unit;
@@ -117,20 +171,20 @@ class ProdukController extends Controller
                 $fotoPath = $request->file('foto')->store('produk', 'public');
             }
 
-            // GENERATE KODE PRODUK OTOMATIS
+            // GENERATE KODE PRODUK OTOMATIS (TERJAMIN UNIK)
             $kodeProduk = Produk::generateKode('rebranding');
 
             // CREATE PRODUK
             $produk = Produk::create([
                 'kode_produk'        => $kodeProduk,
                 'nama_produk'        => $request->nama_produk,
-                'id_jenis_pakaian'   => $request->id_jenis_pakaian,
-                'id_warna'           => $request->id_warna,
-                'id_model'           => $request->id_model,
+                'id_jenis_pakaian'   => $masterData['id_jenis_pakaian'],
+                'id_warna'           => $masterData['id_warna'],
+                'id_model'           => $masterData['id_model'],
                 'harga_jual'         => $request->harga_jual,
                 'harga_beli_per_unit'=> $request->harga_beli_per_unit,
                 'hpp_otomatis'       => $hppOtomatis,
-                'hpp_realisasi'      => $request->hpp_realisasi ?? $hppOtomatis,
+                'hpp_realisasi'      => $request->filled('hpp_realisasi') ? $request->hpp_realisasi : $hppOtomatis,
                 'stok'               => $request->jumlah,
                 'id_pemasok'         => $request->id_pemasok,
                 'foto'               => $fotoPath,
@@ -139,12 +193,15 @@ class ProdukController extends Controller
             ]);
 
             // CREATE PEMBELIAN AWAL
+            $jumlahAwal = (int) $request->jumlah;
+            $hargaBeliUnit = (float) $request->harga_beli_per_unit;
             PembelianBarang::create([
                 'id_produk'          => $produk->id,
-                'qty'                => $request->jumlah,
-                'harga_beli_per_unit'=> $request->harga_beli_per_unit,
-                'tanggal_pembelian'  => now()->toDateString(),
-                'keterangan'         => 'Pembelian awal produk',
+                'id_pemasok'         => $request->id_pemasok,
+                'qty'                => $jumlahAwal,
+                'harga_beli_per_unit'=> $hargaBeliUnit,
+                'tanggal_pembelian' => now()->toDateString(),
+                'keterangan'        => 'Pembelian awal produk',
             ]);
 
             DB::commit();
@@ -177,8 +234,9 @@ class ProdukController extends Controller
     {
         $produk = Produk::with(['pemasok', 'retur', 'jenisPakaian', 'warna', 'model'])->findOrFail($id);
 
-        $riwayat = PembelianBarang::where('id_produk', $id)
-                    ->orderBy('tanggal_pembelian', 'desc')
+        $riwayat = PembelianBarang::with('pemasok')
+                    ->where('id_produk', $id)
+                    ->orderBy('created_at', 'desc')
                     ->get();
 
         return view('produk.show', compact('produk', 'riwayat'));
@@ -191,9 +249,9 @@ class ProdukController extends Controller
     {
         $produk = Produk::findOrFail($id);
         $pemasok = Pemasok::orderBy('nama_pemasok')->get();
-        $jenisPakaian = MsJenisPakaian::orderBy('nama_jenis')->get();
-        $warna = MsWarna::orderBy('nama_warna')->get();
-        $model = MsModel::orderBy('nama_model')->get();
+        $jenisPakaian = MsJenisPakaian::orderBy('nama')->get();
+        $warna = MsWarna::orderBy('nama')->get();
+        $model = MsModel::orderBy('nama')->get();
         
         return view('produk.edit', compact('produk', 'pemasok', 'jenisPakaian', 'warna', 'model'));
     }
@@ -207,35 +265,43 @@ class ProdukController extends Controller
             $produk = Produk::findOrFail($id);
 
             // BERSIHKAN TITIK DARI VALUE RUPIAH SEBELUM VALIDASI
-            if ($request->has('harga_jual')) {
+            if ($request->filled('harga_jual')) {
                 $request->merge(['harga_jual' => str_replace('.', '', $request->harga_jual)]);
             }
-            if ($request->has('harga_beli_per_unit')) {
+            if ($request->filled('harga_beli_per_unit')) {
                 $request->merge(['harga_beli_per_unit' => str_replace('.', '', $request->harga_beli_per_unit)]);
             }
-            if ($request->has('hpp_realisasi')) {
+            if ($request->filled('hpp_realisasi')) {
                 $request->merge(['hpp_realisasi' => str_replace('.', '', $request->hpp_realisasi)]);
+            } else {
+                $request->merge(['hpp_realisasi' => null]);
             }
 
             $request->validate([
-                'nama_produk'           => 'required|string|max:150',
-                'id_jenis_pakaian'      => 'required|exists:ms_jenis_pakaian,id',
-                'id_warna'              => 'required|exists:ms_warna,id',
-                'id_model'              => 'required|exists:ms_model,id',
-                'harga_jual'            => 'required|numeric|min:0',
-                'id_pemasok'            => 'required|exists:pemasok,id',
-                'jenis_koreksi_stok'    => 'nullable|in:tetap,tambah,kurang,set_total',
-                'qty_koreksi'           => 'nullable|integer|min:0',
-                'stok_total_baru'       => 'nullable|integer|min:0',
-                'qty_tambah'            => 'nullable|integer|min:0',
-                'harga_beli_per_unit'   => 'nullable|numeric|min:0',
-                'hpp_realisasi'         => 'nullable|numeric|min:0',
-                'foto'                  => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5000',
-                'deskripsi'             => 'nullable|string',
-                'status'                => 'nullable|in:aktif,nonaktif',
+                'nama_produk'             => 'required|string|max:150',
+                'id_jenis_pakaian'        => 'required',
+                'nama_jenis_pakaian_baru' => 'nullable|string|max:100',
+                'id_warna'                => 'required',
+                'nama_warna_baru'         => 'nullable|string|max:100',
+                'id_model'                => 'required',
+                'nama_model_baru'         => 'nullable|string|max:100',
+                'harga_jual'              => 'required|numeric|min:0',
+                'id_pemasok'              => 'required|exists:pemasok,id',
+                'jenis_koreksi_stok'      => 'nullable|in:tetap,tambah,kurang,set_total',
+                'qty_koreksi'             => 'nullable|integer|min:0',
+                'stok_total_baru'         => 'nullable|integer|min:0',
+                'qty_tambah'              => 'nullable|integer|min:0',
+                'harga_beli_per_unit'     => 'nullable|numeric|min:0',
+                'hpp_realisasi'           => 'nullable|numeric|min:0',
+                'foto'                    => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5000',
+                'deskripsi'               => 'nullable|string',
+                'status'                  => 'nullable|in:aktif,nonaktif',
             ]);
 
             DB::beginTransaction();
+
+            // PROSES OTOMATIS TAMBAH/RESOLVE MASTER DATA (JENIS, WARNA, MODEL)
+            $masterData = $this->resolveMasterData($request);
 
             $stokLama = $produk->stok;
             $stokBaru = $stokLama;
@@ -252,7 +318,8 @@ class ProdukController extends Controller
             if ($jenisKoreksi === 'tambah' && $request->filled('qty_koreksi') && $request->qty_koreksi > 0) {
                 $qtyTambah = (int) $request->qty_koreksi;
                 $stokBaru = $stokLama + $qtyTambah;
-                $hargaBaru = $request->harga_beli_per_unit ?? $produk->harga_beli_per_unit;
+                $hargaBaru = (float) ($request->harga_beli_per_unit ?? $produk->harga_beli_per_unit);
+                $idPemasok = $request->id_pemasok ?? $produk->id_pemasok;
                 
                 // Hitung HPP baru (rata-rata tertimbang)
                 $nilaiStokLama = $stokLama * $produk->hpp_otomatis;
@@ -264,6 +331,7 @@ class ProdukController extends Controller
                 
                 PembelianBarang::create([
                     'id_produk'          => $produk->id,
+                    'id_pemasok'         => $idPemasok,
                     'qty'                => $qtyTambah,
                     'harga_beli_per_unit'=> $hargaBaru,
                     'tanggal_pembelian'  => now()->toDateString(),
@@ -285,9 +353,9 @@ class ProdukController extends Controller
             // SIMPAN DATA PRODUK
             $produk->stok = $stokBaru;
             $produk->nama_produk = $request->nama_produk;
-            $produk->id_jenis_pakaian = $request->id_jenis_pakaian;
-            $produk->id_warna = $request->id_warna;
-            $produk->id_model = $request->id_model;
+            $produk->id_jenis_pakaian = $masterData['id_jenis_pakaian'];
+            $produk->id_warna = $masterData['id_warna'];
+            $produk->id_model = $masterData['id_model'];
             $produk->harga_jual = $request->harga_jual;
             $produk->id_pemasok = $request->id_pemasok;
 
@@ -361,22 +429,50 @@ class ProdukController extends Controller
             $nama = $produk->nama_produk;
             $kode = $produk->kode_produk;
 
-            $produk->update(['status' => 'nonaktif']);
+            // Cek apakah produk memiliki riwayat transaksi/pesanan/retur
+            $hasTransaksi = $produk->detailTransaksi()->exists();
+            $hasPesanan   = $produk->detailPesanan()->exists();
+            $hasRetur     = $produk->retur()->exists();
+            $hasPembelianLain = $produk->pembelian()->where('keterangan', '!=', 'Pembelian awal produk')->exists();
 
-            Log::info('Produk deactivated', [
-                'kode' => $kode,
-                'user_id' => Auth::id(),
-            ]);
+            if (!$hasTransaksi && !$hasPesanan && !$hasRetur && !$hasPembelianLain) {
+                // Hapus record pembelian awal jika ada
+                $produk->pembelian()->delete();
 
-            return redirect()->route('produk.index')
-                             ->with('success', "✅ Produk [{$kode} - {$nama}] berhasil dinonaktifkan!");
+                // Hapus foto jika ada
+                if ($produk->foto && \Illuminate\Support\Facades\Storage::disk('public')->exists($produk->foto)) {
+                    \Illuminate\Support\Facades\Storage::disk('public')->delete($produk->foto);
+                }
+
+                // Hapus produk secara permanen dari database
+                $produk->delete();
+
+                Log::info('Produk deleted permanently', [
+                    'kode' => $kode,
+                    'user_id' => Auth::id(),
+                ]);
+
+                return redirect()->route('produk.index')
+                                 ->with('success', "✅ Produk [{$kode} - {$nama}] berhasil dihapus!");
+            } else {
+                // Jika produk memiliki riwayat transaksi, ubah status menjadi nonaktif agar data transaksi tetap utuh
+                $produk->update(['status' => 'nonaktif']);
+
+                Log::info('Produk deactivated due to existing transactions', [
+                    'kode' => $kode,
+                    'user_id' => Auth::id(),
+                ]);
+
+                return redirect()->route('produk.index')
+                                 ->with('success', "⚠️ Produk [{$kode} - {$nama}] memiliki riwayat transaksi sehingga tidak dapat dihapus permanen untuk menjaga riwayat toko, namun statusnya telah diubah menjadi NONAKTIF!");
+            }
 
         } catch (\Exception $e) {
             Log::error('Produk delete failed', [
                 'error' => $e->getMessage(),
             ]);
 
-            return back()->with('error', '❌ Gagal nonaktifkan produk: ' . $e->getMessage());
+            return back()->with('error', '❌ Gagal menghapus produk: ' . $e->getMessage());
         }
     }
 }

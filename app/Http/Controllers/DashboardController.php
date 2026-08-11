@@ -16,11 +16,14 @@ class DashboardController extends Controller
         $hariIni = Carbon::today();
 
         // ========== STATISTIK KARTU ATAS ==========
-        $transaksiHariIni = TransaksiPos::whereDate('tanggal', $hariIni)->count() 
-                          + PesananOnline::whereDate('tanggal', $hariIni)->count();
-                          
-        $penjualanHariIni = TransaksiPos::whereDate('tanggal', $hariIni)->sum('total_harga') 
-                          + PesananOnline::whereDate('tanggal', $hariIni)->sum('total_harga');
+        $posHariIniCount = TransaksiPos::whereDate('tanggal', $hariIni)->count();
+        $posHariIniOmset = TransaksiPos::whereDate('tanggal', $hariIni)->sum('total_harga');
+
+        $onlineHariIniCount = PesananOnline::whereDate('tanggal', $hariIni)->count();
+        $onlineHariIniOmset = PesananOnline::whereDate('tanggal', $hariIni)->sum('total_harga');
+
+        $transaksiHariIni = $posHariIniCount + $onlineHariIniCount;
+        $penjualanHariIni = $posHariIniOmset + $onlineHariIniOmset;
 
         $totalStok  = Produk::where('status', 'aktif')->sum('stok');
         $totalHabis = Produk::where('status', 'aktif')->where('stok', 0)->count();
@@ -147,6 +150,10 @@ class DashboardController extends Controller
         return view('dashboard', compact(
             'transaksiHariIni',
             'penjualanHariIni',
+            'posHariIniCount',
+            'posHariIniOmset',
+            'onlineHariIniCount',
+            'onlineHariIniOmset',
             'totalStok',
             'totalHabis',
             'lowStockProducts',

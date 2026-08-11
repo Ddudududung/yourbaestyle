@@ -1,122 +1,139 @@
 @extends('layouts.app')
 
-@section('title', 'Pilih Transaksi untuk Retur - Yourbaestyle')
+@section('title', 'Pilih Transaksi untuk Retur — Yourbaestyle')
 
 @section('content')
-<div class="container-fluid py-4" style="max-width: 1100px; margin: 0 auto;">
+<div class="container-fluid p-0" style="max-width: 1150px; margin: 0 auto;">
     
-    <!-- Header -->
-    <div class="mb-4">
-        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-            <div>
-                <h4 class="mb-1 fw-bold text-dark" style="font-family: 'Quicksand', sans-serif;">
-                    <i class="bi bi-reply-fill me-2" style="color: #EC95A8;"></i>Pilih Transaksi untuk Retur
-                </h4>
-                <small class="text-muted">Cari dan pilih transaksi yang akan di-retur (dari Kasir POS atau Pesanan Online)</small>
-            </div>
-            <a href="{{ route('retur.index') }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
-                <i class="bi bi-arrow-left me-1"></i> Kembali
-            </a>
+    <!-- HEADER ACTION -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <div>
+            <h4 class="mb-1 fw-bold" style="color: var(--ink); font-family: 'Quicksand', sans-serif;">
+                <i class="bi bi-reply-fill me-2" style="color: var(--pink-primary);"></i>Pilih Transaksi untuk Retur
+            </h4>
+            <small class="text-muted font-semibold" style="font-size: 12px;">Cari dan pilih transaksi yang akan di-retur (dari Kasir POS atau Pesanan Online)</small>
         </div>
+        <a href="{{ route('retur.index') }}" class="btn btn-yb-outline px-3 py-2 text-decoration-none font-semibold" style="border-radius: 12px; font-size: 12.5px;">
+            <i class="bi bi-arrow-left me-1"></i> Kembali ke Retur
+        </a>
     </div>
 
-    <!-- Alert Notifikasi Error/Success -->
+    <!-- ALERT NOTIFIKASI ERROR -->
     @if(session('error'))
-        <div class="alert alert-danger rounded-4 mb-4 border-0 shadow-sm">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ session('error') }}
+        <div class="p-3 mb-4 d-flex align-items-center gap-2" style="background: #FFF0F2; border: 1.5px solid #F5B8C5; border-radius: 16px; color: #A6243F; font-size: 13px; font-weight: 600;">
+            <i class="bi bi-exclamation-triangle-fill fs-5 me-1" style="color: #E05270;"></i>
+            {{ session('error') }}
         </div>
     @endif
 
-    <!-- CARD PENCARIAN & FILTER TERPADU -->
-    <div class="card border-0 shadow-sm rounded-4 mb-4">
-        <div class="card-header bg-white py-3 px-4 border-bottom" style="border-color: #F7E5EA;">
-            <h6 class="mb-0 fw-bold text-dark">
-                <i class="bi bi-funnel-fill me-2" style="color: #EC95A8;"></i>Filter & Cari Transaksi
+    <!-- PANEL PENCARIAN & FILTER TERPADU -->
+    <div class="card-yb p-3 p-md-4 mb-4">
+        <div class="d-flex align-items-center gap-2 mb-3 pb-2.5" style="border-bottom: 1.5px dashed var(--border-soft);">
+            <h6 class="mb-0 fw-bold" style="color: var(--ink); font-family: 'Quicksand', sans-serif;">
+                <i class="bi bi-funnel-fill me-2" style="color: var(--pink-primary);"></i>Filter & Cari Transaksi
             </h6>
         </div>
-        <div class="card-body p-4">
-            <form method="GET" action="{{ route('retur.select') }}" id="mainSearchForm">
-                <!-- Baris 1: Filter Parameter -->
-                <div class="row g-3 mb-3">
-                    <div class="col-md-3">
-                        <label class="form-label fw-semibold small text-muted">Sesi Live (Khusus Online)</label>
-                        <select name="id_sesi_live" class="form-select rounded-3">
-                            <option value="">-- Semua Sesi Live --</option>
-                            @if(isset($sesiLive))
-                                @foreach($sesiLive as $sesi)
-                                    <option value="{{ $sesi->id }}" {{ request('id_sesi_live') == $sesi->id ? 'selected' : '' }}>
-                                        {{ $sesi->nama_sesi }} ({{ \Carbon\Carbon::parse($sesi->tanggal_live)->format('d/m/Y') }})
-                                    </option>
-                                @endforeach
-                            @endif
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label fw-semibold small text-muted">Tanggal Mulai</label>
-                        <input type="date" name="tanggal_mulai" class="form-control rounded-3" value="{{ request('tanggal_mulai') }}">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label fw-semibold small text-muted">Tanggal Selesai</label>
-                        <input type="date" name="tanggal_selesai" class="form-control rounded-3" value="{{ request('tanggal_selesai') }}">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label fw-semibold small text-muted">Tipe Transaksi</label>
-                        <select name="type" class="form-select rounded-3">
-                            <option value="">-- Semua Tipe --</option>
-                            <option value="pos" {{ request('type') == 'pos' ? 'selected' : '' }}>Kasir (POS)</option>
-                            <option value="online" {{ request('type') == 'online' ? 'selected' : '' }}>Pesanan Online</option>
-                        </select>
+
+        <form method="GET" action="{{ route('retur.select') }}" id="mainSearchForm">
+            <!-- Baris 1: Filter Parameter -->
+            <div class="row g-2.5 mb-3">
+                <div class="col-12 col-sm-6 col-lg-3">
+                    <label class="form-label font-semibold text-muted mb-1" style="font-size: 11.5px;">Sesi Live (Khusus Online)</label>
+                    <select name="id_sesi_live" class="form-select font-semibold" style="border-radius: 12px; border-color: var(--border-soft); font-size: 12.5px;">
+                        <option value="">-- Semua Sesi Live --</option>
+                        @if(isset($sesiLive))
+                            @foreach($sesiLive as $sesi)
+                                <option value="{{ $sesi->id }}" {{ request('id_sesi_live') == $sesi->id ? 'selected' : '' }}>
+                                    {{ $sesi->nama_sesi }} ({{ \Carbon\Carbon::parse($sesi->tanggal_live)->format('d/m/Y') }})
+                                </option>
+                            @endforeach
+                        @endif
+                    </select>
+                </div>
+                <div class="col-12 col-sm-6 col-lg-3">
+                    <label class="form-label font-semibold text-muted mb-1" style="font-size: 11.5px;">Tanggal Mulai</label>
+                    <input type="date" name="tanggal_mulai" class="form-control font-semibold" value="{{ request('tanggal_mulai') }}" style="border-radius: 12px; border-color: var(--border-soft); font-size: 12.5px;">
+                </div>
+                <div class="col-12 col-sm-6 col-lg-3">
+                    <label class="form-label font-semibold text-muted mb-1" style="font-size: 11.5px;">Tanggal Selesai</label>
+                    <input type="date" name="tanggal_selesai" class="form-control font-semibold" value="{{ request('tanggal_selesai') }}" style="border-radius: 12px; border-color: var(--border-soft); font-size: 12.5px;">
+                </div>
+                <div class="col-12 col-sm-6 col-lg-3">
+                    <label class="form-label font-semibold text-muted mb-1" style="font-size: 11.5px;">Tipe Transaksi</label>
+                    <select name="type" class="form-select font-semibold" style="border-radius: 12px; border-color: var(--border-soft); font-size: 12.5px;">
+                        <option value="">-- Semua Tipe --</option>
+                        <option value="pos" {{ request('type') == 'pos' ? 'selected' : '' }}>Kasir (POS)</option>
+                        <option value="online" {{ request('type') == 'online' ? 'selected' : '' }}>Pesanan Online</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Baris 2: Input Kata Kunci & Action Buttons -->
+            <div class="row g-2.5 align-items-center">
+                <div class="col-12 col-lg-5">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0" style="border-color: var(--border-soft); border-radius: 12px 0 0 12px; color: var(--ink-soft);">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text" name="search" class="form-control border-start-0 ps-0 font-semibold" 
+                               placeholder="Cari nomor transaksi, resi, atau nama produk..." 
+                               value="{{ request('search', '') }}"
+                               id="searchInput" autofocus style="border-radius: 0 12px 12px 0; border-color: var(--border-soft); font-size: 12.5px;">
                     </div>
                 </div>
 
-                <!-- Baris 2: Input Pencarian & Action Buttons -->
-                <div class="d-flex gap-2 flex-wrap align-items-center">
-                    <div class="flex-grow-1">
-                        <input type="text" name="search" class="form-control rounded-3" 
-                               placeholder="Cari nomor transaksi, resi, atau nama produk..." 
-                               value="{{ request('search', '') }}"
-                               id="searchInput" autofocus>
-                    </div>
-                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">
-                        <i class="bi bi-search me-1"></i> Terapkan Filter
+                <div class="col-12 col-lg-7 d-flex flex-wrap align-items-center justify-content-lg-end gap-2">
+                    <button type="submit" class="btn btn-yb px-4 py-2 font-semibold shadow-sm text-white" style="border-radius: 12px; font-size: 13px;">
+                        <i class="bi bi-search me-1.5"></i> Terapkan Filter
                     </button>
+                    
                     @if(request()->hasAny(['search', 'id_sesi_live', 'tanggal_mulai', 'tanggal_selesai', 'type']))
-                        <a href="{{ route('retur.select') }}" class="btn btn-outline-secondary rounded-pill px-4">
-                            <i class="bi bi-x-lg me-1"></i> Reset
+                        <a href="{{ route('retur.select') }}" class="btn btn-yb-outline px-3 py-2 text-decoration-none font-semibold" style="border-radius: 12px; font-size: 13px;">
+                            <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
                         </a>
                     @endif
+
                     <!-- TOMBOL SCAN BARCODE -->
-                    <button type="button" class="btn btn-warning rounded-pill px-4 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#scanBarcodeModal">
-                        <i class="bi bi-upc-scan me-1"></i> Scan Barcode
+                    <button type="button" class="btn font-semibold px-4 py-2 text-white shadow-sm" data-bs-toggle="modal" data-bs-target="#scanBarcodeModal" style="background: linear-gradient(135deg, #DD7991 0%, #C43654 100%); border-radius: 12px; font-size: 13px;">
+                        <i class="bi bi-upc-scan me-1.5"></i> Scan Barcode
                     </button>
                 </div>
-            </form>
-        </div>
+            </div>
+        </form>
     </div>
 
     <!-- INFORMASI HASIL PENCARIAN -->
     @if(request()->hasAny(['search', 'id_sesi_live', 'tanggal_mulai', 'tanggal_selesai', 'type']))
-        <div class="alert alert-info rounded-4 mb-4" style="background: #E8F4F8; border: none;">
-            <i class="bi bi-info-circle me-2"></i>
-            Ditemukan <strong>{{ $transaksis->count() }}</strong> transaksi sesuai kriteria filter Anda.
+        <div class="p-3 mb-4 d-flex align-items-center gap-2" style="background: var(--pink-soft-2); border: 1.5px solid var(--border-soft); border-radius: 16px; color: var(--ink); font-size: 13px; font-weight: 600;">
+            <i class="bi bi-info-circle-fill fs-5 me-1" style="color: var(--pink-primary);"></i>
+            Ditemukan <strong style="color: var(--pink-primary-dark);" class="mx-1">{{ $transaksis->count() }}</strong> transaksi sesuai kriteria filter Anda.
         </div>
     @endif
 
     <!-- TABEL TRANSAKSI - DESKTOP -->
-    <div class="card border-0 shadow-sm rounded-4 d-none d-lg-block" style="overflow: hidden;">
+    <div class="card-yb p-0 overflow-hidden d-none d-lg-block">
+        <div class="p-3 px-4 d-flex justify-content-between align-items-center" style="border-bottom: 1.5px dashed var(--border-soft); background: var(--pink-soft-2);">
+            <h6 class="fw-bold mb-0" style="color: var(--ink); font-family: 'Quicksand', sans-serif;">
+                <i class="bi bi-list-check me-2" style="color: var(--pink-primary);"></i>Daftar Transaksi Ditemukan
+            </h6>
+            <span class="badge bg-white text-muted font-semibold px-3 py-1.5" style="border: 1px solid var(--border-soft); font-size: 11px;">
+                Total: {{ $transaksis->count() }} Transaksi
+            </span>
+        </div>
+
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0" style="font-size: 13.5px;">
-                <thead style="background-color: #FFF5F7; color: #7A686D; font-size: 11.5px; text-transform: uppercase;">
+            <table class="table table-hover align-middle mb-0" style="font-size: 13px;">
+                <thead style="background: var(--pink-soft-2); color: var(--ink-soft); font-size: 11.5px; font-family: 'Quicksand', sans-serif; text-transform: uppercase; font-weight: 700; border-bottom: 1.5px solid var(--border-soft);">
                     <tr>
-                        <th class="py-3 ps-4 border-0">No. Transaksi</th>
-                        <th class="py-3 border-0">Tipe</th>
-                        <th class="py-3 border-0">Produk</th>
-                        <th class="py-3 text-end border-0">Total</th>
-                        <th class="py-3 border-0">Tanggal</th>
-                        <th class="py-3 pe-4 text-center border-0">Aksi</th>
+                        <th class="py-3 ps-4">No. Transaksi</th>
+                        <th class="py-3">Tipe</th>
+                        <th class="py-3">Produk</th>
+                        <th class="py-3 text-end">Total</th>
+                        <th class="py-3">Tanggal</th>
+                        <th class="py-3 pe-4 text-center">Aksi</th>
                     </tr>
                 </thead>
-                <tbody style="border-top: 1px solid #F7E5EA;">
+                <tbody style="border-top: 1px solid var(--border-soft);">
                     @forelse($transaksis as $tx)
                     @php
                         $type = $tx->type ?? 'pos';
@@ -124,28 +141,30 @@
                         $produkNames = $tx->detail ? $tx->detail->map(fn($d) => optional($d->produk)->nama_produk)->filter()->implode(', ') : '-';
                     @endphp
                     <tr>
-                        <td class="ps-4">
-                            <code style="font-size: 11.5px; color: #EC95A8; background: #FFF0F3; padding: 4px 8px; border-radius: 6px;">
+                        <td class="py-3 ps-4">
+                            <span class="badge" style="background: var(--pink-soft-2); color: var(--pink-primary-dark); border: 1px solid var(--border-soft); font-family: monospace; font-size: 11.5px; padding: 5px 8px;">
                                 {{ $kode }}
-                            </code>
-                        </td>
-                        <td>
-                            <span class="badge" style="background: {{ $type === 'online' ? '#FFE6E6' : '#E8F7EE' }}; color: {{ $type === 'online' ? '#DC3545' : '#52976D' }};">
-                                {{ $type === 'online' ? 'ONLINE' : 'POS' }}
                             </span>
                         </td>
-                        <td class="fw-semibold text-dark" title="{{ $produkNames }}">
+                        <td class="py-3">
+                            @if($type === 'online')
+                                <span class="badge font-semibold px-2.5 py-1" style="background: #F3E5F5; color: #7B1FA2; font-size: 10.5px;">PESANAN ONLINE</span>
+                            @else
+                                <span class="badge bg-success font-semibold px-2.5 py-1" style="font-size: 10.5px;">KASIR (POS)</span>
+                            @endif
+                        </td>
+                        <td class="py-3 fw-bold" style="color: var(--ink);" title="{{ $produkNames }}">
                             {{ \Illuminate\Support\Str::limit($produkNames, 45) }}
                         </td>
-                        <td class="text-end fw-bold" style="color: #4D3D43;">
+                        <td class="py-3 text-end fw-bold" style="color: #52976D; font-size: 13.5px;">
                             Rp {{ number_format($tx->total_harga ?? 0, 0, ',', '.') }}
                         </td>
-                        <td class="text-muted small">
+                        <td class="py-3 text-muted font-semibold" style="font-size: 12px;">
                             {{ $tx->tanggal ? \Carbon\Carbon::parse($tx->tanggal)->format('d-m-Y H:i') : '-' }}
                         </td>
-                        <td class="pe-4 text-center">
+                        <td class="py-3 pe-4 text-center">
                             <a href="{{ route('retur.create', ['transaksi_id' => $tx->id, 'type' => $type]) }}" 
-                               class="btn btn-sm btn-yb rounded-pill px-3 fw-bold">
+                               class="btn btn-sm btn-yb px-3 py-1.5 font-semibold text-white shadow-sm" style="border-radius: 10px; font-size: 12px;">
                                 <i class="bi bi-plus-lg me-1"></i> Pilih
                             </a>
                         </td>
@@ -153,14 +172,10 @@
                     @empty
                     <tr>
                         <td colspan="6" class="text-center py-5">
-                            <div class="py-3">
-                                <div style="font-size: 3rem; color: #F6C9D3; margin-bottom: 10px;">
-                                    <i class="bi bi-inbox"></i>
-                                </div>
-                                <h6 class="fw-bold text-dark mb-1">Transaksi tidak ditemukan</h6>
-                                <small class="text-muted">
-                                    Gunakan filter tanggal, sesi live, atau kata kunci pencarian di atas untuk menemukan transaksi
-                                </small>
+                            <div class="py-4">
+                                <i class="bi bi-inbox fs-1 d-block mb-2" style="color: var(--border-soft);"></i>
+                                <h6 class="fw-bold mb-1" style="color: var(--ink);">Transaksi tidak ditemukan</h6>
+                                <small class="text-muted font-semibold">Gunakan filter tanggal, sesi live, atau kata kunci pencarian di atas untuk menemukan transaksi</small>
                             </div>
                         </td>
                     </tr>
@@ -170,7 +185,7 @@
         </div>
     </div>
 
-    <!-- KARTU MOBILE -->
+    <!-- KARTU MOBILE (HP) -->
     <div class="d-lg-none">
         @forelse($transaksis as $tx)
         @php
@@ -178,51 +193,51 @@
             $kode = $tx->kode_transaksi ?? '-';
             $produkNames = $tx->detail ? $tx->detail->map(fn($d) => optional($d->produk)->nama_produk)->filter()->implode(', ') : '-';
         @endphp
-        <div class="card border-0 shadow-sm rounded-4 mb-3" style="overflow: hidden; background: #fff;">
-            <div class="card-body p-3">
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <div>
-                        <code style="font-size: 12px; color: #EC95A8; background: #FFF0F3; padding: 4px 8px; border-radius: 6px;">
-                            {{ $kode }}
-                        </code>
-                        <br>
-                        <span class="badge mt-1" style="background: {{ $type === 'online' ? '#FFE6E6' : '#E8F7EE' }}; color: {{ $type === 'online' ? '#DC3545' : '#52976D' }}; font-size: 11px;">
-                            {{ $type === 'online' ? 'PESANAN ONLINE' : 'KASIR POS' }}
-                        </span>
-                    </div>
+        <div class="p-3 mb-3 rounded-3" style="background: #ffffff; border: 1.5px solid var(--border-soft);">
+            <div class="d-flex justify-content-between align-items-start mb-2.5">
+                <div>
+                    <span class="badge mb-1" style="background: var(--pink-soft-2); color: var(--pink-primary-dark); font-family: monospace; font-size: 11px;">
+                        {{ $kode }}
+                    </span>
+                    <br>
+                    @if($type === 'online')
+                        <span class="badge font-semibold px-2 py-0.5" style="background: #F3E5F5; color: #7B1FA2; font-size: 10px;">PESANAN ONLINE</span>
+                    @else
+                        <span class="badge bg-success font-semibold px-2 py-0.5" style="font-size: 10px;">KASIR (POS)</span>
+                    @endif
                 </div>
-
-                <div class="mb-3">
-                    <small class="text-muted d-block" style="font-size: 11px;">Produk</small>
-                    <strong class="text-dark d-block">{{ $produkNames }}</strong>
-                </div>
-
-                <div class="row g-2 mb-3">
-                    <div class="col-6">
-                        <small class="text-muted d-block" style="font-size: 11px;">Total</small>
-                        <strong style="color: #EC95A8; font-size: 15px;">Rp {{ number_format($tx->total_harga ?? 0, 0, ',', '.') }}</strong>
-                    </div>
-                    <div class="col-6">
-                        <small class="text-muted d-block" style="font-size: 11px;">Tanggal</small>
-                        <strong class="text-dark">{{ $tx->tanggal ? \Carbon\Carbon::parse($tx->tanggal)->format('d-m-Y') : '-' }}</strong>
-                    </div>
-                </div>
-
-                <a href="{{ route('retur.create', ['transaksi_id' => $tx->id, 'type' => $type]) }}" 
-                   class="btn btn-yb w-100 rounded-pill fw-bold">
-                    <i class="bi bi-plus-lg me-1"></i> Pilih Transaksi Ini
-                </a>
             </div>
+
+            <div class="mb-3">
+                <small class="text-muted d-block font-semibold" style="font-size: 11px;">Produk</small>
+                <strong style="color: var(--ink); font-size: 13px;">{{ $produkNames }}</strong>
+            </div>
+
+            <div class="row g-2 mb-3">
+                <div class="col-6">
+                    <div class="p-2 rounded-2" style="background: var(--pink-soft-2); border: 1px solid var(--border-soft);">
+                        <small class="text-muted d-block" style="font-size: 10px;">Total Transaksi</small>
+                        <strong style="color: #52976D; font-size: 12.5px;">Rp {{ number_format($tx->total_harga ?? 0, 0, ',', '.') }}</strong>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-2 rounded-2" style="background: var(--pink-soft-2); border: 1px solid var(--border-soft);">
+                        <small class="text-muted d-block" style="font-size: 10px;">Tanggal</small>
+                        <strong style="color: var(--ink); font-size: 12px;">{{ $tx->tanggal ? \Carbon\Carbon::parse($tx->tanggal)->format('d-m-Y') : '-' }}</strong>
+                    </div>
+                </div>
+            </div>
+
+            <a href="{{ route('retur.create', ['transaksi_id' => $tx->id, 'type' => $type]) }}" 
+               class="btn btn-yb w-100 font-semibold text-white shadow-sm" style="border-radius: 12px; font-size: 12.5px;">
+                <i class="bi bi-plus-lg me-1"></i> Pilih Transaksi Ini
+            </a>
         </div>
         @empty
-        <div class="card border-0 shadow-sm rounded-4 text-center py-5" style="background: #fff;">
-            <div style="font-size: 3rem; color: #F6C9D3; margin-bottom: 10px;">
-                <i class="bi bi-inbox"></i>
-            </div>
-            <h6 class="fw-bold text-dark mb-1">Transaksi tidak ditemukan</h6>
-            <small class="text-muted">
-                Gunakan filter di atas untuk menampilkan data transaksi
-            </small>
+        <div class="card-yb text-center py-5">
+            <i class="bi bi-inbox fs-1 d-block mb-2" style="color: var(--border-soft);"></i>
+            <h6 class="fw-bold mb-1" style="color: var(--ink);">Transaksi tidak ditemukan</h6>
+            <small class="text-muted font-semibold">Gunakan filter di atas untuk menampilkan data transaksi</small>
         </div>
         @endforelse
     </div>
@@ -231,25 +246,25 @@
 <!-- MODAL SCAN / FOTO BARCODE UNTUK SEARCH TRANSAKSI -->
 <div class="modal fade" id="scanBarcodeModal" tabindex="-1" aria-labelledby="scanBarcodeModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 rounded-4">
-            <div class="modal-header border-bottom" style="border-color: #F7E5EA;">
-                <h5 class="modal-title fw-bold" id="scanBarcodeModalLabel">
-                    <i class="bi bi-qr-code-scan me-2" style="color: #EC95A8;"></i>Scan / Foto Barcode & QR Code
-                </h5>
+        <div class="modal-content border-0" style="border-radius: 20px; box-shadow: 0 15px 40px rgba(0,0,0,0.12);">
+            <div class="modal-header py-3 px-4" style="border-bottom: 1.5px dashed var(--border-soft); background: var(--pink-soft-2);">
+                <h6 class="modal-title fw-bold mb-0" id="scanBarcodeModalLabel" style="color: var(--ink); font-family: 'Quicksand', sans-serif;">
+                    <i class="bi bi-qr-code-scan me-2" style="color: var(--pink-primary);"></i>Scan / Foto Barcode & QR Code
+                </h6>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-4">
                 
                 <!-- Nav Tabs Pilihan Metode -->
-                <ul class="nav nav-pills nav-fill mb-3 rounded-pill p-1" style="background: #FFF5F7; border: 1px solid #F7E5EA;" id="barcodeTab" role="tablist">
+                <ul class="nav nav-pills nav-fill mb-3 p-1" style="background: var(--pink-soft-2); border: 1px solid var(--border-soft); border-radius: 14px;" id="barcodeTab" role="tablist">
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link active rounded-pill fw-bold small py-2" id="camera-tab" data-bs-toggle="tab" data-bs-target="#camera-pane" type="button" role="tab">
+                        <button class="nav-link active font-semibold small py-2" id="camera-tab" data-bs-toggle="tab" data-bs-target="#camera-pane" type="button" role="tab" style="border-radius: 10px;">
                             <i class="bi bi-camera-video-fill me-1"></i> Live Kamera
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link rounded-pill fw-bold small py-2" id="file-tab" data-bs-toggle="tab" data-bs-target="#file-pane" type="button" role="tab">
-                            <i class="bi bi-image-fill me-1"></i> Upload / Ambil Foto
+                        <button class="nav-link font-semibold small py-2" id="file-tab" data-bs-toggle="tab" data-bs-target="#file-pane" type="button" role="tab" style="border-radius: 10px;">
+                            <i class="bi bi-image-fill me-1"></i> Upload Foto
                         </button>
                     </li>
                 </ul>
@@ -258,22 +273,22 @@
                 <div class="tab-content mb-3" id="barcodeTabContent">
                     <!-- Tab 1: Live Kamera -->
                     <div class="tab-pane fade show active" id="camera-pane" role="tabpanel">
-                        <div id="scanner" style="width: 100%; min-height: 280px; background: #f0f0f0; border-radius: 12px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                        <div id="scanner" style="width: 100%; min-height: 260px; background: #f9f9f9; border-radius: 14px; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1.5px solid var(--border-soft);">
                             <div class="text-center p-4">
                                 <i class="bi bi-camera fs-1 text-muted mb-2"></i>
-                                <p class="text-muted mb-0 small">Arahkan kamera ke QR Code atau Barcode transaksi...</p>
+                                <p class="text-muted mb-0 font-semibold" style="font-size: 12px;">Arahkan kamera ke QR Code atau Barcode transaksi...</p>
                             </div>
                         </div>
                     </div>
 
                     <!-- Tab 2: Upload Foto -->
                     <div class="tab-pane fade" id="file-pane" role="tabpanel">
-                        <div class="text-center p-4 rounded-3" style="border: 2px dashed #EC95A8; background: #FAF8F9;">
-                            <i class="bi bi-cloud-arrow-up-fill fs-1" style="color: #EC95A8;"></i>
-                            <h6 class="fw-bold mt-2 mb-1 text-dark">Pilih Foto atau Ambil Jepretan</h6>
-                            <p class="text-muted small mb-3">Upload screenshot pesanan atau foto resi/QR Code yang jelas</p>
+                        <div class="text-center p-4" style="border: 2px dashed var(--pink-primary); background: var(--pink-soft-2); border-radius: 14px;">
+                            <i class="bi bi-cloud-arrow-up-fill fs-1" style="color: var(--pink-primary);"></i>
+                            <h6 class="fw-bold mt-2 mb-1" style="color: var(--ink);">Pilih Foto atau Ambil Jepretan</h6>
+                            <p class="text-muted font-semibold mb-3" style="font-size: 11.5px;">Upload screenshot pesanan atau foto resi/QR Code yang jelas</p>
                             
-                            <label for="barcodeFileInput" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" style="cursor: pointer;">
+                            <label for="barcodeFileInput" class="btn btn-yb px-4 py-2 font-semibold text-white shadow-sm" style="cursor: pointer; border-radius: 12px; font-size: 12.5px;">
                                 <i class="bi bi-folder2-open me-1"></i> Pilih File Foto / Kamera
                             </label>
                             <input type="file" id="barcodeFileInput" accept="image/*" class="d-none">
@@ -281,8 +296,8 @@
                         
                         <!-- Preview Hasil Foto -->
                         <div id="imagePreviewArea" class="text-center mt-3 d-none">
-                            <img id="previewImg" src="" alt="Preview Barcode" class="img-fluid rounded-3 mb-2" style="max-height: 180px; border: 1px solid #E8D9E0;">
-                            <div id="decodeStatus" class="small fw-bold text-muted">Sedang membaca kode...</div>
+                            <img id="previewImg" src="" alt="Preview Barcode" class="img-fluid mb-2" style="max-height: 180px; border-radius: 12px; border: 1px solid var(--border-soft);">
+                            <div id="decodeStatus" class="font-semibold text-muted" style="font-size: 12px;">Sedang membaca kode...</div>
                         </div>
                     </div>
                 </div>
@@ -290,20 +305,20 @@
                 <div id="scanner-hidden" style="display: none;"></div>
 
                 <!-- Manual Input Fallback -->
-                <div class="border-top pt-3" style="border-color: #F7E5EA !important;">
-                    <label class="form-label fw-bold small text-muted mb-1">ATAU KETIK MANUAL:</label>
+                <div class="pt-3" style="border-top: 1.5px dashed var(--border-soft);">
+                    <label class="form-label font-bold text-muted mb-1" style="font-size: 11px;">ATAU KETIK MANUAL:</label>
                     <form id="manualSearchForm" method="GET" action="{{ route('retur.select') }}" class="mb-0">
                         <div class="input-group">
-                            <input type="text" id="barcodeSearchInput" name="search" class="form-control" placeholder="Ketik nomor transaksi / resi...">
-                            <button class="btn btn-primary" type="submit" id="searchBarcodeBtn">
+                            <input type="text" id="barcodeSearchInput" name="search" class="form-control font-semibold" placeholder="Ketik nomor transaksi / resi..." style="border-radius: 12px 0 0 12px; border-color: var(--border-soft); font-size: 12.5px;">
+                            <button class="btn btn-yb px-3 font-semibold text-white" type="submit" id="searchBarcodeBtn" style="border-radius: 0 12px 12px 0;">
                                 <i class="bi bi-search me-1"></i>Cari
                             </button>
                         </div>
                     </form>
                 </div>
             </div>
-            <div class="modal-footer border-top py-2" style="border-color: #F7E5EA;">
-                <button type="button" class="btn btn-sm btn-secondary rounded-pill px-3" data-bs-dismiss="modal">Tutup</button>
+            <div class="modal-footer py-2" style="border-top: 1px solid var(--border-soft);">
+                <button type="button" class="btn btn-yb-outline px-4 font-semibold" data-bs-dismiss="modal" style="border-radius: 10px; font-size: 12px;">Tutup</button>
             </div>
         </div>
     </div>
@@ -387,7 +402,7 @@ window.addEventListener('DOMContentLoaded', function() {
             const file = e.target.files[0];
 
             if (typeof Html5Qrcode === 'undefined') {
-                alert('Library scanner gagal dimuat.');
+                if (window.notify) notify.error('Library scanner gagal dimuat.');
                 return;
             }
 
@@ -398,16 +413,16 @@ window.addEventListener('DOMContentLoaded', function() {
 
             previewImg.src = imgURL;
             previewArea.classList.remove('d-none');
-            decodeStatus.innerHTML = '<span class="text-primary"><i class="bi bi-hourglass-split me-1"></i>Memindai barcode dari foto...</span>';
+            decodeStatus.innerHTML = '<span style="color: var(--pink-primary);"><i class="bi bi-hourglass-split me-1"></i>Memindai barcode dari foto...</span>';
 
             const fileScanner = new Html5Qrcode("scanner-hidden");
             fileScanner.scanFile(file, true)
                 .then(decodedText => {
-                    decodeStatus.innerHTML = `<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>Terbaca: <strong>${decodedText}</strong></span>`;
+                    decodeStatus.innerHTML = `<span style="color: #52976D;"><i class="bi bi-check-circle-fill me-1"></i>Terbaca: <strong>${decodedText}</strong></span>`;
                     setTimeout(() => { processDetectedBarcode(decodedText); }, 800);
                 })
                 .catch(err => {
-                    decodeStatus.innerHTML = '<span class="text-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i>Kode tidak terbaca.</span>';
+                    decodeStatus.innerHTML = '<span style="color: #E05270;"><i class="bi bi-exclamation-triangle-fill me-1"></i>Kode tidak terbaca.</span>';
                 });
         });
     }

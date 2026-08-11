@@ -18,21 +18,21 @@
 </div>
 
 <!-- PANEL PENCARIAN & FILTER PRODUK -->
-<div class="card-yb p-4 mb-4">
-    <form method="GET" action="{{ route('produk.index') }}" class="row g-2 align-items-end">
+<div class="card-yb p-3 p-md-4 mb-4">
+    <form method="GET" action="{{ route('produk.index') }}" class="row g-2.5 align-items-end">
         <!-- Search Input -->
-        <div class="col-12 col-md-3">
+        <div class="col-12 col-lg-4">
             <label class="form-label font-semibold text-muted mb-1" style="font-size: 11.5px;">Cari Produk / Kode SKU</label>
             <div class="input-group">
                 <span class="input-group-text bg-white border-end-0" style="border-color: var(--border-soft); border-radius: 12px 0 0 12px; color: var(--ink-soft);">
                     <i class="bi bi-search"></i>
                 </span>
-                <input type="text" name="search" class="form-control border-start-0 ps-0" placeholder="Nama / kode..." value="{{ request('search', '') }}" style="border-radius: 0 12px 12px 0; border-color: var(--border-soft);">
+                <input type="text" name="search" class="form-control border-start-0 ps-0" placeholder="Ketik nama produk / SKU..." value="{{ request('search', '') }}" style="border-radius: 0 12px 12px 0; border-color: var(--border-soft); font-size: 12.5px;">
             </div>
         </div>
 
         <!-- Filter Jenis Pakaian -->
-        <div class="col-6 col-md-2">
+        <div class="col-6 col-md-3 col-lg-2">
             <label class="form-label font-semibold text-muted mb-1" style="font-size: 11.5px;">Jenis Pakaian</label>
             <select name="id_jenis_pakaian" class="form-select font-semibold" style="border-radius: 12px; border-color: var(--border-soft); font-size: 12.5px;">
                 <option value="">Semua Jenis</option>
@@ -45,7 +45,7 @@
         </div>
 
         <!-- Filter Warna -->
-        <div class="col-6 col-md-2">
+        <div class="col-6 col-md-3 col-lg-2">
             <label class="form-label font-semibold text-muted mb-1" style="font-size: 11.5px;">Warna</label>
             <select name="id_warna" class="form-select font-semibold" style="border-radius: 12px; border-color: var(--border-soft); font-size: 12.5px;">
                 <option value="">Semua Warna</option>
@@ -58,7 +58,7 @@
         </div>
 
         <!-- Filter Model -->
-        <div class="col-6 col-md-2">
+        <div class="col-6 col-md-3 col-lg-2">
             <label class="form-label font-semibold text-muted mb-1" style="font-size: 11.5px;">Model / Motif</label>
             <select name="id_model" class="form-select font-semibold" style="border-radius: 12px; border-color: var(--border-soft); font-size: 12.5px;">
                 <option value="">Semua Model</option>
@@ -70,8 +70,18 @@
             </select>
         </div>
 
-        <!-- Filter Status & Stok -->
-        <div class="col-6 col-md-2">
+        <!-- Filter Status Produk -->
+        <div class="col-6 col-md-3 col-lg-2">
+            <label class="form-label font-semibold text-muted mb-1" style="font-size: 11.5px;">Status Produk</label>
+            <select name="status" class="form-select font-semibold" style="border-radius: 12px; border-color: var(--border-soft); font-size: 12.5px;">
+                <option value="aktif" {{ request('status', 'aktif') === 'aktif' ? 'selected' : '' }}>Aktif</option>
+                <option value="nonaktif" {{ request('status') === 'nonaktif' ? 'selected' : '' }}>Nonaktif</option>
+                <option value="semua" {{ request('status') === 'semua' ? 'selected' : '' }}>Semua Status</option>
+            </select>
+        </div>
+
+        <!-- Filter Status Stok -->
+        <div class="col-6 col-md-4 col-lg-3">
             <label class="form-label font-semibold text-muted mb-1" style="font-size: 11.5px;">Status Stok</label>
             <select name="stok" class="form-select font-semibold" style="border-radius: 12px; border-color: var(--border-soft); font-size: 12.5px;">
                 <option value="">Semua Stok</option>
@@ -81,13 +91,13 @@
         </div>
 
         <!-- Tombol Submit & Reset -->
-        <div class="col-12 col-md-1 d-flex gap-1">
-            <button type="submit" class="btn btn-yb flex-grow-1 font-semibold" title="Cari / Filter">
-                <i class="bi bi-filter"></i>
+        <div class="col-12 col-md-8 col-lg-9 ms-auto d-flex justify-content-end gap-2 mt-2">
+            <button type="submit" class="btn btn-yb px-4 py-2 font-semibold shadow-sm text-white" style="border-radius: 12px; font-size: 13px;">
+                <i class="bi bi-search me-1.5"></i> Cari & Filter Produk
             </button>
             @if(request()->anyFilled(['search', 'id_jenis_pakaian', 'id_warna', 'id_model', 'status', 'stok']))
-                <a href="{{ route('produk.index') }}" class="btn btn-yb-outline text-decoration-none" title="Reset Filter">
-                    <i class="bi bi-arrow-counterclockwise"></i>
+                <a href="{{ route('produk.index') }}" class="btn btn-yb-outline px-3 py-2 text-decoration-none font-semibold" style="border-radius: 12px; font-size: 13px;">
+                    <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
                 </a>
             @endif
         </div>
@@ -183,10 +193,10 @@
                                 <a href="{{ route('produk.edit', $p->id) }}" class="btn btn-sm btn-light border p-1 px-2" style="border-radius: 8px; font-size: 11.5px;" title="Edit Produk">
                                     <i class="bi bi-pencil-fill text-warning"></i>
                                 </a>
-                                <form method="POST" action="{{ route('produk.destroy', $p->id) }}" class="d-inline" onsubmit="return confirm('Yakin ingin nonaktifkan produk ini?');">
+                                <form method="POST" action="{{ route('produk.destroy', $p->id) }}" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus produk ini?');">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-light border p-1 px-2 text-danger" style="border-radius: 8px; font-size: 11.5px;" title="Nonaktifkan">
+                                    <button type="submit" class="btn btn-sm btn-light border p-1 px-2 text-danger" style="border-radius: 8px; font-size: 11.5px;" title="Hapus Produk">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </form>
@@ -261,11 +271,11 @@
                 <a href="{{ route('produk.edit', $p->id) }}" class="btn btn-sm btn-light border flex-grow-1 font-semibold" style="font-size: 11.5px;">
                     <i class="bi bi-pencil-fill me-1"></i> Edit
                 </a>
-                <form method="POST" action="{{ route('produk.destroy', $p->id) }}" class="d-inline flex-grow-1" onsubmit="return confirm('Yakin ingin nonaktifkan produk ini?');">
+                <form method="POST" action="{{ route('produk.destroy', $p->id) }}" class="d-inline flex-grow-1" onsubmit="return confirm('Apakah Anda yakin ingin menghapus produk ini?');">
                     @csrf
                     @method('DELETE')
                     <button type="submit" class="btn btn-sm btn-light border text-danger w-100 font-semibold" style="font-size: 11.5px;">
-                        <i class="bi bi-trash me-1"></i> Nonaktifkan
+                        <i class="bi bi-trash me-1"></i> Hapus
                     </button>
                 </form>
             </div>

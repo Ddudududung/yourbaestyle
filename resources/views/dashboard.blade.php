@@ -197,17 +197,15 @@
                             </h6>
                             <span class="badge bg-light text-muted font-semibold" style="font-size: 10px;">Kasir Instan</span>
                         </div>
-                        <small class="text-muted font-semibold d-block mb-3" style="font-size: 11.5px;">Mesin Kasir & Transaksi Toko</small>
-
                         <!-- Mini Stat Kasir Hari Ini -->
                         <div class="p-3 rounded-3 mb-3 d-flex justify-content-between align-items-center" style="background: var(--pink-soft-2); border: 1px solid var(--border-soft);">
                             <div>
-                                <small class="text-muted d-block font-semibold" style="font-size: 10.5px;">Omset Kasir Hari Ini</small>
-                                <strong style="color: #52976D; font-size: 14px;">Rp {{ number_format($penjualanHariIni ?? 0, 0, ',', '.') }}</strong>
+                                <small class="text-muted d-block font-semibold" style="font-size: 9px;">Omset Kasir Hari Ini</small>
+                                <strong style="color: #52976D; font-size: 14px;">Rp {{ number_format($posHariIniOmset ?? 0, 0, ',', '.') }}</strong>
                             </div>
                             <div class="text-end">
-                                <small class="text-muted d-block font-semibold" style="font-size: 10.5px;">Total Transaksi</small>
-                                <strong style="color: var(--pink-primary-dark); font-size: 14px;">{{ $totalTransaksiHariIni ?? 1 }} Trx</strong>
+                                <small class="text-muted d-block font-semibold" style="font-size: 9px;">Total Transaksi Hari Ini</small>
+                                <strong style="color: var(--pink-primary-dark); font-size: 14px;">{{ $posHariIniCount ?? 0 }} Trx</strong>
                             </div>
                         </div>
                     </div>

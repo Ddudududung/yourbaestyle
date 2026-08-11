@@ -12,60 +12,74 @@
 
         <p class="text-secondary small fw-bold text-uppercase mb-3" style="letter-spacing:.4px">🧷 Data Produk</p>
         <div class="row g-3 mb-3">
-            <div class="col-md-6">
-                <label class="form-label">Nama Produk <span class="text-danger">*</span></label>
-                <input type="text" name="nama_produk" class="form-control" value="{{ old('nama_produk') }}" required>
+            <!-- 1. Dropdown Jenis Pakaian -->
+            <div class="col-md-4">
+                <label class="form-label fw-bold text-dark small">Jenis Pakaian <span class="text-danger">*</span></label>
+                <select name="id_jenis_pakaian" id="id_jenis_pakaian" class="form-select rounded-3 @error('id_jenis_pakaian') is-invalid @enderror" required>
+                    <option value="">-- Pilih Jenis --</option>
+                    <option value="__NEW__" style="font-weight:bold; color:#d63384;">➕ + Tambah Jenis Baru...</option>
+                    @foreach($jenisPakaian as $jp)
+                        <option value="{{ $jp->id }}" data-nama="{{ $jp->nama }}" {{ old('id_jenis_pakaian') == $jp->id ? 'selected' : '' }}>
+                            {{ $jp->nama }} ({{ $jp->kode }})
+                        </option>
+                    @endforeach
+                </select>
+                <input type="text" name="nama_jenis_pakaian_baru" id="nama_jenis_pakaian_baru" class="form-control form-control-sm mt-2 rounded-3" value="{{ old('nama_jenis_pakaian_baru') }}" placeholder="✍️ Ketik nama jenis baru..." style="display: {{ old('id_jenis_pakaian') == '__NEW__' ? 'block' : 'none' }}; border-color: #ec95a8;">
+                @error('id_jenis_pakaian') 
+                    <small class="text-danger d-block mt-1" style="font-size: 11px;">{{ $message }}</small> 
+                @enderror
             </div>
-           <!-- GANTI INPUT/SELECT LAMA 'JENIS' DENGAN 3 DROPDOWN MASTER DATA INI -->
-<div class="row g-3 mb-3">
-    <!-- 1. Dropdown Jenis Pakaian -->
-    <div class="col-md-4">
-        <label class="form-label fw-bold text-dark small">Jenis Pakaian <span class="text-danger">*</span></label>
-        <select name="id_jenis_pakaian" class="form-select rounded-3 @error('id_jenis_pakaian') is-invalid @enderror" required>
-            <option value="">-- Pilih Jenis --</option>
-            @foreach($jenisPakaian as $jp)
-                <option value="{{ $jp->id }}" {{ old('id_jenis_pakaian') == $jp->id ? 'selected' : '' }}>
-                    {{ $jp->nama }} ({{ $jp->kode }})
-                </option>
-            @endforeach
-        </select>
-        @error('id_jenis_pakaian') 
-            <small class="text-danger d-block mt-1" style="font-size: 11px;">{{ $message }}</small> 
-        @enderror
-    </div>
 
-    <!-- 2. Dropdown Warna -->
-    <div class="col-md-4">
-        <label class="form-label fw-bold text-dark small">Warna <span class="text-danger">*</span></label>
-        <select name="id_warna" class="form-select rounded-3 @error('id_warna') is-invalid @enderror" required>
-            <option value="">-- Pilih Warna --</option>
-            @foreach($warna as $w)
-                <option value="{{ $w->id }}" {{ old('id_warna') == $w->id ? 'selected' : '' }}>
-                    {{ $w->nama }} ({{ $w->kode }})
-                </option>
-            @endforeach
-        </select>
-        @error('id_warna') 
-            <small class="text-danger d-block mt-1" style="font-size: 11px;">{{ $message }}</small> 
-        @enderror
-    </div>
+            <!-- 2. Dropdown Warna -->
+            <div class="col-md-4">
+                <label class="form-label fw-bold text-dark small">Warna <span class="text-danger">*</span></label>
+                <select name="id_warna" id="id_warna" class="form-select rounded-3 @error('id_warna') is-invalid @enderror" required>
+                    <option value="">-- Pilih Warna --</option>
+                    <option value="__NEW__" style="font-weight:bold; color:#d63384;">➕ + Tambah Warna Baru...</option>
+                    @foreach($warna as $w)
+                        <option value="{{ $w->id }}" data-nama="{{ $w->nama }}" {{ old('id_warna') == $w->id ? 'selected' : '' }}>
+                            {{ $w->nama }} ({{ $w->kode }})
+                        </option>
+                    @endforeach
+                </select>
+                <input type="text" name="nama_warna_baru" id="nama_warna_baru" class="form-control form-control-sm mt-2 rounded-3" value="{{ old('nama_warna_baru') }}" placeholder="✍️ Ketik nama warna baru..." style="display: {{ old('id_warna') == '__NEW__' ? 'block' : 'none' }}; border-color: #ec95a8;">
+                @error('id_warna') 
+                    <small class="text-danger d-block mt-1" style="font-size: 11px;">{{ $message }}</small> 
+                @enderror
+            </div>
 
-    <!-- 3. Dropdown Model / Motif -->
-    <div class="col-md-4">
-        <label class="form-label fw-bold text-dark small">Model / Motif <span class="text-danger">*</span></label>
-        <select name="id_model" class="form-select rounded-3 @error('id_model') is-invalid @enderror" required>
-            <option value="">-- Pilih Model --</option>
-            @foreach($model as $m)
-                <option value="{{ $m->id }}" {{ old('id_model') == $m->id ? 'selected' : '' }}>
-                    {{ $m->nama }} ({{ $m->kode }})
-                </option>
-            @endforeach
-        </select>
-        @error('id_model') 
-            <small class="text-danger d-block mt-1" style="font-size: 11px;">{{ $message }}</small> 
-        @enderror
-    </div>
-</div>
+            <!-- 3. Dropdown Model / Motif -->
+            <div class="col-md-4">
+                <label class="form-label fw-bold text-dark small">Model / Motif <span class="text-danger">*</span></label>
+                <select name="id_model" id="id_model" class="form-select rounded-3 @error('id_model') is-invalid @enderror" required>
+                    <option value="">-- Pilih Model --</option>
+                    <option value="__NEW__" style="font-weight:bold; color:#d63384;">➕ + Tambah Model Baru...</option>
+                    @foreach($model as $m)
+                        <option value="{{ $m->id }}" data-nama="{{ $m->nama }}" {{ old('id_model') == $m->id ? 'selected' : '' }}>
+                            {{ $m->nama }} ({{ $m->kode }})
+                        </option>
+                    @endforeach
+                </select>
+                <input type="text" name="nama_model_baru" id="nama_model_baru" class="form-control form-control-sm mt-2 rounded-3" value="{{ old('nama_model_baru') }}" placeholder="✍️ Ketik nama model/motif baru..." style="display: {{ old('id_model') == '__NEW__' ? 'block' : 'none' }}; border-color: #ec95a8;">
+                @error('id_model') 
+                    <small class="text-danger d-block mt-1" style="font-size: 11px;">{{ $message }}</small> 
+                @enderror
+            </div>
+        </div>
+        <div class="row g-3 mb-3">
+            <div class="col-md-12">
+                <label class="form-label fw-bold text-dark">Nama Produk <span class="text-danger">*</span></label>
+                <div class="input-group">
+                    <input type="text" name="nama_produk" id="nama_produk" class="form-control" value="{{ old('nama_produk') }}" placeholder="Otomatis terisi saat memilih jenis, model, & warna" required>
+                    <button type="button" id="btn_generate_nama" class="btn btn-outline-secondary btn-sm px-3" style="font-size:12px;" title="Reset ke nama otomatis">
+                        ⚡ Generate Nama
+                    </button>
+                </div>
+                <small class="text-muted d-block mt-1" style="font-size: 11px;">
+                    💡 <i>Nama terisi otomatis dari gabungan <strong>[Jenis] [Model] [Warna]</strong>. Pegawai tetap bisa mengedit atau menambahkan detail manual.</i>
+                </small>
+            </div>
+        </div>
         <div class="mb-3">
             <label class="form-label">Deskripsi</label>
             <textarea name="deskripsi" class="form-control" rows="2">{{ old('deskripsi') }}</textarea>
@@ -170,7 +184,88 @@
         const hargaBeli = parseFloat((document.getElementById('harga_beli').value || '').toString().replace(/\D/g, '')) || 0;
         document.getElementById('hpp_otomatis_display').value = formatRupiahDisplay(hargaBeli);
     }
-    document.getElementById('harga_beli').addEventListener('input', hitungHPP);
-    document.getElementById('jumlah').addEventListener('input', hitungHPP);
+    document.getElementById('harga_beli')?.addEventListener('input', hitungHPP);
+    document.getElementById('jumlah')?.addEventListener('input', hitungHPP);
+
+    // ============================================================
+    // AUTO GENERATE NAMA PRODUK & TOGGLE TAMBAH MASTER DATA BARU
+    // ============================================================
+    document.addEventListener('DOMContentLoaded', function() {
+        const inputNama = document.getElementById('nama_produk');
+        const selectJenis = document.getElementById('id_jenis_pakaian');
+        const inputJenisBaru = document.getElementById('nama_jenis_pakaian_baru');
+        const selectWarna = document.getElementById('id_warna');
+        const inputWarnaBaru = document.getElementById('nama_warna_baru');
+        const selectModel = document.getElementById('id_model');
+        const inputModelBaru = document.getElementById('nama_model_baru');
+        const btnGenerate = document.getElementById('btn_generate_nama');
+
+        let isManuallyEdited = false;
+
+        if (inputNama) {
+            inputNama.addEventListener('input', function() {
+                isManuallyEdited = true;
+            });
+        }
+
+        function toggleNewInput(selectElem, inputElem) {
+            if (!selectElem || !inputElem) return;
+            if (selectElem.value === '__NEW__') {
+                inputElem.style.display = 'block';
+                inputElem.focus();
+            } else {
+                inputElem.style.display = 'none';
+            }
+        }
+
+        function getSelectedAttributeText(selectElement, inputNewElement) {
+            if (!selectElement) return '';
+            if (selectElement.value === '__NEW__') {
+                return inputNewElement ? inputNewElement.value.trim() : '';
+            }
+            if (selectElement.selectedIndex <= 0) return '';
+            const selectedOpt = selectElement.options[selectElement.selectedIndex];
+            return selectedOpt.getAttribute('data-nama') || selectedOpt.text.replace(/\s*\([^)]*\)/g, '').trim();
+        }
+
+        function generateNamaProduk(force = false) {
+            if (!inputNama) return;
+            if (isManuallyEdited && !force) return;
+
+            const jenis = getSelectedAttributeText(selectJenis, inputJenisBaru);
+            const model = getSelectedAttributeText(selectModel, inputModelBaru);
+            const warna = getSelectedAttributeText(selectWarna, inputWarnaBaru);
+
+            const parts = [jenis, model, warna].filter(Boolean);
+            if (parts.length > 0) {
+                inputNama.value = parts.join(' ');
+            }
+        }
+
+        [
+            { select: selectJenis, input: inputJenisBaru },
+            { select: selectWarna, input: inputWarnaBaru },
+            { select: selectModel, input: inputModelBaru },
+        ].forEach(item => {
+            if (item.select) {
+                item.select.addEventListener('change', function() {
+                    toggleNewInput(item.select, item.input);
+                    generateNamaProduk(false);
+                });
+            }
+            if (item.input) {
+                item.input.addEventListener('input', function() {
+                    generateNamaProduk(false);
+                });
+            }
+        });
+
+        if (btnGenerate) {
+            btnGenerate.addEventListener('click', function() {
+                isManuallyEdited = false;
+                generateNamaProduk(true);
+            });
+        }
+    });
 </script>
 @endpush

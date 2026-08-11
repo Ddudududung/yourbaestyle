@@ -7,6 +7,7 @@ class NotificationManager {
     this.notifications = [];
     this.initContainer();
     this.interceptAlert();
+    this.interceptFormConfirms();
   }
 
   initContainer() {
@@ -177,6 +178,100 @@ class NotificationManager {
     return this.show(message, 'pink', title, duration);
   }
 
+  confirm(options = {}) {
+    return new Promise((resolve) => {
+      const message = typeof options === 'string' ? options : (options.message || 'Apakah Anda yakin?');
+      const title = options.title || 'Konfirmasi Hapus 🌸';
+      const confirmText = options.confirmText || 'Ya, Hapus';
+      const cancelText = options.cancelText || 'Batal';
+      const icon = options.icon || '<i class="bi bi-trash3-fill"></i>';
+
+      let modalOverlay = document.getElementById('yb-confirm-modal');
+      if (!modalOverlay) {
+        modalOverlay = document.createElement('div');
+        modalOverlay.id = 'yb-confirm-modal';
+        modalOverlay.className = 'yb-modal-overlay';
+        modalOverlay.innerHTML = `
+          <div class="yb-modal-card">
+            <div class="yb-modal-icon-wrap" id="yb-modal-icon">${icon}</div>
+            <div class="yb-modal-title" id="yb-modal-title">${title}</div>
+            <div class="yb-modal-text" id="yb-modal-text">${message}</div>
+            <div class="yb-modal-actions">
+              <button type="button" class="yb-modal-btn yb-modal-btn-cancel" id="yb-modal-btn-cancel">${cancelText}</button>
+              <button type="button" class="yb-modal-btn yb-modal-btn-confirm" id="yb-modal-btn-confirm">${confirmText}</button>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(modalOverlay);
+      } else {
+        document.getElementById('yb-modal-icon').innerHTML = icon;
+        document.getElementById('yb-modal-title').textContent = title;
+        document.getElementById('yb-modal-text').textContent = message;
+        document.getElementById('yb-modal-btn-cancel').textContent = cancelText;
+        document.getElementById('yb-modal-btn-confirm').textContent = confirmText;
+      }
+
+      const btnConfirm = document.getElementById('yb-modal-btn-confirm');
+      const btnCancel = document.getElementById('yb-modal-btn-cancel');
+
+      const closeModal = (result) => {
+        modalOverlay.classList.remove('show');
+        setTimeout(() => {
+          resolve(result);
+        }, 220);
+      };
+
+      const newConfirm = btnConfirm.cloneNode(true);
+      const newCancel = btnCancel.cloneNode(true);
+      btnConfirm.parentNode.replaceChild(newConfirm, btnConfirm);
+      btnCancel.parentNode.replaceChild(newCancel, btnCancel);
+
+      newConfirm.addEventListener('click', () => closeModal(true));
+      newCancel.addEventListener('click', () => closeModal(false));
+
+      modalOverlay.onclick = (e) => {
+        if (e.target === modalOverlay) closeModal(false);
+      };
+
+      requestAnimationFrame(() => {
+        modalOverlay.classList.add('show');
+      });
+    });
+  }
+
+  interceptFormConfirms() {
+    if (typeof document === 'undefined') return;
+
+    document.addEventListener('submit', (e) => {
+      const form = e.target;
+      if (form.dataset.ybConfirmed === 'true') {
+        delete form.dataset.ybConfirmed;
+        return;
+      }
+
+      const onsubmitAttr = form.getAttribute('onsubmit');
+      if (onsubmitAttr && onsubmitAttr.includes('confirm(')) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+
+        let match = onsubmitAttr.match(/confirm\s*\(\s*['"](.*?)['"]\s*\)/);
+        let msg = match ? match[1] : 'Apakah Anda yakin ingin menghapus data ini?';
+
+        this.confirm({
+          title: 'Konfirmasi Hapus 🌸',
+          message: msg,
+          confirmText: 'Ya, Hapus',
+          cancelText: 'Batal'
+        }).then((confirmed) => {
+          if (confirmed) {
+            form.dataset.ybConfirmed = 'true';
+            form.submit();
+          }
+        });
+      }
+    }, true);
+  }
+
   clearAll() {
     [...this.notifications].forEach((n) => this.remove(n));
   }
@@ -191,3 +286,4 @@ window.notifyError = (msg, title) => window.notify.error(msg, title);
 window.notifyWarning = (msg, title) => window.notify.warning(msg, title);
 window.notifyInfo = (msg, title) => window.notify.info(msg, title);
 window.notifyPink = (msg, title) => window.notify.pink(msg, title);
+window.ybConfirm = (options) => window.notify.confirm(options);
