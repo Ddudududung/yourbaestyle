@@ -9,7 +9,7 @@ class MsWarna extends Model
 {
     use HasFactory;
 
-    protected $table = 'ms_warnas';
+    protected $table = 'ms_warna';
 
     protected $fillable = [
         'kode',

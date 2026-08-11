@@ -11,7 +11,7 @@ class SesiLive extends Model
 {
     use HasFactory;
  
-    protected $table = 'sesi_lives';
+    protected $table = 'sesi_live';
     
     protected $fillable = [
         'platform',

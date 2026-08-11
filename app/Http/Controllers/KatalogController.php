@@ -11,11 +11,11 @@ class KatalogController extends Controller
     public function index(Request $request)
     {
         // 1. CARI ID PRODUK YANG SEDANG LIVE (Status 'ongoing' DAN belum lewat jam selesai)
-        $liveProdukIds = DB::table('katalog_lives')
-            ->join('sesi_lives', 'katalog_lives.id_sesi_live', '=', 'sesi_lives.id')
-            ->where('sesi_lives.status', 'ongoing')
-            ->whereRaw("TIMESTAMP(sesi_lives.tanggal_live, sesi_lives.jam_selesai) >= ?", [now()])
-            ->pluck('katalog_lives.id_produk')
+        $liveProdukIds = DB::table('katalog_live')
+            ->join('sesi_live', 'katalog_live.id_sesi_live', '=', 'sesi_live.id')
+            ->where('sesi_live.status', 'ongoing')
+            ->whereRaw("TIMESTAMP(sesi_live.tanggal_live, sesi_live.jam_selesai) >= ?", [now()])
+            ->pluck('katalog_live.id_produk')
             ->toArray();
 
         // Fungsi filter pencarian (nama produk / jenis)

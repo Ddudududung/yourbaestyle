@@ -57,7 +57,7 @@ class SesiLiveController extends Controller
 
         $request->validate([
             'tanggal_live' => 'required|date',
-            'id_sesi_live' => 'required|exists:sesi_lives,id',
+            'id_sesi_live' => 'required|exists:sesi_live,id',
             'kode_live'    => 'required|string|max:50',
             'id_produk'    => 'required|exists:produk,id',
             'harga_live'   => 'nullable|numeric|min:0'

@@ -22,6 +22,12 @@
                 <i class="bi bi-arrow-left me-1"></i> Ganti File
             </a>
         </div>
+        @php
+        // Tambahkan pengecekan is_array() dan isset() agar halaman tidak crash jika data kosong/error
+        $berhasil = count(array_filter($parsed, fn($p) => is_array($p) && isset($p['mapping_status']) && $p['mapping_status'] === 'auto_found'));
+        $gagalMapping = count(array_filter($parsed, fn($p) => is_array($p) && isset($p['mapping_status']) && $p['mapping_status'] !== 'auto_found'));
+        $total = is_array($parsed) ? count($parsed) : 0;
+    @endphp
     </div>
 
     <!-- 2. STATISTIK CARDS -->

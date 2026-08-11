@@ -78,11 +78,11 @@ class DashboardController extends Controller
             ->take(6)
             ->values();
 
-        // ========== SESI LIVE BREAKDOWN (Jika ada table sesi_lives) ==========
+        // ========== SESI LIVE BREAKDOWN (Jika ada table sesi_live) ==========
         $sesiHariIni = [];
         try {
             $currentTime = Carbon::now()->format('H:i:s');
-            $sesiHariIni = DB::table('sesi_lives as sl')
+            $sesiHariIni = DB::table('sesi_live as sl')
                 ->leftJoin('pesanan_online as po', 'sl.id', '=', 'po.id_sesi_live')
                 ->select(
                     'sl.id',
@@ -103,7 +103,7 @@ class DashboardController extends Controller
                 ->orderBy('sl.jam_mulai')
                 ->get();
         } catch (\Exception $e) {
-            // Jika tabel sesi_lives belum ada, skip
+            // Jika tabel sesi_live belum ada, skip
             $sesiHariIni = [];
         }
 

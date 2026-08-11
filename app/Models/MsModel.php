@@ -9,7 +9,7 @@ class MsModel extends Model
 {
     use HasFactory;
 
-    protected $table = 'ms_models';
+    protected $table = 'ms_model';
 
     protected $fillable = [
         'kode',

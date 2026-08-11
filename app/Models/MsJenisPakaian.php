@@ -10,7 +10,7 @@ class MsJenisPakaian extends Model
     use HasFactory;
 
     // Menegaskan nama tabel di database phpMyAdmin
-    protected $table = 'ms_jenis_pakaians';
+    protected $table = 'ms_jenis_pakaian';
 
     // Kolom yang boleh diisi saat input data
     protected $fillable = [

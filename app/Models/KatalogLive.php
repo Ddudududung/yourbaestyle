@@ -10,7 +10,7 @@ class KatalogLive extends Model
 {
     use HasFactory;
  
-    protected $table = 'katalog_lives';
+    protected $table = 'katalog_live';
  
     protected $fillable = [
         'id_sesi_live',
