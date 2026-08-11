@@ -14,7 +14,13 @@ class MsWarna extends Model
     protected $fillable = [
         'kode',
         'nama',
+        'nama_warna',
     ];
+
+    public function getNamaAttribute($value)
+    {
+        return $value ?? $this->attributes['nama_warna'] ?? '';
+    }
 
     // Relasi: 1 Warna (misal: Kuning) bisa dimiliki oleh banyak Produk
     public function produks()

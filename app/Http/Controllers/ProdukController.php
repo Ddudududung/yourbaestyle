@@ -124,11 +124,15 @@ class ProdukController extends Controller
                     ? strtoupper($userKode) 
                     : $this->generateMasterKode($nama, MsJenisPakaian::class);
 
-                $jenisObj = MsJenisPakaian::where('nama', $nama)->first();
+                $jenisObj = MsJenisPakaian::where('nama', $nama)
+                    ->orWhere('nama_jenis', $nama)
+                    ->first();
+
                 if (!$jenisObj) {
                     $jenisObj = MsJenisPakaian::create([
-                        'nama' => $nama,
-                        'kode' => $kode,
+                        'nama'       => $nama,
+                        'nama_jenis' => $nama,
+                        'kode'       => $kode,
                     ]);
                 }
                 $idJenisPakaian = $jenisObj->id;
@@ -145,11 +149,15 @@ class ProdukController extends Controller
                     ? strtoupper($userKode) 
                     : $this->generateMasterKode($nama, MsWarna::class);
 
-                $warnaObj = MsWarna::where('nama', $nama)->first();
+                $warnaObj = MsWarna::where('nama', $nama)
+                    ->orWhere('nama_warna', $nama)
+                    ->first();
+
                 if (!$warnaObj) {
                     $warnaObj = MsWarna::create([
-                        'nama' => $nama,
-                        'kode' => $kode,
+                        'nama'       => $nama,
+                        'nama_warna' => $nama,
+                        'kode'       => $kode,
                     ]);
                 }
                 $idWarna = $warnaObj->id;
@@ -166,11 +174,15 @@ class ProdukController extends Controller
                     ? strtoupper($userKode) 
                     : $this->generateMasterKode($nama, MsModel::class);
 
-                $modelObj = MsModel::where('nama', $nama)->first();
+                $modelObj = MsModel::where('nama', $nama)
+                    ->orWhere('nama_model', $nama)
+                    ->first();
+
                 if (!$modelObj) {
                     $modelObj = MsModel::create([
-                        'nama' => $nama,
-                        'kode' => $kode,
+                        'nama'       => $nama,
+                        'nama_model' => $nama,
+                        'kode'       => $kode,
                     ]);
                 }
                 $idModel = $modelObj->id;

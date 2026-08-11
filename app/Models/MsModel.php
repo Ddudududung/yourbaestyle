@@ -14,7 +14,13 @@ class MsModel extends Model
     protected $fillable = [
         'kode',
         'nama',
+        'nama_model',
     ];
+
+    public function getNamaAttribute($value)
+    {
+        return $value ?? $this->attributes['nama_model'] ?? '';
+    }
 
     // Relasi: 1 Model (misal: Garis) bisa dimiliki oleh banyak Produk
     public function produks()
