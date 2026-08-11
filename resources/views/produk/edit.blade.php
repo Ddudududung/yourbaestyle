@@ -95,7 +95,22 @@
                                         </option>
                                     @endforeach
                                 </select>
-                                <input type="text" name="nama_jenis_pakaian_baru" id="nama_jenis_pakaian_baru" class="form-control form-control-sm mt-2 rounded-3" value="{{ old('nama_jenis_pakaian_baru') }}" placeholder="✍️ Ketik nama jenis baru..." style="display: {{ old('id_jenis_pakaian') == '__NEW__' ? 'block' : 'none' }}; border-color: #ec95a8;">
+                                <div id="container_jenis_baru" style="display: {{ old('id_jenis_pakaian') == '__NEW__' ? 'block' : 'none' }}; border-color: #ec95a8;" class="mt-2 p-2 rounded-3 bg-light border">
+                                    <div class="row g-1 align-items-center">
+                                        <div class="col-7">
+                                            <input type="text" name="nama_jenis_pakaian_baru" id="nama_jenis_pakaian_baru" class="form-control form-control-sm rounded-3 @error('nama_jenis_pakaian_baru') is-invalid @enderror" value="{{ old('nama_jenis_pakaian_baru') }}" placeholder="✍️ Nama (cth: Cardigan)">
+                                        </div>
+                                        <div class="col-5">
+                                            <div class="input-group input-group-sm">
+                                                <span class="input-group-text px-1 bg-white text-muted" style="font-size:10px;">KODE</span>
+                                                <input type="text" name="kode_jenis_pakaian_baru" id="kode_jenis_pakaian_baru" class="form-control form-control-sm rounded-end-3 text-uppercase fw-bold" value="{{ old('kode_jenis_pakaian_baru') }}" placeholder="CAR" maxlength="10">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @error('nama_jenis_pakaian_baru') 
+                                        <small class="text-danger d-block mt-1" style="font-size: 11px;">{{ $message }}</small> 
+                                    @enderror
+                                </div>
                                 @error('id_jenis_pakaian') 
                                     <small class="text-danger d-block mt-1" style="font-size: 11px;">{{ $message }}</small> 
                                 @enderror
@@ -113,7 +128,22 @@
                                         </option>
                                     @endforeach
                                 </select>
-                                <input type="text" name="nama_warna_baru" id="nama_warna_baru" class="form-control form-control-sm mt-2 rounded-3" value="{{ old('nama_warna_baru') }}" placeholder="✍️ Ketik nama warna baru..." style="display: {{ old('id_warna') == '__NEW__' ? 'block' : 'none' }}; border-color: #ec95a8;">
+                                <div id="container_warna_baru" style="display: {{ old('id_warna') == '__NEW__' ? 'block' : 'none' }}; border-color: #ec95a8;" class="mt-2 p-2 rounded-3 bg-light border">
+                                    <div class="row g-1 align-items-center">
+                                        <div class="col-7">
+                                            <input type="text" name="nama_warna_baru" id="nama_warna_baru" class="form-control form-control-sm rounded-3 @error('nama_warna_baru') is-invalid @enderror" value="{{ old('nama_warna_baru') }}" placeholder="✍️ Nama (cth: Lavender)">
+                                        </div>
+                                        <div class="col-5">
+                                            <div class="input-group input-group-sm">
+                                                <span class="input-group-text px-1 bg-white text-muted" style="font-size:10px;">KODE</span>
+                                                <input type="text" name="kode_warna_baru" id="kode_warna_baru" class="form-control form-control-sm rounded-end-3 text-uppercase fw-bold" value="{{ old('kode_warna_baru') }}" placeholder="LVD" maxlength="10">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @error('nama_warna_baru') 
+                                        <small class="text-danger d-block mt-1" style="font-size: 11px;">{{ $message }}</small> 
+                                    @enderror
+                                </div>
                                 @error('id_warna') 
                                     <small class="text-danger d-block mt-1" style="font-size: 11px;">{{ $message }}</small> 
                                 @enderror
@@ -131,7 +161,22 @@
                                         </option>
                                     @endforeach
                                 </select>
-                                <input type="text" name="nama_model_baru" id="nama_model_baru" class="form-control form-control-sm mt-2 rounded-3" value="{{ old('nama_model_baru') }}" placeholder="✍️ Ketik nama model/motif baru..." style="display: {{ old('id_model') == '__NEW__' ? 'block' : 'none' }}; border-color: #ec95a8;">
+                                <div id="container_model_baru" style="display: {{ old('id_model') == '__NEW__' ? 'block' : 'none' }}; border-color: #ec95a8;" class="mt-2 p-2 rounded-3 bg-light border">
+                                    <div class="row g-1 align-items-center">
+                                        <div class="col-7">
+                                            <input type="text" name="nama_model_baru" id="nama_model_baru" class="form-control form-control-sm rounded-3 @error('nama_model_baru') is-invalid @enderror" value="{{ old('nama_model_baru') }}" placeholder="✍️ Nama (cth: Oversize)">
+                                        </div>
+                                        <div class="col-5">
+                                            <div class="input-group input-group-sm">
+                                                <span class="input-group-text px-1 bg-white text-muted" style="font-size:10px;">KODE</span>
+                                                <input type="text" name="kode_model_baru" id="kode_model_baru" class="form-control form-control-sm rounded-end-3 text-uppercase fw-bold" value="{{ old('kode_model_baru') }}" placeholder="OVS" maxlength="10">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @error('nama_model_baru') 
+                                        <small class="text-danger d-block mt-1" style="font-size: 11px;">{{ $message }}</small> 
+                                    @enderror
+                                </div>
                                 @error('id_model') 
                                     <small class="text-danger d-block mt-1" style="font-size: 11px;">{{ $message }}</small> 
                                 @enderror
@@ -310,16 +355,45 @@ function toggleKoreksiStok(val) {
 }
 
 // ============================================================
-// AUTO GENERATE NAMA PRODUK & TOGGLE TAMBAH MASTER DATA BARU
+// AUTO GENERATE NAMA PRODUK & KODE MASTER DATA BARU
 // ============================================================
+function generate3LetterCode(text) {
+    if (!text) return '';
+    const clean = text.replace(/[^A-Za-z0-9\s]/g, '').trim().toUpperCase();
+    if (!clean) return '';
+    const words = clean.split(/\s+/).filter(Boolean);
+    let code = '';
+    if (words.length >= 3) {
+        code = words[0][0] + words[1][0] + words[2][0];
+    } else if (words.length === 2) {
+        if (words[0].length >= 2) {
+            code = words[0].substring(0, 2) + words[1][0];
+        } else {
+            code = words[0][0] + words[1].substring(0, 2);
+        }
+    } else {
+        code = clean.substring(0, 3);
+    }
+    return code.padEnd(3, 'X').substring(0, 3);
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const inputNama = document.getElementById('nama_produk');
     const selectJenis = document.getElementById('id_jenis_pakaian');
+    const containerJenisBaru = document.getElementById('container_jenis_baru');
     const inputJenisBaru = document.getElementById('nama_jenis_pakaian_baru');
+    const inputKodeJenisBaru = document.getElementById('kode_jenis_pakaian_baru');
+
     const selectWarna = document.getElementById('id_warna');
+    const containerWarnaBaru = document.getElementById('container_warna_baru');
     const inputWarnaBaru = document.getElementById('nama_warna_baru');
+    const inputKodeWarnaBaru = document.getElementById('kode_warna_baru');
+
     const selectModel = document.getElementById('id_model');
+    const containerModelBaru = document.getElementById('container_model_baru');
     const inputModelBaru = document.getElementById('nama_model_baru');
+    const inputKodeModelBaru = document.getElementById('kode_model_baru');
+
     const btnGenerate = document.getElementById('btn_generate_nama');
 
     let isManuallyEdited = false;
@@ -330,13 +404,13 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function toggleNewInput(selectElem, inputElem) {
-        if (!selectElem || !inputElem) return;
+    function toggleNewContainer(selectElem, containerElem, inputNameElem) {
+        if (!selectElem || !containerElem) return;
         if (selectElem.value === '__NEW__') {
-            inputElem.style.display = 'block';
-            inputElem.focus();
+            containerElem.style.display = 'block';
+            if (inputNameElem) inputNameElem.focus();
         } else {
-            inputElem.style.display = 'none';
+            containerElem.style.display = 'none';
         }
     }
 
@@ -364,19 +438,30 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    [
-        { select: selectJenis, input: inputJenisBaru },
-        { select: selectWarna, input: inputWarnaBaru },
-        { select: selectModel, input: inputModelBaru },
-    ].forEach(item => {
+    const items = [
+        { select: selectJenis, container: containerJenisBaru, inputName: inputJenisBaru, inputKode: inputKodeJenisBaru, userEditedKode: false },
+        { select: selectWarna, container: containerWarnaBaru, inputName: inputWarnaBaru, inputKode: inputKodeWarnaBaru, userEditedKode: false },
+        { select: selectModel, container: containerModelBaru, inputName: inputModelBaru, inputKode: inputKodeModelBaru, userEditedKode: false },
+    ];
+
+    items.forEach(item => {
         if (item.select) {
             item.select.addEventListener('change', function() {
-                toggleNewInput(item.select, item.input);
+                toggleNewContainer(item.select, item.container, item.inputName);
                 generateNamaProduk(false);
             });
         }
-        if (item.input) {
-            item.input.addEventListener('input', function() {
+        if (item.inputKode) {
+            item.inputKode.addEventListener('input', function() {
+                item.userEditedKode = true;
+                this.value = this.value.toUpperCase();
+            });
+        }
+        if (item.inputName) {
+            item.inputName.addEventListener('input', function() {
+                if (item.inputKode && !item.userEditedKode) {
+                    item.inputKode.value = generate3LetterCode(this.value);
+                }
                 generateNamaProduk(false);
             });
         }
@@ -390,5 +475,4 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
-
 @endsection

@@ -77,6 +77,41 @@ class ProdukController extends Controller
     // ============================================================
     // HELPER ON-THE-FLY MASTER DATA
     // ============================================================
+    /**
+     * Helper untuk membuat 3-letter master code secara otomatis & unik
+     * Contoh: "Cardigan" -> "CAR", "Kaos Polos Pria" -> "KPP", "Abu-Abu" -> "ABU"
+     */
+    private function generateMasterKode(string $nama, string $modelClass): string
+    {
+        $clean = strtoupper(trim(preg_replace('/[^A-Za-z0-9\s]/', '', $nama)));
+        $words = array_values(array_filter(explode(' ', $clean)));
+
+        if (count($words) >= 3) {
+            $baseKode = substr($words[0], 0, 1) . substr($words[1], 0, 1) . substr($words[2], 0, 1);
+        } elseif (count($words) === 2) {
+            if (strlen($words[0]) >= 2) {
+                $baseKode = substr($words[0], 0, 2) . substr($words[1], 0, 1);
+            } else {
+                $baseKode = substr($words[0], 0, 1) . substr($words[1], 0, 2);
+            }
+        } else {
+            $baseKode = substr($clean, 0, 3);
+        }
+
+        $baseKode = strtoupper(str_pad($baseKode, 3, 'X'));
+        $kode = $baseKode;
+        $counter = 1;
+
+        // Pastikan unik di tabel model terkait
+        while ($modelClass::where('kode', $kode)->exists()) {
+            $counter++;
+            $suffix = (string) $counter;
+            $kode = substr($baseKode, 0, max(1, 3 - strlen($suffix))) . $suffix;
+        }
+
+        return $kode;
+    }
+
     private function resolveMasterData(Request $request)
     {
         // 1. Jenis Pakaian
@@ -84,8 +119,18 @@ class ProdukController extends Controller
         if ($idJenisPakaian === '__NEW__' || !empty($request->nama_jenis_pakaian_baru)) {
             $nama = trim($request->nama_jenis_pakaian_baru ?? '');
             if (!empty($nama)) {
-                $kode = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $nama), 0, 4)) ?: 'JNS';
-                $jenisObj = MsJenisPakaian::firstOrCreate(['nama' => $nama], ['kode' => $kode]);
+                $userKode = trim($request->kode_jenis_pakaian_baru ?? '');
+                $kode = !empty($userKode) 
+                    ? strtoupper($userKode) 
+                    : $this->generateMasterKode($nama, MsJenisPakaian::class);
+
+                $jenisObj = MsJenisPakaian::where('nama', $nama)->first();
+                if (!$jenisObj) {
+                    $jenisObj = MsJenisPakaian::create([
+                        'nama' => $nama,
+                        'kode' => $kode,
+                    ]);
+                }
                 $idJenisPakaian = $jenisObj->id;
             }
         }
@@ -95,8 +140,18 @@ class ProdukController extends Controller
         if ($idWarna === '__NEW__' || !empty($request->nama_warna_baru)) {
             $nama = trim($request->nama_warna_baru ?? '');
             if (!empty($nama)) {
-                $kode = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $nama), 0, 4)) ?: 'WRN';
-                $warnaObj = MsWarna::firstOrCreate(['nama' => $nama], ['kode' => $kode]);
+                $userKode = trim($request->kode_warna_baru ?? '');
+                $kode = !empty($userKode) 
+                    ? strtoupper($userKode) 
+                    : $this->generateMasterKode($nama, MsWarna::class);
+
+                $warnaObj = MsWarna::where('nama', $nama)->first();
+                if (!$warnaObj) {
+                    $warnaObj = MsWarna::create([
+                        'nama' => $nama,
+                        'kode' => $kode,
+                    ]);
+                }
                 $idWarna = $warnaObj->id;
             }
         }
@@ -106,8 +161,18 @@ class ProdukController extends Controller
         if ($idModel === '__NEW__' || !empty($request->nama_model_baru)) {
             $nama = trim($request->nama_model_baru ?? '');
             if (!empty($nama)) {
-                $kode = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $nama), 0, 4)) ?: 'MDL';
-                $modelObj = MsModel::firstOrCreate(['nama' => $nama], ['kode' => $kode]);
+                $userKode = trim($request->kode_model_baru ?? '');
+                $kode = !empty($userKode) 
+                    ? strtoupper($userKode) 
+                    : $this->generateMasterKode($nama, MsModel::class);
+
+                $modelObj = MsModel::where('nama', $nama)->first();
+                if (!$modelObj) {
+                    $modelObj = MsModel::create([
+                        'nama' => $nama,
+                        'kode' => $kode,
+                    ]);
+                }
                 $idModel = $modelObj->id;
             }
         }
@@ -142,11 +207,14 @@ class ProdukController extends Controller
             $request->validate([
                 'nama_produk'             => 'required|string|max:150',
                 'id_jenis_pakaian'        => 'required',
-                'nama_jenis_pakaian_baru' => 'nullable|string|max:100',
+                'nama_jenis_pakaian_baru' => 'required_if:id_jenis_pakaian,__NEW__|nullable|string|max:100',
+                'kode_jenis_pakaian_baru' => 'nullable|string|max:10',
                 'id_warna'                => 'required',
-                'nama_warna_baru'         => 'nullable|string|max:100',
+                'nama_warna_baru'         => 'required_if:id_warna,__NEW__|nullable|string|max:100',
+                'kode_warna_baru'         => 'nullable|string|max:10',
                 'id_model'                => 'required',
-                'nama_model_baru'         => 'nullable|string|max:100',
+                'nama_model_baru'         => 'required_if:id_model,__NEW__|nullable|string|max:100',
+                'kode_model_baru'         => 'nullable|string|max:10',
                 'harga_jual'              => 'required|numeric|min:0',
                 'id_pemasok'              => 'required|exists:pemasok,id',
                 'jumlah'                  => 'required|integer|min:1',
@@ -280,11 +348,14 @@ class ProdukController extends Controller
             $request->validate([
                 'nama_produk'             => 'required|string|max:150',
                 'id_jenis_pakaian'        => 'required',
-                'nama_jenis_pakaian_baru' => 'nullable|string|max:100',
+                'nama_jenis_pakaian_baru' => 'required_if:id_jenis_pakaian,__NEW__|nullable|string|max:100',
+                'kode_jenis_pakaian_baru' => 'nullable|string|max:10',
                 'id_warna'                => 'required',
-                'nama_warna_baru'         => 'nullable|string|max:100',
+                'nama_warna_baru'         => 'required_if:id_warna,__NEW__|nullable|string|max:100',
+                'kode_warna_baru'         => 'nullable|string|max:10',
                 'id_model'                => 'required',
-                'nama_model_baru'         => 'nullable|string|max:100',
+                'nama_model_baru'         => 'required_if:id_model,__NEW__|nullable|string|max:100',
+                'kode_model_baru'         => 'nullable|string|max:10',
                 'harga_jual'              => 'required|numeric|min:0',
                 'id_pemasok'              => 'required|exists:pemasok,id',
                 'jenis_koreksi_stok'      => 'nullable|in:tetap,tambah,kurang,set_total',
