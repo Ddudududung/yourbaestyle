@@ -49,74 +49,48 @@
         </div>
     </div>
 
-    <!-- 2. STATISTIK CARDS (THEMED SOFT PINK & MINT & GOLD) -->
+    <!-- 2. STATISTIK CARDS (CENTER ALIGNED & THEMED) -->
     <div class="row g-2.5 g-md-3 mb-4">
         <div class="col-6 col-md-3">
-            <div class="p-3.5 rounded-4 h-100 d-flex flex-column justify-content-between" style="background: #E8F7EE; border: 1.5px solid #C3EEDB; box-shadow: 0 4px 12px rgba(46, 175, 108, 0.08);">
-                <div class="d-flex align-items-center justify-content-between mb-2">
+            <div class="p-3.5 rounded-4 h-100 text-center d-flex flex-column justify-content-center align-items-center" style="background: #E8F7EE; border: 1.5px solid #C3EEDB; box-shadow: 0 4px 12px rgba(46, 175, 108, 0.08);">
+                <div class="d-flex align-items-center justify-content-center gap-1.5 mb-1">
                     <span class="fw-bold text-success small"><i class="bi bi-check-circle-fill me-1"></i> Auto-Map</span>
-                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2" style="font-size: 10px;">Teratas</span>
                 </div>
-                <div>
-                    <h3 class="mb-0 fw-bold text-success" style="font-size: 1.6rem;">{{ $berhasil }}</h3>
-                    <small class="text-success font-semibold opacity-85" style="font-size: 11px;">Sudah terpetakan otomatis</small>
-                </div>
+                <h3 class="mb-1 fw-bold text-success" style="font-size: 1.7rem; font-family: 'Quicksand', sans-serif;">{{ $berhasil }}</h3>
+                <small class="text-success font-semibold opacity-85" style="font-size: 11px;">Sudah terpetakan otomatis</small>
             </div>
         </div>
 
         <div class="col-6 col-md-3">
-            <div class="p-3.5 rounded-4 h-100 d-flex flex-column justify-content-between" style="background: #FFF9E6; border: 1.5px solid #FFE699; box-shadow: 0 4px 12px rgba(230, 138, 0, 0.08);">
-                <div class="d-flex align-items-center justify-content-between mb-2">
+            <div class="p-3.5 rounded-4 h-100 text-center d-flex flex-column justify-content-center align-items-center" style="background: #FFF9E6; border: 1.5px solid #FFE699; box-shadow: 0 4px 12px rgba(230, 138, 0, 0.08); cursor: pointer;" onclick="filterTab('manual')" title="Klik untuk lihat yang perlu manual">
+                <div class="d-flex align-items-center justify-content-center gap-1.5 mb-1">
                     <span class="fw-bold text-warning-emphasis small"><i class="bi bi-exclamation-triangle-fill me-1"></i> Perlu Manual</span>
-                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2" style="font-size: 10px;">Terbawah</span>
                 </div>
-                <div>
-                    <h3 class="mb-0 fw-bold text-warning-emphasis" style="font-size: 1.6rem;">{{ $gagalMapping }}</h3>
-                    <small class="text-warning-emphasis font-semibold opacity-85" style="font-size: 11px;">Perlu dipilih atau skip</small>
-                </div>
+                <h3 class="mb-1 fw-bold text-warning-emphasis" style="font-size: 1.7rem; font-family: 'Quicksand', sans-serif;">{{ $gagalMapping }}</h3>
+                <small class="text-warning-emphasis font-semibold opacity-85" style="font-size: 11px;">Perlu dipilih / skip</small>
             </div>
         </div>
 
         <div class="col-6 col-md-3">
-            <div class="p-3.5 rounded-4 h-100 d-flex flex-column justify-content-between" style="background: var(--pink-soft-2); border: 1.5px solid var(--border-soft); box-shadow: 0 4px 12px rgba(236, 149, 168, 0.08);">
-                <div class="d-flex align-items-center justify-content-between mb-2">
+            <div class="p-3.5 rounded-4 h-100 text-center d-flex flex-column justify-content-center align-items-center" style="background: var(--pink-soft-2); border: 1.5px solid var(--border-soft); box-shadow: 0 4px 12px rgba(236, 149, 168, 0.08);">
+                <div class="d-flex align-items-center justify-content-center gap-1.5 mb-1">
                     <span class="fw-bold small" style="color: var(--ink);"><i class="bi bi-box-seam me-1" style="color: var(--pink-primary);"></i> Total Order</span>
                 </div>
-                <div>
-                    <h3 class="mb-0 fw-bold" style="color: var(--pink-primary-dark); font-size: 1.6rem;">{{ $total }}</h3>
-                    <small class="text-muted font-semibold" style="font-size: 11px;">Valid item dari file Excel</small>
-                </div>
+                <h3 class="mb-1 fw-bold" style="color: var(--pink-primary-dark); font-size: 1.7rem; font-family: 'Quicksand', sans-serif;">{{ $total }}</h3>
+                <small class="text-muted font-semibold" style="font-size: 11px;">Valid item dari Excel</small>
             </div>
         </div>
 
         <div class="col-6 col-md-3">
-            <div class="p-3.5 rounded-4 h-100 d-flex flex-column justify-content-between" style="background: #FAF0F7; border: 1.5px solid #EBC6E3; box-shadow: 0 4px 12px rgba(124, 53, 90, 0.06);">
-                <div class="d-flex align-items-center justify-content-between mb-2">
+            <div class="p-3.5 rounded-4 h-100 text-center d-flex flex-column justify-content-center align-items-center" style="background: #FAF0F7; border: 1.5px solid #EBC6E3; box-shadow: 0 4px 12px rgba(124, 53, 90, 0.06);">
+                <div class="d-flex align-items-center justify-content-center gap-1.5 mb-1">
                     <span class="fw-bold small" style="color: #7C355A;"><i class="bi bi-lightning-charge-fill me-1"></i> Ready</span>
                 </div>
-                <div>
-                    <h3 class="mb-0 fw-bold" style="color: #7C355A; font-size: 1.6rem;">{{ $total > 0 ? '✓' : '–' }}</h3>
-                    <small class="text-muted font-semibold" style="font-size: 11px;">Siap disimpan</small>
-                </div>
+                <h3 class="mb-1 fw-bold" style="color: #7C355A; font-size: 1.7rem; font-family: 'Quicksand', sans-serif;">{{ $total > 0 ? '✓' : '–' }}</h3>
+                <small class="text-muted font-semibold" style="font-size: 11px;">Siap disimpan</small>
             </div>
         </div>
     </div>
-
-    <!-- 3. WARNING ALERT (AESTHETIC SOFT AMBER) -->
-    @if($gagalMapping > 0)
-    <div class="p-3.5 mb-4 d-flex align-items-start gap-2.5 shadow-sm" style="background: #FFF7F2; border: 1.5px solid #F8D6C2; border-radius: 16px; color: #6E3B1C;">
-        <i class="bi bi-exclamation-triangle-fill fs-5 mt-0.5" style="color: #EE9A68; flex-shrink: 0;"></i>
-        <div class="flex-grow-1">
-            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-0.5">
-                <strong style="font-size: 13.5px;">Ada {{ $gagalMapping }} Kode Variasi yang Perlu Dipilih</strong>
-                <button type="button" class="btn btn-sm px-2.5 py-1 text-decoration-none font-semibold rounded-pill" onclick="filterTab('manual')" style="background: #FFEAD9; color: #B35118; font-size: 11.5px; border: 1px solid #F8C3A4;">
-                    <i class="bi bi-funnel-fill me-1"></i> Tampilkan Hanya yang Manual
-                </button>
-            </div>
-            <small class="font-semibold text-muted d-block" style="font-size: 12px;">Item ber-status Auto-Map telah dikelompokkan di <strong>atas</strong>, sedangkan item yang perlu pilihan manual berada di <strong>bawah</strong>.</small>
-        </div>
-    </div>
-    @endif
 
     <!-- 4. FORM IMPORT & EKSEKUSI PANEL -->
     <form id="import-form" action="{{ route('pesanan.import.proses') }}" method="POST">
