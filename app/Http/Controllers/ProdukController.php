@@ -467,54 +467,18 @@ class ProdukController extends Controller
 
             // PROSES UPLOAD FOTO BARU ATAU HAPUS FOTO LAMA
             if ($request->hasFile('foto')) {
-                if ($produk->foto && \Illuminate\Support\Facades\Storage::disk('public')->exists($produk->foto)) {
-                    \Illuminate\Support\Facades\Storage::disk('public')->delete($produk->foto);
-                }
-                $produk->foto = $request->file('foto')->store('produk', 'public');
-            } elseif ($request->boolean('hapus_foto')) {
-                if ($produk->foto && \Illuminate\Support\Facades\Storage::disk('public')->exists($produk->foto)) {
                 if ($produk->foto && Storage::disk('public')->exists($produk->foto)) {
                     Storage::disk('public')->delete($produk->foto);
                 }
-                $fotoPath = null;
-            }
-
-            // Update stok jika ada perubahan stok manual
-            $stokLama = (int) $produk->stok;
-            $stokBaru = (int) $request->stok;
-            $selisihStok = $stokBaru - $stokLama;
-            $pesanStok = '';
-
-            if ($selisihStok !== 0 && $cleanHargaBeliUnit !== null) {
-                if ($selisihStok > 0) {
-                    PembelianBarang::create([
-                        'id_produk'           => $produk->id,
-                        'id_pemasok'          => $request->id_pemasok,
-                        'qty'                 => $selisihStok,
-                        'harga_beli_per_unit' => $cleanHargaBeliUnit,
-                        'tanggal_pembelian'  => now()->toDateString(),
-                        'keterangan'         => 'Penambahan stok manual via Edit Produk',
-                    ]);
-                    $pesanStok = "Stok bertambah +{$selisihStok} unit.";
-                } else {
-                    $pesanStok = "Stok disesuaikan berkurang " . abs($selisihStok) . " unit.";
+                $produk->foto = $request->file('foto')->store('produk', 'public');
+            } elseif ($request->boolean('hapus_foto')) {
+                if ($produk->foto && Storage::disk('public')->exists($produk->foto)) {
+                    Storage::disk('public')->delete($produk->foto);
                 }
+                $produk->foto = null;
             }
 
-            $produk->update([
-                'nama_produk'         => $request->nama_produk,
-                'id_jenis_pakaian'    => $idJenis,
-                'id_warna'            => $idWarna,
-                'id_model'            => $idModel,
-                'harga_jual'          => $cleanHargaJual,
-                'harga_beli_per_unit' => $cleanHargaBeliUnit ?? $produk->harga_beli_per_unit,
-                'hpp_realisasi'       => $cleanHppRealisasi,
-                'stok'                => $stokBaru,
-                'id_pemasok'          => $request->id_pemasok,
-                'foto'                => $fotoPath,
-                'deskripsi'           => $request->deskripsi,
-                'status'              => $request->status,
-            ]);
+            $produk->save();
 
             DB::commit();
 
@@ -524,6 +488,8 @@ class ProdukController extends Controller
 
             Log::info('Produk updated', [
                 'produk_id' => $produk->id,
+                'stok_lama' => $stokLama,
+                'stok_baru' => $stokBaru,
                 'user_id'   => Auth::id(),
             ]);
 
@@ -591,3 +557,4 @@ class ProdukController extends Controller
             return back()->with('error', '❌ Gagal menghapus produk: ' . $e->getMessage());
         }
     }
+}
