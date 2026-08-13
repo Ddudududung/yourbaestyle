@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="stylesheet" href="{{ asset('css/notifications.css') }}?v=2.0">
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ asset('css/style.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/style.css') }}?v={{ time() }}">
     @stack('styles')
 </head>
 <body>
@@ -25,8 +25,8 @@
         </button>
         <div class="sidebar">
             <div class="brand">
-                <div class="brand-logo-wrapper">
-                    <img src="{{ asset('images/logo.svg') }}" alt="Yourbaestyle Logo" class="brand-logo-img" onerror="this.onerror=null; this.src='{{ asset('images/logo.png') }}';">
+                <div class="brand-logo-wrapper" style="width: 38px; height: 38px; min-width: 38px; min-height: 38px; max-width: 38px; max-height: 38px; border-radius: 50%; overflow: hidden; flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.2); background: #FFDCED; display: flex; align-items: center; justify-content: center; border: 2px solid rgba(255, 255, 255, 0.4);">
+                    <img src="{{ asset('images/logo.svg') }}" alt="Yourbaestyle Logo" style="width: 100%; height: 100%; max-width: 100%; max-height: 100%; object-fit: cover; display: block;" onerror="this.onerror=null; this.src='{{ asset('images/logo.png') }}';">
                 </div>
                 <div>
                     <div class="brand-text">Yourbaestyle</div>
