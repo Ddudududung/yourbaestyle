@@ -183,6 +183,27 @@ class PesananOnlineController extends Controller
     }
 }
 
+    /** Helper: Cek apakah baris merupakan header/deskripsi dummy */
+    private function isDummyHeaderRow(string $noPesanan, ?string $variasi = null): bool
+    {
+        $no = strtolower(trim($noPesanan));
+        $var = strtolower(trim($variasi ?? ''));
+
+        if (empty($no)) return true;
+
+        if (str_contains($no, 'platform') || 
+            str_contains($no, 'unique order') || 
+            str_contains($no, 'field to explain') || 
+            str_contains($no, 'filed to explain') ||
+            str_contains($no, 'order status') ||
+            str_contains($var, 'sku variation') ||
+            str_contains($var, 'platform sku')) {
+            return true;
+        }
+
+        return false;
+    }
+
     /** Parser: Shopee Standard / Reguler */
     private function parseShopeeStandardRobust(array $data): ?array
     {
@@ -201,16 +222,16 @@ class PesananOnlineController extends Controller
             'Nomor Pesanan', 'ID Pesanan'
         ], ''));
         
-        // Abaikan baris header / penjelasan dummy
-        if (empty($noPesanan) || strtolower($noPesanan) === 'platform unique order id' || str_contains(strtolower($noPesanan), 'the filed to explain')) {
-            return null;
-        }
-
         $rawVariasi = trim((string)$this->getValueFromData($data, [
             'Nama Variasi', 'NamaVariasi',
             'Variasi', 'SKU Name', 'SKU', 'Varian',
             'Variant', 'SKU Code', 'Option'
         ], ''));
+
+        // Abaikan baris header / penjelasan dummy
+        if ($this->isDummyHeaderRow($noPesanan, $rawVariasi)) {
+            return null;
+        }
 
         // Jika variasi panjang (misal "54, NO RETUR..."), ambil kode awalnya
         if (!empty($rawVariasi) && str_contains($rawVariasi, ',')) {
@@ -264,14 +285,15 @@ class PesananOnlineController extends Controller
             'No. Pesanan', 'Order ID'
         ], ''));
         
-        if (empty($noPesanan) || strtolower($noPesanan) === 'platform unique order id' || str_contains(strtolower($noPesanan), 'the filed to explain')) return null;
-
         $info = (string)$this->getValueFromData($data, [
             'product_info', 'Product Info', 'ProductInfo'
         ], '');
+
+        $variasi = $this->ekstrakField($info, 'Nama Variasi');
+
+        if ($this->isDummyHeaderRow($noPesanan, $variasi)) return null;
         
         $namaProduk = $this->ekstrakField($info, 'Nama Produk');
-        $variasi = $this->ekstrakField($info, 'Nama Variasi');
         if (!empty($variasi) && str_contains($variasi, ',')) {
             $parts = explode(',', $variasi);
             $variasi = trim($parts[0]);
@@ -310,16 +332,16 @@ class PesananOnlineController extends Controller
             'Order ID', 'OrderID', 'order_id',
             'No. Pesanan', 'Order Number'
         ], ''));
-        
-        // Abaikan baris penjelasan header TikTok ("Platform unique order ID")
-        if (empty($noPesanan) || strtolower($noPesanan) === 'platform unique order id' || str_contains(strtolower($noPesanan), 'the filed to explain')) {
-            return null;
-        }
 
         $rawVariasi = trim((string)$this->getValueFromData($data, [
             'Variation', 'variation', 'SKU Name', 'sku_name', 'SKU',
             'Variasi', 'Variant', 'Seller SKU', 'SellerSKU', 'Platform SKU'
         ], ''));
+        
+        // Abaikan baris penjelasan header TikTok ("Platform unique order ID.")
+        if ($this->isDummyHeaderRow($noPesanan, $rawVariasi)) {
+            return null;
+        }
 
         // Jika variasi TikTok berupa "IYB 3, NO RETUR, MEMBELI ARTINYA AGREE", ambil "IYB 3"
         if (!empty($rawVariasi) && str_contains($rawVariasi, ',')) {

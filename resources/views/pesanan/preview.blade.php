@@ -4,11 +4,16 @@
 
 @section('content')
 @php
-    // 1. Filter out dummy rows (misal baris header deskripsi TikTok "Platform unique order ID")
+    // 1. Filter out dummy rows (misal baris header deskripsi TikTok "Platform unique order ID.")
     $cleanParsed = array_values(array_filter($parsed ?? [], function($p) {
         if (!is_array($p)) return false;
-        $no = strtolower($p['no_pesanan'] ?? '');
-        return $no !== '' && $no !== 'platform unique order id' && !str_contains($no, 'the filed to explain');
+        $no = strtolower(trim($p['no_pesanan'] ?? ''));
+        $var = strtolower(trim($p['variasi'] ?? ''));
+        if (empty($no)) return false;
+        if (str_contains($no, 'platform') || str_contains($no, 'unique order') || str_contains($no, 'explain') || str_contains($var, 'sku variation') || str_contains($var, 'platform sku')) {
+            return false;
+        }
+        return true;
     }));
 
     // 2. Sorting: Auto-Mapped di ATAS, Manual di BAWAH
