@@ -86,7 +86,7 @@
                             <!-- 1. Dropdown Jenis Pakaian -->
                             <div class="col-md-4">
                                 <label class="form-label fw-bold text-dark small">Jenis Pakaian <span class="text-danger">*</span></label>
-                                <select name="id_jenis_pakaian" id="id_jenis_pakaian" class="form-select rounded-3 @error('id_jenis_pakaian') is-invalid @enderror" required>
+                                <select name="id_jenis_pakaian" id="id_jenis_pakaian" class="form-select select-searchable rounded-3 @error('id_jenis_pakaian') is-invalid @enderror" required>
                                     <option value="">-- Pilih Jenis --</option>
                                     <option value="__NEW__" style="font-weight:bold; color:#d63384;">➕ + Tambah Jenis Baru...</option>
                                     @foreach($jenisPakaian as $jp)
@@ -119,7 +119,7 @@
                             <!-- 2. Dropdown Warna -->
                             <div class="col-md-4">
                                 <label class="form-label fw-bold text-dark small">Warna <span class="text-danger">*</span></label>
-                                <select name="id_warna" id="id_warna" class="form-select rounded-3 @error('id_warna') is-invalid @enderror" required>
+                                <select name="id_warna" id="id_warna" class="form-select select-searchable rounded-3 @error('id_warna') is-invalid @enderror" required>
                                     <option value="">-- Pilih Warna --</option>
                                     <option value="__NEW__" style="font-weight:bold; color:#d63384;">➕ + Tambah Warna Baru...</option>
                                     @foreach($warna as $w)
@@ -152,7 +152,7 @@
                             <!-- 3. Dropdown Model -->
                             <div class="col-md-4">
                                 <label class="form-label fw-bold text-dark small">Model / Motif <span class="text-danger">*</span></label>
-                                <select name="id_model" id="id_model" class="form-select rounded-3 @error('id_model') is-invalid @enderror" required>
+                                <select name="id_model" id="id_model" class="form-select select-searchable rounded-3 @error('id_model') is-invalid @enderror" required>
                                     <option value="">-- Pilih Model --</option>
                                     <option value="__NEW__" style="font-weight:bold; color:#d63384;">➕ + Tambah Model Baru...</option>
                                     @foreach($model as $m)
@@ -199,7 +199,7 @@
 
                     <div class="col-md-6">
                         <label class="form-label fw-bold text-dark">Pemasok <span class="text-danger">*</span></label>
-                        <select name="id_pemasok" class="form-select" required>
+                        <select name="id_pemasok" class="form-select select-searchable" required>
                             <option value="">Pilih Pemasok</option>
                             @foreach($pemasok as $p)
                                 <option value="{{ $p->id }}" {{ old('id_pemasok', $produk->id_pemasok) == $p->id ? 'selected' : '' }}>

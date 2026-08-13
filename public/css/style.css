@@ -1251,3 +1251,62 @@ body {
     border-color: var(--pink-primary);
     color: var(--pink-primary-dark);
 }
+
+/* ============================================================ */
+/* SEARCHABLE SELECT (TOM SELECT STYLING) */
+/* ============================================================ */
+.ts-control {
+    border-radius: 12px !important;
+    border: 1.5px solid var(--border-soft) !important;
+    font-size: 13px !important;
+    font-family: 'Nunito', sans-serif !important;
+    padding: 8px 12px !important;
+    min-height: 42px !important;
+    box-shadow: none !important;
+    background-color: #ffffff !important;
+    transition: all 0.2s ease !important;
+}
+
+.ts-control:focus, .ts-control.focus {
+    border-color: var(--pink-primary) !important;
+    box-shadow: 0 0 0 3px rgba(236, 149, 168, 0.25) !important;
+}
+
+.ts-control .item {
+    font-weight: 600 !important;
+    color: var(--ink) !important;
+}
+
+.ts-control input {
+    font-size: 13px !important;
+    font-family: 'Nunito', sans-serif !important;
+}
+
+.ts-dropdown {
+    border-radius: 12px !important;
+    border: 1px solid var(--border-soft) !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.12) !important;
+    overflow: hidden !important;
+    margin-top: 4px !important;
+    z-index: 1060 !important;
+}
+
+.ts-dropdown .option {
+    padding: 9px 14px !important;
+    font-size: 12.5px !important;
+    font-weight: 600 !important;
+    color: var(--ink) !important;
+    transition: background 0.15s ease !important;
+}
+
+.ts-dropdown .option.active, 
+.ts-dropdown .option:hover {
+    background-color: var(--pink-soft-2) !important;
+    color: var(--pink-primary-dark) !important;
+}
+
+.ts-dropdown [data-selectable] .highlight {
+    background-color: #FFDCED !important;
+    border-radius: 3px !important;
+}
+

@@ -8,6 +8,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="stylesheet" href="{{ asset('css/notifications.css') }}?v=2.0">
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/style.css') }}?v={{ time() }}">
     @stack('styles')
@@ -238,9 +239,27 @@
 
     @stack('scripts')
     <script src="{{ asset('js/notifications.js') }}?v=2.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
 
 <script>
+    function initSearchableSelects() {
+        if (typeof TomSelect === 'undefined') return;
+        document.querySelectorAll('select.select-searchable, select.form-select-searchable, select[data-searchable="true"]').forEach(function(el) {
+            if (!el.tomselect) {
+                new TomSelect(el, {
+                    create: false,
+                    maxOptions: 150,
+                    controlInput: '<input>',
+                    onChange: function(val) {
+                        el.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                });
+            }
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
+        initSearchableSelects();
         @if($errors->any())
             @foreach($errors->all() as $error)
                 if (window.notify) notify.error('{!! addslashes($error) !!}', 'Validasi Error');

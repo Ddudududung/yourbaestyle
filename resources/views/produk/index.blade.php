@@ -39,7 +39,7 @@
         <!-- Filter Jenis Pakaian -->
         <div class="col-6 col-md-3 col-lg-2">
             <label class="form-label font-semibold text-muted mb-1" style="font-size: 11.5px;">Jenis Pakaian</label>
-            <select name="id_jenis_pakaian" class="form-select font-semibold" style="border-radius: 12px; border-color: var(--border-soft); font-size: 12.5px;">
+            <select name="id_jenis_pakaian" class="form-select select-searchable font-semibold" style="border-radius: 12px; border-color: var(--border-soft); font-size: 12.5px;">
                 <option value="">Semua Jenis</option>
                 @foreach($jenisPakaian as $jp)
                     <option value="{{ $jp->id }}" {{ request('id_jenis_pakaian') == $jp->id ? 'selected' : '' }}>
@@ -52,7 +52,7 @@
         <!-- Filter Warna -->
         <div class="col-6 col-md-3 col-lg-2">
             <label class="form-label font-semibold text-muted mb-1" style="font-size: 11.5px;">Warna</label>
-            <select name="id_warna" class="form-select font-semibold" style="border-radius: 12px; border-color: var(--border-soft); font-size: 12.5px;">
+            <select name="id_warna" class="form-select select-searchable font-semibold" style="border-radius: 12px; border-color: var(--border-soft); font-size: 12.5px;">
                 <option value="">Semua Warna</option>
                 @foreach($warna as $w)
                     <option value="{{ $w->id }}" {{ request('id_warna') == $w->id ? 'selected' : '' }}>
@@ -65,7 +65,7 @@
         <!-- Filter Model -->
         <div class="col-6 col-md-3 col-lg-2">
             <label class="form-label font-semibold text-muted mb-1" style="font-size: 11.5px;">Model / Motif</label>
-            <select name="id_model" class="form-select font-semibold" style="border-radius: 12px; border-color: var(--border-soft); font-size: 12.5px;">
+            <select name="id_model" class="form-select select-searchable font-semibold" style="border-radius: 12px; border-color: var(--border-soft); font-size: 12.5px;">
                 <option value="">Semua Model</option>
                 @foreach($model as $m)
                     <option value="{{ $m->id }}" {{ request('id_model') == $m->id ? 'selected' : '' }}>
