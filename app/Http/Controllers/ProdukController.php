@@ -12,6 +12,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 
 class ProdukController extends Controller
 {
@@ -314,8 +316,9 @@ class ProdukController extends Controller
     {
         $produk = Produk::with(['pemasok', 'retur', 'jenisPakaian', 'warna', 'model'])->findOrFail($id);
 
-        $prevProduk = Produk::where('id', '<', $produk->id)->orderBy('id', 'desc')->first();
-        $nextProduk = Produk::where('id', '>', $produk->id)->orderBy('id', 'asc')->first();
+        // Hanya ambil produk dengan status AKTIF untuk navigasi Sebelumnya & Selanjutnya
+        $prevProduk = Produk::where('status', 'aktif')->where('id', '<', $produk->id)->orderBy('id', 'desc')->first();
+        $nextProduk = Produk::where('status', 'aktif')->where('id', '>', $produk->id)->orderBy('id', 'asc')->first();
 
         $riwayat = PembelianBarang::with('pemasok')
                     ->where('id_produk', $id)
@@ -470,12 +473,48 @@ class ProdukController extends Controller
                 $produk->foto = $request->file('foto')->store('produk', 'public');
             } elseif ($request->boolean('hapus_foto')) {
                 if ($produk->foto && \Illuminate\Support\Facades\Storage::disk('public')->exists($produk->foto)) {
-                    \Illuminate\Support\Facades\Storage::disk('public')->delete($produk->foto);
+                if ($produk->foto && Storage::disk('public')->exists($produk->foto)) {
+                    Storage::disk('public')->delete($produk->foto);
                 }
-                $produk->foto = null;
+                $fotoPath = null;
             }
 
-            $produk->save();
+            // Update stok jika ada perubahan stok manual
+            $stokLama = (int) $produk->stok;
+            $stokBaru = (int) $request->stok;
+            $selisihStok = $stokBaru - $stokLama;
+            $pesanStok = '';
+
+            if ($selisihStok !== 0 && $cleanHargaBeliUnit !== null) {
+                if ($selisihStok > 0) {
+                    PembelianBarang::create([
+                        'id_produk'           => $produk->id,
+                        'id_pemasok'          => $request->id_pemasok,
+                        'qty'                 => $selisihStok,
+                        'harga_beli_per_unit' => $cleanHargaBeliUnit,
+                        'tanggal_pembelian'  => now()->toDateString(),
+                        'keterangan'         => 'Penambahan stok manual via Edit Produk',
+                    ]);
+                    $pesanStok = "Stok bertambah +{$selisihStok} unit.";
+                } else {
+                    $pesanStok = "Stok disesuaikan berkurang " . abs($selisihStok) . " unit.";
+                }
+            }
+
+            $produk->update([
+                'nama_produk'         => $request->nama_produk,
+                'id_jenis_pakaian'    => $idJenis,
+                'id_warna'            => $idWarna,
+                'id_model'            => $idModel,
+                'harga_jual'          => $cleanHargaJual,
+                'harga_beli_per_unit' => $cleanHargaBeliUnit ?? $produk->harga_beli_per_unit,
+                'hpp_realisasi'       => $cleanHppRealisasi,
+                'stok'                => $stokBaru,
+                'id_pemasok'          => $request->id_pemasok,
+                'foto'                => $fotoPath,
+                'deskripsi'           => $request->deskripsi,
+                'status'              => $request->status,
+            ]);
 
             DB::commit();
 
@@ -485,8 +524,6 @@ class ProdukController extends Controller
 
             Log::info('Produk updated', [
                 'produk_id' => $produk->id,
-                'stok_lama' => $stokLama,
-                'stok_baru' => $stokBaru,
                 'user_id'   => Auth::id(),
             ]);
 
@@ -506,7 +543,7 @@ class ProdukController extends Controller
     }
 
     // ============================================================
-    // DELETE
+    // DELETE (HAPUS PERMANEN / HAPUS TOTAL)
     // ============================================================
     public function destroy(string $id)
     {
@@ -515,45 +552,38 @@ class ProdukController extends Controller
             $nama = $produk->nama_produk;
             $kode = $produk->kode_produk;
 
-            // Cek apakah produk memiliki riwayat transaksi/pesanan/retur
-            $hasTransaksi = $produk->detailTransaksi()->exists();
-            $hasPesanan   = $produk->detailPesanan()->exists();
-            $hasRetur     = $produk->retur()->exists();
-            $hasPembelianLain = $produk->pembelian()->where('keterangan', '!=', 'Pembelian awal produk')->exists();
+            DB::beginTransaction();
 
-            if (!$hasTransaksi && !$hasPesanan && !$hasRetur && !$hasPembelianLain) {
-                // Hapus record pembelian awal jika ada
-                $produk->pembelian()->delete();
-
-                // Hapus foto jika ada
-                if ($produk->foto && \Illuminate\Support\Facades\Storage::disk('public')->exists($produk->foto)) {
-                    \Illuminate\Support\Facades\Storage::disk('public')->delete($produk->foto);
-                }
-
-                // Hapus produk secara permanen dari database
-                $produk->delete();
-
-                Log::info('Produk deleted permanently', [
-                    'kode' => $kode,
-                    'user_id' => Auth::id(),
-                ]);
-
-                return redirect()->route('produk.index')
-                                 ->with('success', "✅ Produk [{$kode} - {$nama}] berhasil dihapus!");
-            } else {
-                // Jika produk memiliki riwayat transaksi, ubah status menjadi nonaktif agar data transaksi tetap utuh
-                $produk->update(['status' => 'nonaktif']);
-
-                Log::info('Produk deactivated due to existing transactions', [
-                    'kode' => $kode,
-                    'user_id' => Auth::id(),
-                ]);
-
-                return redirect()->route('produk.index')
-                                 ->with('success', "⚠️ Produk [{$kode} - {$nama}] memiliki riwayat transaksi sehingga tidak dapat dihapus permanen untuk menjaga riwayat toko, namun statusnya telah diubah menjadi NONAKTIF!");
+            // Hapus record relasi terkait agar Hapus Total berjalan bersih tanpa Foreign Key Violation
+            DB::table('pembelian_barang')->where('id_produk', $produk->id)->delete();
+            DB::table('detail_transaksi_pos')->where('id_produk', $produk->id)->delete();
+            DB::table('detail_pesanan_online')->where('id_produk', $produk->id)->delete();
+            DB::table('retur')->where('id_produk', $produk->id)->delete();
+            if (Schema::hasTable('katalog_live')) {
+                DB::table('katalog_live')->where('id_produk', $produk->id)->delete();
             }
 
+            // Hapus foto file jika ada
+            if ($produk->foto && Storage::disk('public')->exists($produk->foto)) {
+                Storage::disk('public')->delete($produk->foto);
+            }
+
+            // Hapus produk secara permanen dari database
+            $produk->delete();
+
+            DB::commit();
+
+            Log::info('Produk deleted permanently', [
+                'kode' => $kode,
+                'user_id' => Auth::id(),
+            ]);
+
+            return redirect()->route('produk.index')
+                             ->with('success', "✅ Produk [{$kode} - {$nama}] telah BERHASIL DIHAPUS TOTAL dari database!");
+
         } catch (\Exception $e) {
+            DB::rollBack();
+
             Log::error('Produk delete failed', [
                 'error' => $e->getMessage(),
             ]);
@@ -561,4 +591,3 @@ class ProdukController extends Controller
             return back()->with('error', '❌ Gagal menghapus produk: ' . $e->getMessage());
         }
     }
-}
