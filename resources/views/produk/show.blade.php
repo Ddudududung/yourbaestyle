@@ -5,13 +5,25 @@
 @section('content')
 
 <!-- Header Action Nav -->
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
     <a href="{{ route('produk.index') }}" class="btn btn-yb-outline text-decoration-none">
         <i class="bi bi-arrow-left me-1"></i> Kembali ke Daftar Produk
     </a>
-    <a href="{{ route('produk.edit', $produk->id) }}" class="btn btn-yb">
-        <i class="bi bi-pencil-square me-1"></i> Edit Produk
-    </a>
+    <div class="d-flex gap-2">
+        @if($prevProduk)
+            <a href="{{ route('produk.show', $prevProduk->id) }}" class="btn btn-white border rounded-pill px-3 py-2 font-semibold text-decoration-none" title="Sebelumnya: {{ $prevProduk->nama_produk }}" style="font-size: 13px; color: var(--ink);">
+                <i class="bi bi-chevron-left me-1" style="color: var(--pink-primary);"></i> <span class="d-none d-sm-inline">Sebelumnya</span>
+            </a>
+        @endif
+        @if($nextProduk)
+            <a href="{{ route('produk.show', $nextProduk->id) }}" class="btn btn-white border rounded-pill px-3 py-2 font-semibold text-decoration-none" title="Selanjutnya: {{ $nextProduk->nama_produk }}" style="font-size: 13px; color: var(--ink);">
+                <span class="d-none d-sm-inline">Selanjutnya</span> <i class="bi bi-chevron-right ms-1" style="color: var(--pink-primary);"></i>
+            </a>
+        @endif
+        <a href="{{ route('produk.edit', $produk->id) }}" class="btn btn-yb rounded-pill px-3.5 py-2 font-semibold text-decoration-none">
+            <i class="bi bi-pencil-square me-1"></i> Edit Produk
+        </a>
+    </div>
 </div>
 
 <div class="row g-4">
@@ -146,5 +158,60 @@
         </div>
     </div>
 </div>
+
+<!-- BAR NAVIGASI BAWAH (SEBELUMNYA / SELANJUTNYA) -->
+<div class="card-yb p-3 mt-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            @if($prevProduk)
+                <a href="{{ route('produk.show', $prevProduk->id) }}" id="btnPrevProduk" class="btn btn-white border rounded-pill px-3 py-2 font-semibold text-decoration-none shadow-sm" style="font-size: 13px; color: var(--ink); border-color: var(--border-soft);">
+                    <i class="bi bi-arrow-left me-1.5" style="color: var(--pink-primary);"></i> <span class="d-none d-sm-inline">Sebelumnya:</span> <strong>{{ Str::limit($prevProduk->nama_produk, 26) }}</strong>
+                </a>
+            @else
+                <button class="btn btn-light rounded-pill px-3 py-2 text-muted font-semibold" style="font-size: 13px;" disabled>
+                    <i class="bi bi-arrow-left me-1"></i> Produk Pertama
+                </button>
+            @endif
+        </div>
+
+        <div class="text-center d-none d-md-block">
+            <span class="badge rounded-pill bg-light text-muted border px-3 py-1.5 font-semibold" style="font-size: 11px;">
+                💡 Tips: Tekan <kbd class="bg-dark text-white">←</kbd> atau <kbd class="bg-dark text-white">→</kbd> pada keyboard untuk cepat berpindah produk
+            </span>
+        </div>
+
+        <div>
+            @if($nextProduk)
+                <a href="{{ route('produk.show', $nextProduk->id) }}" id="btnNextProduk" class="btn btn-yb rounded-pill px-3 py-2 font-semibold text-decoration-none shadow-sm" style="font-size: 13px;">
+                    <span class="d-none d-sm-inline">Selanjutnya:</span> <strong>{{ Str::limit($nextProduk->nama_produk, 26) }}</strong> <i class="bi bi-arrow-right ms-1.5"></i>
+                </a>
+            @else
+                <button class="btn btn-light rounded-pill px-3 py-2 text-muted font-semibold" style="font-size: 13px;" disabled>
+                    Produk Terakhir <i class="bi bi-arrow-right ms-1"></i>
+                </button>
+            @endif
+        </div>
+    </div>
+</div>
+
+@push('scripts')
+<script>
+    document.addEventListener('keydown', function(e) {
+        if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return;
+        
+        if (e.key === 'ArrowLeft') {
+            const prevLink = document.getElementById('btnPrevProduk');
+            if (prevLink) {
+                window.location.href = prevLink.href;
+            }
+        } else if (e.key === 'ArrowRight') {
+            const nextLink = document.getElementById('btnNextProduk');
+            if (nextLink) {
+                window.location.href = nextLink.href;
+            }
+        }
+    });
+</script>
+@endpush
 
 @endsection

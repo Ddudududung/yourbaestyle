@@ -314,12 +314,15 @@ class ProdukController extends Controller
     {
         $produk = Produk::with(['pemasok', 'retur', 'jenisPakaian', 'warna', 'model'])->findOrFail($id);
 
+        $prevProduk = Produk::where('id', '<', $produk->id)->orderBy('id', 'desc')->first();
+        $nextProduk = Produk::where('id', '>', $produk->id)->orderBy('id', 'asc')->first();
+
         $riwayat = PembelianBarang::with('pemasok')
                     ->where('id_produk', $id)
                     ->orderBy('created_at', 'desc')
                     ->get();
 
-        return view('produk.show', compact('produk', 'riwayat'));
+        return view('produk.show', compact('produk', 'riwayat', 'prevProduk', 'nextProduk'));
     }
 
     // ============================================================
