@@ -12,9 +12,14 @@
         </h4>
         <small class="text-muted font-semibold" style="font-size: 12px;">Kelola persediaan stok, spesifikasi, dan harga jual barang toko</small>
     </div>
-    <a href="{{ route('produk.create') }}" class="btn btn-yb px-4 py-2.5 font-semibold text-decoration-none shadow-sm">
-        <i class="bi bi-plus-lg me-1"></i> Tambah Produk Baru
-    </a>
+    <div class="d-flex gap-2">
+        <button type="button" class="btn btn-white border px-3 py-2.5 font-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalMasterData" style="border-radius: 12px; font-size: 13px; color: var(--ink); border-color: var(--border-soft);">
+            <i class="bi bi-sliders me-1.5" style="color: var(--pink-primary);"></i> Kelola Master Data
+        </button>
+        <a href="{{ route('produk.create') }}" class="btn btn-yb px-4 py-2.5 font-semibold text-decoration-none shadow-sm">
+            <i class="bi bi-plus-lg me-1"></i> Tambah Produk Baru
+        </a>
+    </div>
 </div>
 
 <!-- PANEL PENCARIAN & FILTER PRODUK -->
@@ -295,5 +300,225 @@
     {{ $produk->links('pagination::bootstrap-4') }}
 </div>
 @endif
+
+<!-- MODAL KELOLA MASTER DATA -->
+<div class="modal fade" id="modalMasterData" tabindex="-1" aria-labelledby="modalMasterDataLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 16px; border: none; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
+            <!-- Modal Header -->
+            <div class="modal-header px-4 py-3 text-white" style="background: linear-gradient(135deg, var(--pink-primary) 0%, #D85C8A 100%);">
+                <h5 class="modal-title font-semibold d-flex align-items-center gap-2" id="modalMasterDataLabel" style="font-family: 'Quicksand', sans-serif;">
+                    <i class="bi bi-sliders fs-5"></i> Kelola Master Data (Warna, Jenis, Model)
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="modal-body p-4 bg-light">
+                <!-- Nav Tabs -->
+                <ul class="nav nav-pills nav-fill gap-2 mb-4 p-1 rounded-3 bg-white border" id="masterDataTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active font-semibold py-2" id="warna-tab" data-bs-toggle="tab" data-bs-target="#tab-warna" type="button" role="tab" style="font-size: 13px; border-radius: 10px;">
+                            🎨 Warna ({{ count($warna) }})
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link font-semibold py-2" id="jenis-tab" data-bs-toggle="tab" data-bs-target="#tab-jenis" type="button" role="tab" style="font-size: 13px; border-radius: 10px;">
+                            🏷️ Jenis Pakaian ({{ count($jenisPakaian) }})
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link font-semibold py-2" id="model-tab" data-bs-toggle="tab" data-bs-target="#tab-model" type="button" role="tab" style="font-size: 13px; border-radius: 10px;">
+                            ✂️ Model / Motif ({{ count($model) }})
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="masterDataTabContent">
+
+                    <!-- ================= TAB WARNA ================= -->
+                    <div class="tab-pane fade show active" id="tab-warna" role="tabpanel">
+                        <!-- Form Tambah Warna -->
+                        <form action="{{ route('master_data.warna.store') }}" method="POST" class="mb-4 card p-3 shadow-sm border-0" style="border-radius: 12px;">
+                            @csrf
+                            <label class="form-label font-semibold text-muted mb-1" style="font-size: 12px;">Tambah Warna Baru</label>
+                            <div class="input-group">
+                                <input type="text" name="nama" class="form-control" placeholder="Misal: Sage Green, Navy, Terracotta..." required style="border-radius: 10px 0 0 10px; font-size: 13px;">
+                                <button type="submit" class="btn btn-yb px-3 font-semibold" style="border-radius: 0 10px 10px 0; font-size: 13px;">
+                                    <i class="bi bi-plus-circle me-1"></i> Tambah
+                                </button>
+                            </div>
+                        </form>
+
+                        <!-- Tabel List Warna -->
+                        <div class="table-responsive bg-white rounded-3 border" style="max-height: 320px; overflow-y: auto;">
+                            <table class="table table-hover align-middle mb-0" style="font-size: 13px;">
+                                <thead class="table-light sticky-top">
+                                    <tr>
+                                        <th class="ps-3" style="width: 20%;">Kode</th>
+                                        <th>Nama Warna</th>
+                                        <th class="text-end pe-3" style="width: 25%;">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($warna as $w)
+                                    <tr>
+                                        <td class="ps-3"><span class="badge bg-light text-dark border font-monospace">{{ $w->kode }}</span></td>
+                                        <td>
+                                            <form action="{{ route('master_data.warna.update', $w->id) }}" method="POST" class="d-flex gap-2 align-items-center">
+                                                @csrf
+                                                @method('PUT')
+                                                <input type="text" name="nama" value="{{ $w->nama }}" class="form-control form-control-sm border-soft" required style="font-size: 12.5px; border-radius: 8px;">
+                                                <button type="submit" class="btn btn-sm btn-outline-success p-1 px-2" title="Simpan Perubahan">
+                                                    <i class="bi bi-check-lg"></i>
+                                                </button>
+                                            </form>
+                                        </td>
+                                        <td class="text-end pe-3">
+                                            <form action="{{ route('master_data.warna.destroy', $w->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus warna \'{{ $w->nama }}\'?');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-sm btn-light border text-danger p-1 px-2 font-semibold" style="border-radius: 8px; font-size: 11.5px;" title="Hapus Warna">
+                                                    <i class="bi bi-trash me-1"></i> Hapus
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    @empty
+                                    <tr>
+                                        <td colspan="3" class="text-center py-3 text-muted">Belum ada data warna.</td>
+                                    </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- ================= TAB JENIS PAKAIAN ================= -->
+                    <div class="tab-pane fade" id="tab-jenis" role="tabpanel">
+                        <!-- Form Tambah Jenis -->
+                        <form action="{{ route('master_data.jenis.store') }}" method="POST" class="mb-4 card p-3 shadow-sm border-0" style="border-radius: 12px;">
+                            @csrf
+                            <label class="form-label font-semibold text-muted mb-1" style="font-size: 12px;">Tambah Jenis Pakaian Baru</label>
+                            <div class="input-group">
+                                <input type="text" name="nama" class="form-control" placeholder="Misal: Cardigan, Inner, Skirt, Blouse..." required style="border-radius: 10px 0 0 10px; font-size: 13px;">
+                                <button type="submit" class="btn btn-yb px-3 font-semibold" style="border-radius: 0 10px 10px 0; font-size: 13px;">
+                                    <i class="bi bi-plus-circle me-1"></i> Tambah
+                                </button>
+                            </div>
+                        </form>
+
+                        <!-- Tabel List Jenis -->
+                        <div class="table-responsive bg-white rounded-3 border" style="max-height: 320px; overflow-y: auto;">
+                            <table class="table table-hover align-middle mb-0" style="font-size: 13px;">
+                                <thead class="table-light sticky-top">
+                                    <tr>
+                                        <th class="ps-3" style="width: 20%;">Kode</th>
+                                        <th>Nama Jenis Pakaian</th>
+                                        <th class="text-end pe-3" style="width: 25%;">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($jenisPakaian as $jp)
+                                    <tr>
+                                        <td class="ps-3"><span class="badge bg-light text-dark border font-monospace">{{ $jp->kode }}</span></td>
+                                        <td>
+                                            <form action="{{ route('master_data.jenis.update', $jp->id) }}" method="POST" class="d-flex gap-2 align-items-center">
+                                                @csrf
+                                                @method('PUT')
+                                                <input type="text" name="nama" value="{{ $jp->nama }}" class="form-control form-control-sm border-soft" required style="font-size: 12.5px; border-radius: 8px;">
+                                                <button type="submit" class="btn btn-sm btn-outline-success p-1 px-2" title="Simpan Perubahan">
+                                                    <i class="bi bi-check-lg"></i>
+                                                </button>
+                                            </form>
+                                        </td>
+                                        <td class="text-end pe-3">
+                                            <form action="{{ route('master_data.jenis.destroy', $jp->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus jenis pakaian \'{{ $jp->nama }}\'?');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-sm btn-light border text-danger p-1 px-2 font-semibold" style="border-radius: 8px; font-size: 11.5px;" title="Hapus Jenis">
+                                                    <i class="bi bi-trash me-1"></i> Hapus
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    @empty
+                                    <tr>
+                                        <td colspan="3" class="text-center py-3 text-muted">Belum ada data jenis pakaian.</td>
+                                    </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- ================= TAB MODEL / MOTIF ================= -->
+                    <div class="tab-pane fade" id="tab-model" role="tabpanel">
+                        <!-- Form Tambah Model -->
+                        <form action="{{ route('master_data.model.store') }}" method="POST" class="mb-4 card p-3 shadow-sm border-0" style="border-radius: 12px;">
+                            @csrf
+                            <label class="form-label font-semibold text-muted mb-1" style="font-size: 12px;">Tambah Model / Motif Baru</label>
+                            <div class="input-group">
+                                <input type="text" name="nama" class="form-control" placeholder="Misal: Polos, Floral, Oversize, Knit..." required style="border-radius: 10px 0 0 10px; font-size: 13px;">
+                                <button type="submit" class="btn btn-yb px-3 font-semibold" style="border-radius: 0 10px 10px 0; font-size: 13px;">
+                                    <i class="bi bi-plus-circle me-1"></i> Tambah
+                                </button>
+                            </div>
+                        </form>
+
+                        <!-- Tabel List Model -->
+                        <div class="table-responsive bg-white rounded-3 border" style="max-height: 320px; overflow-y: auto;">
+                            <table class="table table-hover align-middle mb-0" style="font-size: 13px;">
+                                <thead class="table-light sticky-top">
+                                    <tr>
+                                        <th class="ps-3" style="width: 20%;">Kode</th>
+                                        <th>Nama Model / Motif</th>
+                                        <th class="text-end pe-3" style="width: 25%;">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($model as $m)
+                                    <tr>
+                                        <td class="ps-3"><span class="badge bg-light text-dark border font-monospace">{{ $m->kode }}</span></td>
+                                        <td>
+                                            <form action="{{ route('master_data.model.update', $m->id) }}" method="POST" class="d-flex gap-2 align-items-center">
+                                                @csrf
+                                                @method('PUT')
+                                                <input type="text" name="nama" value="{{ $m->nama }}" class="form-control form-control-sm border-soft" required style="font-size: 12.5px; border-radius: 8px;">
+                                                <button type="submit" class="btn btn-sm btn-outline-success p-1 px-2" title="Simpan Perubahan">
+                                                    <i class="bi bi-check-lg"></i>
+                                                </button>
+                                            </form>
+                                        </td>
+                                        <td class="text-end pe-3">
+                                            <form action="{{ route('master_data.model.destroy', $m->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus model \'{{ $m->nama }}\'?');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-sm btn-light border text-danger p-1 px-2 font-semibold" style="border-radius: 8px; font-size: 11.5px;" title="Hapus Model">
+                                                    <i class="bi bi-trash me-1"></i> Hapus
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    @empty
+                                    <tr>
+                                        <td colspan="3" class="text-center py-3 text-muted">Belum ada data model.</td>
+                                    </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="modal-footer bg-light px-4 py-2 border-top">
+                <button type="button" class="btn btn-light border font-semibold px-4" data-bs-dismiss="modal" style="border-radius: 10px; font-size: 13px;">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 @endsection

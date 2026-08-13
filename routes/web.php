@@ -12,6 +12,7 @@ use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\PengaturanController;
 use App\Http\Controllers\SesiLiveController;
 use App\Http\Controllers\KatalogController;
+use App\Http\Controllers\MasterDataController;
 
 
 Route::get('/', [KatalogController::class, 'index'])->name('katalog.publik');
@@ -30,6 +31,19 @@ Route::middleware(['auth', 'menu.access'])->group(function () {
 
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Kelola Master Data (Warna, Jenis, Model)
+    Route::post('/master-data/warna',             [MasterDataController::class, 'storeWarna'])->name('master_data.warna.store');
+    Route::put('/master-data/warna/{id}',         [MasterDataController::class, 'updateWarna'])->name('master_data.warna.update');
+    Route::delete('/master-data/warna/{id}',      [MasterDataController::class, 'destroyWarna'])->name('master_data.warna.destroy');
+
+    Route::post('/master-data/jenis',             [MasterDataController::class, 'storeJenis'])->name('master_data.jenis.store');
+    Route::put('/master-data/jenis/{id}',         [MasterDataController::class, 'updateJenis'])->name('master_data.jenis.update');
+    Route::delete('/master-data/jenis/{id}',      [MasterDataController::class, 'destroyJenis'])->name('master_data.jenis.destroy');
+
+    Route::post('/master-data/model',             [MasterDataController::class, 'storeModel'])->name('master_data.model.store');
+    Route::put('/master-data/model/{id}',         [MasterDataController::class, 'updateModel'])->name('master_data.model.update');
+    Route::delete('/master-data/model/{id}',      [MasterDataController::class, 'destroyModel'])->name('master_data.model.destroy');
 
     // Manajemen Barang & HPP
     Route::get('/produk/hpp',        [ProdukController::class, 'hppIndex'])->name('produk.hpp');
