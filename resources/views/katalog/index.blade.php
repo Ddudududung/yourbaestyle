@@ -8,7 +8,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@600;700&family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ asset('css/style.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/style.css') }}?v={{ time() }}">
 </head>
 <body>
 
@@ -16,8 +16,8 @@
     <nav class="navbar navbar-custom sticky-top">
         <div class="container d-flex justify-content-between align-items-center">
             <a href="{{ url('/') }}" class="text-decoration-none d-flex align-items-center gap-2">
-                <div style="width: 42px; height: 42px; border-radius: 16px; background: var(--brand-pink); display: flex; align-items: center; justify-content: center; font-size: 19px; color: #fff; transform: rotate(-6deg);">
-                    <i class="bi bi-bag-heart-fill"></i>
+                <div style="width: 42px; height: 42px; min-width: 42px; min-height: 42px; max-width: 42px; max-height: 42px; border-radius: 50%; overflow: hidden; flex-shrink: 0; box-shadow: 0 3px 10px rgba(236, 149, 168, 0.3); background: #FFDCED; display: flex; align-items: center; justify-content: center; border: 2px solid rgba(236, 149, 168, 0.4);">
+                    <img src="{{ asset('images/logo.svg') }}" alt="Yourbaestyle Logo" style="width: 100%; height: 100%; max-width: 100%; max-height: 100%; object-fit: cover; display: block;" onerror="this.onerror=null; this.src='{{ asset('images/logo.png') }}';">
                 </div>
                 <div>
                     <h5 class="mb-0 fw-bold text-dark font-heading" style="letter-spacing: -0.5px;">Yourbaestyle</h5>
