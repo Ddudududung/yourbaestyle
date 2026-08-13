@@ -121,10 +121,30 @@ class PesananOnlineController extends Controller
             $variasiLive = $item['variasi'];
             
             if (!empty($variasiLive)) {
+                // 1. Match persis kode_live pada tanggal hari ini
                 $katalog = KatalogLive::where('kode_live', $variasiLive)
                                       ->whereDate('tanggal_live', $tanggalLiveDefault)
                                       ->with('produk')
                                       ->first();
+
+                // 2. Fallback: Match persis kode_live tanpa batasan tanggal hari ini (live sebelumnya)
+                if (!$katalog) {
+                    $katalog = KatalogLive::where('kode_live', $variasiLive)
+                                          ->orderBy('created_at', 'desc')
+                                          ->with('produk')
+                                          ->first();
+                }
+
+                // 3. Fallback: Ekstrak nomor dari "IYB 3" -> "3" atau sebaliknya
+                if (!$katalog && preg_match('/(\d+)/', $variasiLive, $m)) {
+                    $numCode = $m[1];
+                    $katalog = KatalogLive::where('kode_live', $numCode)
+                                          ->orWhere('kode_live', 'IYB ' . $numCode)
+                                          ->orWhere('kode_live', 'IYB-' . $numCode)
+                                          ->orderBy('created_at', 'desc')
+                                          ->with('produk')
+                                          ->first();
+                }
                 
                 if ($katalog && $katalog->produk && $katalog->produk->status === 'aktif') {
                     $item['mapping_status'] = 'auto_found';
@@ -163,63 +183,79 @@ class PesananOnlineController extends Controller
     }
 }
 
-    /** Parser: Shopee Standard */
+    /** Parser: Shopee Standard / Reguler */
     private function parseShopeeStandardRobust(array $data): ?array
-{
-    // Extract No. Pesanan
-    $noPesanan = trim((string)$this->getValueFromData($data, [
-        'No. Pesanan', 'No.Pesanan', 'NoPesanan',
-        'Order ID', 'OrderID', 'order_id',
-        'Nomor Pesanan', 'ID Pesanan'
-    ], ''));
-    
-    // Kalau tidak ada nomor pesanan → null (parse gagal)
-    if (empty($noPesanan)) return null;
+    {
+        // Cek jika kolom memakai format product_info (seperti order_sn & product_info dari ekspor Shopee Reguler)
+        $orderSnCheck = trim((string)$this->getValueFromData($data, ['order_sn', 'Order SN', 'OrderSN'], ''));
+        $productInfoCheck = (string)$this->getValueFromData($data, ['product_info', 'Product Info', 'ProductInfo'], '');
 
-    // ✅ Extract semua field yang perlu
-    return [
-        'no_pesanan'   => $noPesanan,
-        'nama_pembeli' => trim((string)$this->getValueFromData($data, [
-            'Nama Penerima', 'NamaPenerima',
-            'Recipient', 'Pembeli',
-            'Username (Pembeli)', 'Buyer Name', 'buyer_name'
-        ], '-')),
-        'tanggal'      => $this->parseTanggal($this->getValueFromData($data, [
-            'Waktu Pesanan Dibuat', 'WaktuPesananDibuat',
-            'Tanggal Pesanan', 'TanggalPesanan',
-            'Created Time', 'Order Date', 'Waktu'
-        ])),
-        'nama_produk'  => trim((string)$this->getValueFromData($data, [
-            'Nama Produk', 'NamaProduk',
-            'Product Name', 'Product', 'Produk'
-        ], '')),
-        // ✅ Ini yang paling penting! Kode variasi untuk mapping
-        'variasi'      => trim((string)$this->getValueFromData($data, [
+        if (!empty($orderSnCheck) || !empty($productInfoCheck)) {
+            return $this->parseShopeeHematKargoRobust($data);
+        }
+
+        // Extract No. Pesanan
+        $noPesanan = trim((string)$this->getValueFromData($data, [
+            'No. Pesanan', 'No.Pesanan', 'NoPesanan',
+            'Order ID', 'OrderID', 'order_id',
+            'Nomor Pesanan', 'ID Pesanan'
+        ], ''));
+        
+        // Abaikan baris header / penjelasan dummy
+        if (empty($noPesanan) || strtolower($noPesanan) === 'platform unique order id' || str_contains(strtolower($noPesanan), 'the filed to explain')) {
+            return null;
+        }
+
+        $rawVariasi = trim((string)$this->getValueFromData($data, [
             'Nama Variasi', 'NamaVariasi',
             'Variasi', 'SKU Name', 'SKU', 'Varian',
-            'Variant', 'SKU Code'
-        ], '')) ?: null,
-        'qty'          => (int)($this->getValueFromData($data, [
-            'Jumlah', 'Quantity', 'Qty',
-            'Jumlah Produk', 'JumlahProduk'
-        ], 1)),
-        'harga_satuan' => $this->parseHarga($this->getValueFromData($data, [
-            'Harga Setelah Diskon', 'HargaSetelahDiskon',
-            'Unit Price', 'Price', 'Harga',
-            'Harga per Item'
-        ], 0)),
-        'total_harga'  => $this->parseHarga($this->getValueFromData($data, [
-            'Total Pembayaran', 'TotalPembayaran',
-            'Total', 'Order Amount', 'Total Price',
-            'Subtotal'
-        ], 0)),
-        'ongkir'       => $this->parseHarga($this->getValueFromData($data, [
-            'Ongkos Kirim Dibayar oleh Pembeli', 'OngkosKirim',
-            'Shipping Fee', 'Ongkir', 'Biaya Kirim',
-            'Shipping Cost'
-        ], 0)),
-    ];
-}
+            'Variant', 'SKU Code', 'Option'
+        ], ''));
+
+        // Jika variasi panjang (misal "54, NO RETUR..."), ambil kode awalnya
+        if (!empty($rawVariasi) && str_contains($rawVariasi, ',')) {
+            $parts = explode(',', $rawVariasi);
+            $rawVariasi = trim($parts[0]);
+        }
+
+        return [
+            'no_pesanan'   => $noPesanan,
+            'nama_pembeli' => trim((string)$this->getValueFromData($data, [
+                'Nama Penerima', 'NamaPenerima',
+                'Recipient', 'Pembeli',
+                'Username (Pembeli)', 'Buyer Name', 'buyer_name'
+            ], '-')),
+            'tanggal'      => $this->parseTanggal($this->getValueFromData($data, [
+                'Waktu Pesanan Dibuat', 'WaktuPesananDibuat',
+                'Tanggal Pesanan', 'TanggalPesanan',
+                'Created Time', 'Order Date', 'Waktu'
+            ])),
+            'nama_produk'  => trim((string)$this->getValueFromData($data, [
+                'Nama Produk', 'NamaProduk',
+                'Product Name', 'Product', 'Produk'
+            ], '')),
+            'variasi'      => $rawVariasi ?: null,
+            'qty'          => (int)($this->getValueFromData($data, [
+                'Jumlah', 'Quantity', 'Qty',
+                'Jumlah Produk', 'JumlahProduk'
+            ], 1)),
+            'harga_satuan' => $this->parseHarga($this->getValueFromData($data, [
+                'Harga Setelah Diskon', 'HargaSetelahDiskon',
+                'Unit Price', 'Price', 'Harga',
+                'Harga per Item'
+            ], 0)),
+            'total_harga'  => $this->parseHarga($this->getValueFromData($data, [
+                'Total Pembayaran', 'TotalPembayaran',
+                'Total', 'Order Amount', 'Total Price',
+                'Subtotal'
+            ], 0)),
+            'ongkir'       => $this->parseHarga($this->getValueFromData($data, [
+                'Ongkos Kirim Dibayar oleh Pembeli', 'OngkosKirim',
+                'Shipping Fee', 'Ongkir', 'Biaya Kirim',
+                'Shipping Cost'
+            ], 0)),
+        ];
+    }
 
     private function parseShopeeHematKargoRobust(array $data): ?array
     {
@@ -228,7 +264,7 @@ class PesananOnlineController extends Controller
             'No. Pesanan', 'Order ID'
         ], ''));
         
-        if (empty($noPesanan)) return null;
+        if (empty($noPesanan) || strtolower($noPesanan) === 'platform unique order id' || str_contains(strtolower($noPesanan), 'the filed to explain')) return null;
 
         $info = (string)$this->getValueFromData($data, [
             'product_info', 'Product Info', 'ProductInfo'
@@ -236,6 +272,11 @@ class PesananOnlineController extends Controller
         
         $namaProduk = $this->ekstrakField($info, 'Nama Produk');
         $variasi = $this->ekstrakField($info, 'Nama Variasi');
+        if (!empty($variasi) && str_contains($variasi, ',')) {
+            $parts = explode(',', $variasi);
+            $variasi = trim($parts[0]);
+        }
+
         $hargaRaw = $this->ekstrakField($info, 'Harga');
         $jumlahRaw = $this->ekstrakField($info, 'Jumlah');
         $harga = $this->parseHarga($hargaRaw);
@@ -245,14 +286,14 @@ class PesananOnlineController extends Controller
             'no_pesanan'   => $noPesanan,
             'nama_pembeli' => trim((string)$this->getValueFromData($data, [
                 'order_receiver_name', 'buyer_user_name',
-                'Nama Penerima', 'Pembeli'
+                'Nama Penerima', 'Pembeli', 'Buyer Name'
             ], '-')),
             'tanggal'      => $this->parseTanggal($this->getValueFromData($data, [
                 'order_creation_date', 'created_date',
                 'Tanggal'
             ])),
             'nama_produk'  => $namaProduk ?? '',
-            'variasi'      => $variasi,
+            'variasi'      => $variasi ?: null,
             'qty'          => $qty,
             'harga_satuan' => $harga,
             'total_harga'  => $harga * $qty,
@@ -270,37 +311,48 @@ class PesananOnlineController extends Controller
             'No. Pesanan', 'Order Number'
         ], ''));
         
-        if (empty($noPesanan)) return null;
+        // Abaikan baris penjelasan header TikTok ("Platform unique order ID")
+        if (empty($noPesanan) || strtolower($noPesanan) === 'platform unique order id' || str_contains(strtolower($noPesanan), 'the filed to explain')) {
+            return null;
+        }
+
+        $rawVariasi = trim((string)$this->getValueFromData($data, [
+            'Variation', 'variation', 'SKU Name', 'sku_name', 'SKU',
+            'Variasi', 'Variant', 'Seller SKU', 'SellerSKU', 'Platform SKU'
+        ], ''));
+
+        // Jika variasi TikTok berupa "IYB 3, NO RETUR, MEMBELI ARTINYA AGREE", ambil "IYB 3"
+        if (!empty($rawVariasi) && str_contains($rawVariasi, ',')) {
+            $parts = explode(',', $rawVariasi);
+            $rawVariasi = trim($parts[0]);
+        }
 
         return [
             'no_pesanan'   => $noPesanan,
             'nama_pembeli' => trim((string)$this->getValueFromData($data, [
-                'Recipient', 'Buyer Name', 'buyer_name',
-                'Pembeli', 'Customer'
+                'Buyer Username', 'buyer_username', 'Recipient',
+                'Buyer Name', 'buyer_name', 'Pembeli', 'Customer'
             ], '-')),
             'tanggal'      => $this->parseTanggal($this->getValueFromData($data, [
-                'Created Time', 'created_time',
+                'Created Time', 'created_time', 'Paid Time',
                 'Order Date', 'Tanggal'
             ])),
             'nama_produk'  => trim((string)$this->getValueFromData($data, [
                 'Product Name', 'product_name',
                 'Produk', 'Item'
             ], '')),
-            'variasi'      => trim((string)$this->getValueFromData($data, [
-                'SKU Name', 'sku_name', 'SKU',
-                'Variasi', 'Variant'
-            ], '')) ?: null,
-            'qty'          => (int)($this->getValueFromData($data, [
+            'variasi'      => $rawVariasi ?: null,
+            'qty'          => max(1, (int)($this->getValueFromData($data, [
                 'Quantity', 'quantity', 'Qty', 'Jumlah'
-            ], 1)),
+            ], 1))),
             'harga_satuan' => $this->parseHarga($this->getValueFromData($data, [
-                'Unit Price', 'unit_price', 'Price', 'Harga'
+                'SKU Unit Price', 'Unit Price', 'unit_price', 'Price', 'Harga'
             ], 0)),
             'total_harga'  => $this->parseHarga($this->getValueFromData($data, [
-                'Order Amount', 'order_amount', 'Total', 'Total Price'
+                'Order Amount', 'order_amount', 'SKU Subtotal After Discount', 'Total', 'Total Price'
             ], 0)),
             'ongkir'       => $this->parseHarga($this->getValueFromData($data, [
-                'Shipping Fee', 'shipping_fee', 'Ongkir', 'Biaya Kirim'
+                'Shipping Fee After Discount', 'Shipping Fee', 'shipping_fee', 'Ongkir', 'Biaya Kirim'
             ], 0)),
             'no_resi'      => trim((string)$this->getValueFromData($data, [
                 'Tracking Number', 'tracking_number',
