@@ -8,19 +8,21 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('transaksi_pos', function (Blueprint $table) {
-            $table->id();
-            $table->string('kode_transaksi', 30)->unique();
-            $table->unsignedBigInteger('id_user');
-            $table->dateTime('tanggal');
-            $table->decimal('total_harga', 15, 2)->default(0);
-            $table->decimal('total_hpp', 15, 2)->default(0);
-            $table->decimal('diskon', 15, 2)->default(0);
-            $table->enum('metode_bayar', ['tunai', 'transfer', 'qris']);
-            $table->timestamps();
+        if (!Schema::hasTable('transaksi_pos')) {
+            Schema::create('transaksi_pos', function (Blueprint $table) {
+                $table->id();
+                $table->string('kode_transaksi', 30)->unique();
+                $table->unsignedBigInteger('id_user');
+                $table->dateTime('tanggal');
+                $table->decimal('total_harga', 15, 2)->default(0);
+                $table->decimal('total_hpp', 15, 2)->default(0);
+                $table->decimal('diskon', 15, 2)->default(0);
+                $table->enum('metode_bayar', ['tunai', 'transfer', 'qris']);
+                $table->timestamps();
 
-            $table->foreign('id_user')->references('id')->on('ms_user')->onDelete('restrict');
-        });
+                $table->foreign('id_user')->references('id')->on('ms_user')->onDelete('restrict');
+            });
+        }
     }
 
     public function down(): void

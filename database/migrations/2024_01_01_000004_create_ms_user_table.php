@@ -8,17 +8,19 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('ms_user', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('id_role');
-            $table->string('nama', 100);
-            $table->string('email', 100)->unique();
-            $table->string('password');
-            $table->rememberToken();
-            $table->timestamps();
+        if (!Schema::hasTable('ms_user')) {
+            Schema::create('ms_user', function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('id_role');
+                $table->string('nama', 100);
+                $table->string('email', 100)->unique();
+                $table->string('password');
+                $table->rememberToken();
+                $table->timestamps();
 
-            $table->foreign('id_role')->references('id')->on('ms_role')->onDelete('restrict');
-        });
+                $table->foreign('id_role')->references('id')->on('ms_role')->onDelete('restrict');
+            });
+        }
     }
 
     public function down(): void

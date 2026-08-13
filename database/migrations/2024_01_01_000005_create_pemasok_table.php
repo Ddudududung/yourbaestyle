@@ -8,13 +8,15 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('pemasok', function (Blueprint $table) {
-            $table->id();
-            $table->string('nama_pemasok', 150);
-            $table->string('kontak', 20)->nullable();
-            $table->text('alamat')->nullable();
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('pemasok')) {
+            Schema::create('pemasok', function (Blueprint $table) {
+                $table->id();
+                $table->string('nama_pemasok', 150);
+                $table->string('kontak', 20)->nullable();
+                $table->text('alamat')->nullable();
+                $table->timestamps();
+            });
+        }
     }
 
     public function down(): void
