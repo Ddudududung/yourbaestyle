@@ -25,18 +25,19 @@
         </button>
         <div class="sidebar">
             <div class="brand">
-                <div class="brand-icon"><i class="bi bi-bag-heart-fill"></i></div>
+                <div class="brand-logo-wrapper">
+                    <img src="{{ asset('images/logo.svg') }}" alt="Yourbaestyle Logo" class="brand-logo-img" onerror="this.onerror=null; this.src='{{ asset('images/logo.png') }}';">
+                </div>
                 <div>
                     <div class="brand-text">Yourbaestyle</div>
-                    <div class="brand-sub">manage with love </div>
+                    <div class="brand-sub">manage with love</div>
                 </div>
             </div>
             <nav>
                 @php 
                     $currentPath = '/' . request()->path(); 
-                    $activeMenus = auth()->user()->menuAktif();
                     
-                    // Struktur 6 Kelompok Menu Lipat (Accordion) yang rapi
+                    // Struktur Menu Sidebar Berdasarkan Sitemap Flowchart
                     $menuStructure = [
                         [
                             'type' => 'single',
@@ -46,49 +47,59 @@
                         ],
                         [
                             'type' => 'group',
-                            'title' => 'Inventaris & Produk',
+                            'title' => 'Manajemen Produk',
                             'icon' => 'bi-box-seam',
-                            'id' => 'inventaris',
-                            'urls' => ['/produk', '/pemasok', '/retur']
+                            'id' => 'manajemen-produk',
+                            'items' => [
+                                ['title' => 'Daftar Produk', 'url' => '/produk'],
+                                ['title' => 'Pemasok', 'url' => '/pemasok'],
+                                ['title' => 'Retur Produk', 'url' => '/retur']
+                            ]
                         ],
                         [
                             'type' => 'group',
-                            'title' => 'Kasir & Transaksi',
+                            'title' => 'Point of Sale',
                             'icon' => 'bi-cart-check',
-                            'id' => 'kasir',
-                            'urls' => ['/pos', '/transaksi']
+                            'id' => 'point-of-sale',
+                            'items' => [
+                                ['title' => 'Point of Sale', 'url' => '/pos'],
+                                ['title' => 'Riwayat Transaksi', 'url' => '/transaksi']
+                            ]
                         ],
                         [
                             'type' => 'group',
-                            'title' => 'Online & Live Kode',
-                            'icon' => 'bi-broadcast',
-                            'id' => 'online',
-                            'urls' => ['/pesanan', '/sesi-live']
+                            'title' => 'Import Pesanan Online',
+                            'icon' => 'bi-cloud-arrow-up-fill',
+                            'id' => 'import-pesanan-online',
+                            'items' => [
+                                ['title' => 'Sesi Live', 'url' => '/sesi-live'],
+                                ['title' => 'Pesanan Online', 'url' => '/pesanan']
+                            ]
                         ],
                         [
                             'type' => 'single',
-                            'title' => 'Laporan ',
+                            'title' => 'Laporan',
                             'icon' => 'bi-file-earmark-text',
                             'url' => '/laporan'
                         ],
                         [
                             'type' => 'group',
-                            'title' => 'Pengaturan ',
+                            'title' => 'Pengaturan',
                             'icon' => 'bi-shield-lock',
                             'id' => 'pengaturan',
-                            'urls' => ['/pengaturan/role', '/pengaturan/user']
+                            'items' => [
+                                ['title' => 'Kelola Role', 'url' => '/pengaturan/role'],
+                                ['title' => 'Kelola User', 'url' => '/pengaturan/user']
+                            ]
                         ]
                     ];
                 @endphp
 
                 @foreach($menuStructure as $item)
                     @if($item['type'] === 'single')
-                        @php
-                            $singleMenu = $activeMenus->firstWhere('target_url', $item['url']);
-                        @endphp
-                        @if($singleMenu)
-                            <a href="{{ $singleMenu->target_url }}"
-                               class="nav-link {{ str_starts_with($currentPath, $singleMenu->target_url) ? 'active' : '' }}"
+                        @if(auth()->user()->isOwner() || auth()->user()->bisaAkses($item['url']))
+                            <a href="{{ $item['url'] }}"
+                               class="nav-link {{ str_starts_with($currentPath, $item['url']) ? 'active' : '' }}"
                                onclick="closeSidebarOnMobile()">
                                 <div class="nav-link-left">
                                     <i class="bi {{ $item['icon'] }}"></i>
@@ -99,17 +110,24 @@
 
                     @elseif($item['type'] === 'group')
                         @php
-                            $children = $activeMenus->filter(function($m) use ($item) {
-                                return in_array($m->target_url, $item['urls']);
-                            });
+                            $validSubitems = [];
+                            foreach ($item['items'] as $sub) {
+                                if (auth()->user()->isOwner() || auth()->user()->bisaAkses($sub['url'])) {
+                                    $validSubitems[] = $sub;
+                                }
+                            }
 
-                            $isGroupActive = $children->contains(function($m) use ($currentPath) {
-                                return str_starts_with($currentPath, $m->target_url);
-                            });
+                            $isGroupActive = false;
+                            foreach ($item['items'] as $sub) {
+                                if (str_starts_with($currentPath, $sub['url'])) {
+                                    $isGroupActive = true;
+                                    break;
+                                }
+                            }
                         @endphp
 
-                        @if($children->isNotEmpty())
-                            <div class="nav-parent" 
+                        @if(count($validSubitems) > 0)
+                            <div class="nav-parent {{ $isGroupActive ? 'active' : '' }}" 
                                  data-bs-toggle="collapse" 
                                  data-bs-target="#collapse-{{ $item['id'] }}" 
                                  aria-expanded="{{ $isGroupActive ? 'true' : 'false' }}">
@@ -122,14 +140,11 @@
 
                             <div class="collapse {{ $isGroupActive ? 'show' : '' }}" id="collapse-{{ $item['id'] }}">
                                 <div class="submenu-box">
-                                    @foreach($children as $child)
-                                        @php
-                                            $labelChild = $child->nama_menu === 'Manajemen Barang' ? 'Manajemen Produk' : $child->nama_menu;
-                                        @endphp
-                                        <a href="{{ $child->target_url }}"
-                                           class="submenu-link {{ str_starts_with($currentPath, $child->target_url) ? 'active' : '' }}"
+                                    @foreach($validSubitems as $sub)
+                                        <a href="{{ $sub['url'] }}"
+                                           class="submenu-link {{ str_starts_with($currentPath, $sub['url']) ? 'active' : '' }}"
                                            onclick="closeSidebarOnMobile()">
-                                            <span>{{ $labelChild }}</span>
+                                            <span>{{ $sub['title'] }}</span>
                                         </a>
                                     @endforeach
                                 </div>

@@ -17,7 +17,9 @@
 
     <div class="login-card">
         <div class="text-center mb-4">
-            <div class="brand-icon"><i class="bi bi-bag-heart-fill"></i></div>
+            <div class="brand-logo-wrapper mx-auto mb-3" style="width: 72px; height: 72px; border-radius: 50%; overflow: hidden; box-shadow: 0 6px 16px rgba(0,0,0,0.12); border: 3px solid #FFDCED;">
+                <img src="{{ asset('images/logo.svg') }}" alt="Yourbaestyle Logo" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null; this.src='{{ asset('images/logo.png') }}';">
+            </div>
             <div class="brand">
                 <h3>Yourbaestyle</h3>
                 <p>manage with love 🌸</p>
