@@ -3,6 +3,26 @@
 @section('title', 'Preview Import — Yourbaestyle')
 
 @section('content')
+@php
+    // 1. Filter out dummy rows (misal baris header deskripsi TikTok "Platform unique order ID")
+    $cleanParsed = array_values(array_filter($parsed ?? [], function($p) {
+        if (!is_array($p)) return false;
+        $no = strtolower($p['no_pesanan'] ?? '');
+        return $no !== '' && $no !== 'platform unique order id' && !str_contains($no, 'the filed to explain');
+    }));
+
+    // 2. Sorting: Auto-Mapped di ATAS, Manual di BAWAH
+    usort($cleanParsed, function($a, $b) {
+        $aAuto = ($a['mapping_status'] ?? '') === 'auto_found' ? 0 : 1;
+        $bAuto = ($b['mapping_status'] ?? '') === 'auto_found' ? 0 : 1;
+        return $aAuto <=> $bAuto;
+    });
+
+    $berhasil = count(array_filter($cleanParsed, fn($p) => ($p['mapping_status'] ?? '') === 'auto_found'));
+    $gagalMapping = count(array_filter($cleanParsed, fn($p) => ($p['mapping_status'] ?? '') !== 'auto_found'));
+    $total = count($cleanParsed);
+@endphp
+
 <div class="container-fluid p-0" style="max-width: 1250px; margin: 0 auto;">
     
     <!-- 1. HEADER HALAMAN -->
@@ -18,42 +38,32 @@
             </div>
         </div>
         <div>
-            <a href="{{ route('pesanan.import') }}" class="btn btn-yb-outline px-3 py-2 text-decoration-none font-semibold" style="border-radius: 12px; font-size: 12.5px;">
+            <a href="{{ route('pesanan.import') }}" class="btn btn-yb-outline px-3 py-2 text-decoration-none font-semibold shadow-sm" style="border-radius: 12px; font-size: 12.5px;">
                 <i class="bi bi-arrow-left me-1"></i> Ganti File
             </a>
         </div>
-        @php
-        // Tambahkan pengecekan is_array() dan isset() agar halaman tidak crash jika data kosong/error
-        $berhasil = count(array_filter($parsed, fn($p) => is_array($p) && isset($p['mapping_status']) && $p['mapping_status'] === 'auto_found'));
-        $gagalMapping = count(array_filter($parsed, fn($p) => is_array($p) && isset($p['mapping_status']) && $p['mapping_status'] !== 'auto_found'));
-        $total = is_array($parsed) ? count($parsed) : 0;
-    @endphp
     </div>
 
-    <!-- 2. STATISTIK CARDS -->
-    @php
-        $berhasil = count(array_filter($parsed, fn($p) => $p['mapping_status'] === 'auto_found'));
-        $gagalMapping = count(array_filter($parsed, fn($p) => $p['mapping_status'] !== 'auto_found'));
-        $total = count($parsed);
-    @endphp
-
+    <!-- 2. STATISTIK CARDS (THEMED SOFT PINK & MINT & GOLD) -->
     <div class="row g-2.5 g-md-3 mb-4">
         <div class="col-6 col-md-3">
-            <div class="p-3.5 rounded-4 h-100 d-flex flex-column justify-content-between" style="background: #E8F7EE; border: 1.5px solid #C3EEDB;">
+            <div class="p-3.5 rounded-4 h-100 d-flex flex-column justify-content-between" style="background: #E8F7EE; border: 1.5px solid #C3EEDB; box-shadow: 0 4px 12px rgba(46, 175, 108, 0.08);">
                 <div class="d-flex align-items-center justify-content-between mb-2">
                     <span class="fw-bold text-success small"><i class="bi bi-check-circle-fill me-1"></i> Auto-Map</span>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2" style="font-size: 10px;">Teratas</span>
                 </div>
                 <div>
                     <h3 class="mb-0 fw-bold text-success" style="font-size: 1.6rem;">{{ $berhasil }}</h3>
-                    <small class="text-success font-semibold opacity-85" style="font-size: 11px;">Sudah ketemu produknya</small>
+                    <small class="text-success font-semibold opacity-85" style="font-size: 11px;">Sudah terpetakan otomatis</small>
                 </div>
             </div>
         </div>
 
         <div class="col-6 col-md-3">
-            <div class="p-3.5 rounded-4 h-100 d-flex flex-column justify-content-between" style="background: #FFF9E6; border: 1.5px solid #FFE699;">
+            <div class="p-3.5 rounded-4 h-100 d-flex flex-column justify-content-between" style="background: #FFF9E6; border: 1.5px solid #FFE699; box-shadow: 0 4px 12px rgba(230, 138, 0, 0.08);">
                 <div class="d-flex align-items-center justify-content-between mb-2">
-                    <span class="fw-bold text-warning-emphasis small"><i class="bi bi-exclamation-triangle-fill me-1"></i> Manual</span>
+                    <span class="fw-bold text-warning-emphasis small"><i class="bi bi-exclamation-triangle-fill me-1"></i> Perlu Manual</span>
+                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2" style="font-size: 10px;">Terbawah</span>
                 </div>
                 <div>
                     <h3 class="mb-0 fw-bold text-warning-emphasis" style="font-size: 1.6rem;">{{ $gagalMapping }}</h3>
@@ -63,51 +73,56 @@
         </div>
 
         <div class="col-6 col-md-3">
-            <div class="p-3.5 rounded-4 h-100 d-flex flex-column justify-content-between" style="background: var(--pink-soft-2); border: 1.5px solid var(--border-soft);">
+            <div class="p-3.5 rounded-4 h-100 d-flex flex-column justify-content-between" style="background: var(--pink-soft-2); border: 1.5px solid var(--border-soft); box-shadow: 0 4px 12px rgba(236, 149, 168, 0.08);">
                 <div class="d-flex align-items-center justify-content-between mb-2">
                     <span class="fw-bold small" style="color: var(--ink);"><i class="bi bi-box-seam me-1" style="color: var(--pink-primary);"></i> Total Order</span>
                 </div>
                 <div>
                     <h3 class="mb-0 fw-bold" style="color: var(--pink-primary-dark); font-size: 1.6rem;">{{ $total }}</h3>
-                    <small class="text-muted font-semibold" style="font-size: 11px;">Total baris dari Excel</small>
+                    <small class="text-muted font-semibold" style="font-size: 11px;">Valid item dari file Excel</small>
                 </div>
             </div>
         </div>
 
         <div class="col-6 col-md-3">
-            <div class="p-3.5 rounded-4 h-100 d-flex flex-column justify-content-between" style="background: #FAF0F7; border: 1.5px solid #EBC6E3;">
+            <div class="p-3.5 rounded-4 h-100 d-flex flex-column justify-content-between" style="background: #FAF0F7; border: 1.5px solid #EBC6E3; box-shadow: 0 4px 12px rgba(124, 53, 90, 0.06);">
                 <div class="d-flex align-items-center justify-content-between mb-2">
                     <span class="fw-bold small" style="color: #7C355A;"><i class="bi bi-lightning-charge-fill me-1"></i> Ready</span>
                 </div>
                 <div>
-                    <h3 class="mb-0 fw-bold" style="color: #7C355A; font-size: 1.6rem;">{{ $berhasil > 0 ? '✓' : '–' }}</h3>
-                    <small class="text-muted font-semibold" style="font-size: 11px;">Siap dikonfirmasi</small>
+                    <h3 class="mb-0 fw-bold" style="color: #7C355A; font-size: 1.6rem;">{{ $total > 0 ? '✓' : '–' }}</h3>
+                    <small class="text-muted font-semibold" style="font-size: 11px;">Siap disimpan</small>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 3. WARNING JIKA ADA YANG PERLU DIPILIH -->
+    <!-- 3. WARNING ALERT (AESTHETIC SOFT AMBER) -->
     @if($gagalMapping > 0)
-    <div class="p-3.5 mb-4 d-flex align-items-start gap-2.5" style="background: #FFF7F2; border: 1.5px solid #F8D6C2; border-radius: 16px; color: #6E3B1C;">
+    <div class="p-3.5 mb-4 d-flex align-items-start gap-2.5 shadow-sm" style="background: #FFF7F2; border: 1.5px solid #F8D6C2; border-radius: 16px; color: #6E3B1C;">
         <i class="bi bi-exclamation-triangle-fill fs-5 mt-0.5" style="color: #EE9A68; flex-shrink: 0;"></i>
-        <div>
-            <strong style="font-size: 13.5px;" class="d-block mb-0.5">Ada {{ $gagalMapping }} Kode Variasi yang Perlu Dipilih</strong>
-            <small class="font-semibold text-muted" style="font-size: 12px;">Kode variasi ini tidak ditemukan di katalog. Pilih produk yang sesuai dari dropdown, atau pilih skip jika ingin diproses nanti.</small>
+        <div class="flex-grow-1">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-0.5">
+                <strong style="font-size: 13.5px;">Ada {{ $gagalMapping }} Kode Variasi yang Perlu Dipilih</strong>
+                <button type="button" class="btn btn-sm px-2.5 py-1 text-decoration-none font-semibold rounded-pill" onclick="filterTab('manual')" style="background: #FFEAD9; color: #B35118; font-size: 11.5px; border: 1px solid #F8C3A4;">
+                    <i class="bi bi-funnel-fill me-1"></i> Tampilkan Hanya yang Manual
+                </button>
+            </div>
+            <small class="font-semibold text-muted d-block" style="font-size: 12px;">Item ber-status Auto-Map telah dikelompokkan di <strong>atas</strong>, sedangkan item yang perlu pilihan manual berada di <strong>bawah</strong>.</small>
         </div>
     </div>
     @endif
 
-    <!-- 4. FORM IMPORT -->
+    <!-- 4. FORM IMPORT & EKSEKUSI PANEL -->
     <form id="import-form" action="{{ route('pesanan.import.proses') }}" method="POST">
         @csrf
         
         <!-- HIDDEN INPUTS -->
-        <input type="hidden" name="data_pesanan_mentah" value="{{ json_encode($parsed) }}">
+        <input type="hidden" name="data_pesanan_mentah" value="{{ json_encode($cleanParsed) }}">
         <input type="hidden" name="mapping_data" id="mapping_data_input" value="{}">
 
         <!-- EKSEKUSI IMPORT PANEL -->
-        <div class="card-yb p-3 p-md-4 mb-4">
+        <div class="card-yb p-3 p-md-4 mb-4 shadow-sm" style="border-radius: 18px; border: 1.5px solid var(--border-soft);">
             <div class="d-flex align-items-center gap-2 mb-3 pb-2.5" style="border-bottom: 1.5px dashed var(--border-soft);">
                 <h6 class="mb-0 fw-bold" style="color: var(--ink); font-family: 'Quicksand', sans-serif;">
                     <i class="bi bi-gear-fill me-2" style="color: var(--pink-primary);"></i>Eksekusi Import
@@ -122,22 +137,48 @@
                 </div>
                 
                 <div class="col-12 col-md-6 text-md-end mt-3 mt-md-0">
-                    <button type="submit" class="btn btn-yb px-4 py-2.5 font-semibold text-white shadow-sm w-100 w-md-auto" style="border-radius: 12px; font-size: 13.5px;">
+                    <button type="submit" class="btn btn-yb px-4 py-2.5 font-semibold text-white shadow-sm w-100 w-md-auto" style="border-radius: 12px; font-size: 13.5px; background: linear-gradient(135deg, #EC95A8, #D86B85); border: none;">
                         <i class="bi bi-cloud-check-fill me-1.5"></i> Konfirmasi & Simpan {{ $total }} Pesanan
                     </button>
                 </div>
             </div>
         </div>
 
-        <!-- 5. TABEL DETAIL PREVIEW -->
-        <div class="card-yb p-0 overflow-hidden">
-            <div class="p-3 px-4 d-flex justify-content-between align-items-center" style="border-bottom: 1.5px dashed var(--border-soft); background: var(--pink-soft-2);">
-                <h6 class="fw-bold mb-0" style="color: var(--ink); font-family: 'Quicksand', sans-serif;">
-                    <i class="bi bi-list-stars me-2" style="color: var(--pink-primary);"></i>Daftar Pratinjau Item ({{ $total }})
-                </h6>
-                <span class="badge bg-white text-muted font-semibold px-3 py-1.5" style="border: 1px solid var(--border-soft); font-size: 11px;">
-                    Total: {{ $total }} Items
-                </span>
+        <!-- 5. TABEL DETAIL PREVIEW WITH FILTER TABS & SEARCH -->
+        <div class="card-yb p-0 overflow-hidden shadow-sm" style="border-radius: 20px; border: 1.5px solid var(--border-soft);">
+            
+            <!-- HEADER TOOLBAR (TAB FILTER & SEARCH) -->
+            <div class="p-3 px-4" style="border-bottom: 1.5px dashed var(--border-soft); background: #FFF5F7;">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-2">
+                    <h6 class="fw-bold mb-0" style="color: var(--ink); font-family: 'Quicksand', sans-serif;">
+                        <i class="bi bi-list-stars me-2" style="color: var(--pink-primary);"></i>Daftar Pratinjau Item ({{ $total }})
+                    </h6>
+                    <span class="badge bg-white text-muted font-semibold px-3 py-1.5 shadow-sm" style="border: 1px solid var(--border-soft); font-size: 11.5px; border-radius: 10px;">
+                        Total Valid: {{ $total }} Items
+                    </span>
+                </div>
+
+                <!-- TAB FILTERS & INSTANT SEARCH -->
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 pt-2">
+                    <!-- FILTER TABS -->
+                    <div class="d-flex align-items-center gap-1.5 p-1 rounded-3" style="background: rgba(236, 149, 168, 0.12); border: 1px solid var(--border-soft);">
+                        <button type="button" class="btn btn-sm tab-btn active-tab px-3 py-1.5 font-semibold" data-filter="all" onclick="filterTab('all')" style="border-radius: 8px; font-size: 12px; transition: all 0.2s ease;">
+                            Semua ({{ $total }})
+                        </button>
+                        <button type="button" class="btn btn-sm tab-btn px-3 py-1.5 font-semibold" data-filter="auto" onclick="filterTab('auto')" style="border-radius: 8px; font-size: 12px; color: #1e7e34; transition: all 0.2s ease;">
+                            <i class="bi bi-check-circle-fill me-1"></i> Auto-Mapped ({{ $berhasil }})
+                        </button>
+                        <button type="button" class="btn btn-sm tab-btn px-3 py-1.5 font-semibold" data-filter="manual" onclick="filterTab('manual')" style="border-radius: 8px; font-size: 12px; color: #b35118; transition: all 0.2s ease;">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i> Perlu Manual ({{ $gagalMapping }})
+                        </button>
+                    </div>
+
+                    <!-- SEARCH INPUT -->
+                    <div class="position-relative" style="min-width: 250px;">
+                        <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted" style="font-size: 12px;"></i>
+                        <input type="text" id="preview-search" onkeyup="applyFilterAndSearch()" class="form-control form-control-sm ps-5 font-semibold shadow-sm" placeholder="Cari Order / Pembeli / Variasi..." style="border-radius: 10px; border-color: var(--border-soft); font-size: 12px; background: #ffffff;">
+                    </div>
+                </div>
             </div>
 
             <div class="card-body p-0">
@@ -145,44 +186,53 @@
                 <div class="d-none d-lg-block">
                     <div class="table-responsive">
                         <table class="table table-hover align-middle mb-0" style="font-size: 13px;">
-                            <thead style="background: var(--pink-soft-2); color: var(--ink-soft); font-size: 11.5px; font-family: 'Quicksand', sans-serif; text-transform: uppercase; font-weight: 700; border-bottom: 1.5px solid var(--border-soft);">
+                            <thead style="background: #FFF0F3; color: var(--ink-soft); font-size: 11px; font-family: 'Quicksand', sans-serif; text-transform: uppercase; font-weight: 700; border-bottom: 1.5px solid var(--border-soft);">
                                 <tr>
-                                    <th class="py-3 ps-4">No. Order</th>
+                                    <th class="py-3 ps-4" style="width: 190px;">No. Order</th>
                                     <th class="py-3">Pembeli</th>
-                                    <th class="py-3">Kode Variasi</th>
-                                    <th class="py-3 text-center">Qty</th>
-                                    <th class="py-3 text-end">Total Harga</th>
+                                    <th class="py-3 text-center" style="width: 130px;">Kode Variasi</th>
+                                    <th class="py-3 text-center" style="width: 60px;">Qty</th>
+                                    <th class="py-3 text-end" style="width: 120px;">Total Harga</th>
                                     <th class="py-3 pe-4 text-end">Mapping Produk</th>
                                 </tr>
                             </thead>
-                            <tbody style="border-top: 1px solid var(--border-soft);">
-                                @foreach($parsed as $idx => $row)
-                                <tr>
+                            <tbody id="preview-table-body" style="border-top: 1px solid var(--border-soft);">
+                                @foreach($cleanParsed as $idx => $row)
+                                @php
+                                    $isAuto = ($row['mapping_status'] ?? '') === 'auto_found';
+                                @endphp
+                                <tr class="preview-row {{ $isAuto ? 'status-auto' : 'status-manual' }}" 
+                                    data-status="{{ $isAuto ? 'auto' : 'manual' }}"
+                                    data-search="{{ strtolower(($row['no_pesanan']??'').' '.($row['nama_pembeli']??'').' '.($row['variasi']??'')) }}"
+                                    style="border-left: 4px solid {{ $isAuto ? '#2EAF6C' : '#EE9A68' }};">
+                                    
                                     <td class="py-3 ps-4">
                                         <span class="badge" style="background: var(--pink-soft-2); color: var(--pink-primary-dark); border: 1px solid var(--border-soft); font-family: monospace; font-size: 11.5px; padding: 5px 8px;">
                                             {{ $row['no_pesanan'] ?? '-' }}
                                         </span>
                                     </td>
                                     <td class="py-3 fw-bold" style="color: var(--ink);">{{ $row['nama_pembeli'] ?? '-' }}</td>
-                                    <td class="py-3">
-                                        <span class="badge bg-light text-dark font-semibold border px-2 py-1" style="font-size: 11px;">{{ $row['variasi'] ?? '-' }}</span>
+                                    <td class="py-3 text-center">
+                                        <span class="badge font-semibold px-2.5 py-1" style="font-size: 11px; background: #FFF0F3; color: var(--pink-primary-dark); border: 1px solid var(--border-soft); border-radius: 8px;">
+                                            {{ $row['variasi'] ?? '-' }}
+                                        </span>
                                     </td>
                                     <td class="py-3 text-center fw-bold">{{ $row['qty'] ?? 1 }}</td>
-                                    <td class="py-3 text-end fw-bold" style="color: #52976D;">Rp {{ number_format($row['total_harga'] ?? 0, 0, ',', '.') }}</td>
+                                    <td class="py-3 text-end fw-bold" style="color: #2EAF6C;">Rp {{ number_format($row['total_harga'] ?? 0, 0, ',', '.') }}</td>
                                     
                                     <td class="py-3 pe-4 text-end">
-                                        @if($row['mapping_status'] === 'auto_found')
-                                            <span class="badge bg-success-subtle text-success border border-success-subtle px-2.5 py-1 rounded-2 font-semibold" style="font-size: 11px;">
-                                                <i class="bi bi-check-lg me-1"></i> {{ substr($row['nama_produk_auto'] ?? '', 0, 22) }}
+                                        @if($isAuto)
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1.5 rounded-pill font-semibold shadow-2xs" style="font-size: 11.5px;">
+                                                <i class="bi bi-check-lg me-1"></i> {{ substr($row['nama_produk_auto'] ?? '', 0, 26) }}
                                             </span>
                                             <input type="hidden" class="mapping-auto" data-idx="{{ $idx }}" value="{{ $row['id_produk_auto'] }}">
                                         @else
-                                            <select name="mapping_select[{{ $idx }}]" class="form-select form-select-sm rounded-2 mapping-select font-semibold d-inline-block" data-idx="{{ $idx }}" style="font-size: 11.5px; max-width: 200px; border-color: var(--border-soft);">
-                                                <option value="">— Pilih Produk —</option>
+                                            <select name="mapping_select[{{ $idx }}]" class="form-select form-select-sm rounded-3 mapping-select font-semibold d-inline-block shadow-2xs" data-idx="{{ $idx }}" style="font-size: 11.5px; max-width: 230px; border-color: #F8C3A4; background-color: #FFF9F5;">
+                                                <option value="">— Pilih Produk Katalog —</option>
                                                 @foreach($produkAktif as $prod)
                                                     <option value="{{ $prod->id }}">{{ substr($prod->nama_produk, 0, 25) }} (Stok: {{ $prod->stok }})</option>
                                                 @endforeach
-                                                <option value="skip" style="background-color: #FFE6E6; color: #dc3545;">▪ Skip Pesanan</option>
+                                                <option value="skip" style="background-color: #FFE6E6; color: #dc3545;">▪ Skip Pesanan Ini</option>
                                             </select>
                                         @endif
                                     </td>
@@ -194,15 +244,22 @@
                 </div>
 
                 <!-- CARD MOBILE (HP) -->
-                <div class="d-lg-none p-3" style="background: var(--pink-soft-2);">
-                    @foreach($parsed as $idx => $row)
-                    <div class="p-3 mb-3 rounded-3" style="background: #ffffff; border: 1.5px solid var(--border-soft);">
+                <div class="d-lg-none p-3" id="preview-mobile-container" style="background: var(--pink-soft-2);">
+                    @foreach($cleanParsed as $idx => $row)
+                    @php
+                        $isAuto = ($row['mapping_status'] ?? '') === 'auto_found';
+                    @endphp
+                    <div class="p-3 mb-3 rounded-4 preview-row {{ $isAuto ? 'status-auto' : 'status-manual' }}" 
+                         data-status="{{ $isAuto ? 'auto' : 'manual' }}"
+                         data-search="{{ strtolower(($row['no_pesanan']??'').' '.($row['nama_pembeli']??'').' '.($row['variasi']??'')) }}"
+                         style="background: #ffffff; border: 1.5px solid var(--border-soft); border-left: 5px solid {{ $isAuto ? '#2EAF6C' : '#EE9A68' }};">
+                        
                         <div class="d-flex justify-content-between align-items-center mb-2 pb-2" style="border-bottom: 1px dashed var(--border-soft);">
                             <span class="badge" style="background: var(--pink-soft-2); color: var(--pink-primary-dark); font-family: monospace; font-size: 11px;">
                                 {{ $row['no_pesanan'] ?? '-' }}
                             </span>
-                            <span class="badge font-semibold" style="font-size: 10px; background-color: {{ $row['mapping_status'] === 'auto_found' ? '#D4EDDA' : '#FFF3CD' }}; color: {{ $row['mapping_status'] === 'auto_found' ? '#155724' : '#856404' }};">
-                                {{ $row['mapping_status'] === 'auto_found' ? '✓ Auto' : '⚠ Manual' }}
+                            <span class="badge font-semibold rounded-pill px-2.5 py-1" style="font-size: 10.5px; background-color: {{ $isAuto ? '#E8F7EE' : '#FFF9E6' }}; color: {{ $isAuto ? '#2EAF6C' : '#B35118' }}; border: 1px solid {{ $isAuto ? '#C3EEDB' : '#FFE699' }};">
+                                {{ $isAuto ? '✓ Auto-Mapped' : '⚠ Perlu Manual' }}
                             </span>
                         </div>
 
@@ -218,19 +275,19 @@
                             </div>
                             <div class="col-6">
                                 <small class="text-muted d-block" style="font-size: 10px;">Jumlah × Harga</small>
-                                <strong style="color: #52976D;">{{ $row['qty'] ?? 1 }} × Rp {{ number_format($row['total_harga'] ?? 0, 0, ',', '.') }}</strong>
+                                <strong style="color: #2EAF6C;">{{ $row['qty'] ?? 1 }} × Rp {{ number_format($row['total_harga'] ?? 0, 0, ',', '.') }}</strong>
                             </div>
                         </div>
 
-                        @if($row['mapping_status'] === 'auto_found')
-                            <div class="p-2 rounded-3" style="background: #D4EDDA;">
-                                <small class="text-success d-block font-semibold" style="font-size: 10px;">✓ Sudah ter-map ke:</small>
+                        @if($isAuto)
+                            <div class="p-2.5 rounded-3" style="background: #E8F7EE; border: 1px solid #C3EEDB;">
+                                <small class="text-success d-block font-semibold" style="font-size: 10px;">✓ Ter-map ke Produk:</small>
                                 <strong class="text-success" style="font-size: 12px;">{{ $row['nama_produk_auto'] ?? '-' }}</strong>
                             </div>
                             <input type="hidden" class="mapping-auto" data-idx="{{ $idx }}" value="{{ $row['id_produk_auto'] }}">
                         @else
-                            <select name="mapping_select[{{ $idx }}]" class="form-select form-select-sm rounded-2 mapping-select font-semibold" data-idx="{{ $idx }}" style="font-size: 11.5px; border-color: var(--border-soft);">
-                                <option value="">— Pilih Produk atau Skip —</option>
+                            <select name="mapping_select[{{ $idx }}]" class="form-select form-select-sm rounded-3 mapping-select font-semibold" data-idx="{{ $idx }}" style="font-size: 11.5px; border-color: #F8C3A4; background-color: #FFF9F5;">
+                                <option value="">— Pilih Produk Katalog —</option>
                                 @foreach($produkAktif as $prod)
                                     <option value="{{ $prod->id }}">{{ $prod->nama_produk }} (Stok: {{ $prod->stok }})</option>
                                 @endforeach
@@ -245,8 +302,54 @@
     </form>
 </div>
 
-<!-- JAVASCRIPT: Kumpulkan mapping sebelum submit -->
+<!-- STYLES & JAVASCRIPT FOR TABS & SEARCH -->
+<style>
+.tab-btn.active-tab {
+    background: #ffffff !important;
+    color: var(--ink) !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
+}
+.tab-btn:hover:not(.active-tab) {
+    background: rgba(255,255,255,0.6);
+}
+</style>
+
 <script>
+let currentFilter = 'all';
+
+function filterTab(filterName) {
+    currentFilter = filterName;
+    
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        if (btn.getAttribute('data-filter') === filterName) {
+            btn.classList.add('active-tab');
+        } else {
+            btn.classList.remove('active-tab');
+        }
+    });
+
+    applyFilterAndSearch();
+}
+
+function applyFilterAndSearch() {
+    const searchVal = document.getElementById('preview-search').value.toLowerCase().trim();
+    
+    document.querySelectorAll('.preview-row').forEach(row => {
+        const rowStatus = row.getAttribute('data-status');
+        const rowSearch = row.getAttribute('data-search') || '';
+
+        const matchTab = (currentFilter === 'all') || (currentFilter === rowStatus);
+        const matchSearch = (searchVal === '') || rowSearch.includes(searchVal);
+
+        if (matchTab && matchSearch) {
+            row.style.setProperty('display', '', 'important');
+        } else {
+            row.style.setProperty('display', 'none', 'important');
+        }
+    });
+}
+
+// Handler Submit Form
 document.getElementById('import-form').addEventListener('submit', function(e) {
     e.preventDefault();
     
