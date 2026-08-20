@@ -281,9 +281,12 @@ class ProdukController extends Controller
                 'id_produk'          => $produk->id,
                 'id_pemasok'         => $request->id_pemasok,
                 'qty'                => $jumlahAwal,
+                'jumlah'             => $jumlahAwal,
                 'harga_beli_per_unit'=> $hargaBeliUnit,
-                'tanggal_pembelian' => now()->toDateString(),
-                'keterangan'        => 'Pembelian awal produk',
+                'total_modal'        => $jumlahAwal * $hargaBeliUnit,
+                'tanggal'            => now()->toDateString(),
+                'tanggal_pembelian'  => now()->toDateString(),
+                'keterangan'         => 'Pembelian awal produk',
             ]);
 
             DB::commit();
@@ -556,5 +559,33 @@ class ProdukController extends Controller
 
             return back()->with('error', '❌ Gagal menghapus produk: ' . $e->getMessage());
         }
+    }
+
+    // ============================================================
+    // MANAJEMEN HPP (HPP OTOMATIS & HPP REALISASI)
+    // ============================================================
+    public function hppIndex(Request $request)
+    {
+        $query = Produk::with(['jenisPakaian', 'warna', 'model', 'pemasok']);
+        if ($request->filled('search')) {
+            $query->where('nama_produk', 'like', '%' . $request->search . '%')
+                  ->orWhere('kode_produk', 'like', '%' . $request->search . '%');
+        }
+        $produk = $query->orderBy('created_at', 'desc')->paginate(15);
+        return view('produk.hpp', compact('produk'));
+    }
+
+    public function hppUpdate(Request $request, $id)
+    {
+        $request->validate([
+            'hpp_realisasi' => 'nullable|numeric|min:0',
+        ]);
+
+        $produk = Produk::findOrFail($id);
+        $produk->update([
+            'hpp_realisasi' => $request->hpp_realisasi,
+        ]);
+
+        return redirect()->route('produk.hpp')->with('success', 'HPP realisasi berhasil diperbarui!');
     }
 }

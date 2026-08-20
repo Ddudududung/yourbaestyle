@@ -44,7 +44,7 @@ class PosController extends Controller
             $details    = [];
 
             foreach ($request->items as $item) {
-                $produk = Produk::findOrFail($item['id_produk']);
+                $produk = Produk::where('id', $item['id_produk'])->lockForUpdate()->firstOrFail();
 
                 // Cek stok
                 if ($produk->stok < $item['qty']) {
@@ -75,6 +75,13 @@ class PosController extends Controller
             }
 
             $diskon     = $request->diskon ?? 0;
+            if ($diskon > $totalHarga) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Diskon tidak boleh melebihi total harga transaksi.',
+                ], 422);
+            }
             $totalAkhir = $totalHarga - $diskon;
 
             // Buat transaksi induk

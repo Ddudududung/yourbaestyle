@@ -15,6 +15,7 @@ return new class extends Migration
                 $table->string('target_url', 255);
                 $table->string('icon_url', 255)->nullable();
                 $table->integer('order_menu')->default(0);
+                $table->boolean('is_active')->default(true);
                 $table->timestamps();
             });
         }

@@ -50,7 +50,7 @@ class User extends Authenticatable
      */
     public function role()
     {
-        return $this->belongsTo(Role::class, 'id_role'); 
+        return $this->belongsTo(MsRole::class, 'id_role'); 
     }
 
     /**
@@ -58,11 +58,16 @@ class User extends Authenticatable
      */
     public function bisaAkses($url): bool
     {
+        $cleanUrl = trim($url, '/');
         // Mengecek apakah role user ini punya akses ke target_url yang dituju
         return DB::table('role_menu')
             ->join('ms_menu', 'role_menu.id_menu', '=', 'ms_menu.id')
             ->where('role_menu.id_role', $this->id_role)
-            ->where('ms_menu.target_url', $url)
+            ->where(function($q) use ($url, $cleanUrl) {
+                $q->where('ms_menu.target_url', $url)
+                  ->orWhere('ms_menu.target_url', $cleanUrl)
+                  ->orWhere('ms_menu.target_url', '/' . $cleanUrl);
+            })
             ->where('ms_menu.is_active', 1)
             ->exists();
     }

@@ -135,7 +135,7 @@ class ReturController extends Controller
 
         DB::beginTransaction();
         try {
-            $produk = Produk::findOrFail($request->id_produk);
+            $produk = Produk::where('id', $request->id_produk)->lockForUpdate()->firstOrFail();
             $ongkir = $request->ongkir_retur ?? 0;
             $qty = $request->qty ?? 1;
 

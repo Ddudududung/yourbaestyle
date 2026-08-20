@@ -12,16 +12,18 @@ return new class extends Migration
             Schema::create('pesanan_online', function (Blueprint $table) {
                 $table->id();
                 $table->string('no_pesanan', 50)->unique();
-                $table->unsignedBigInteger('id_user');
-                $table->enum('platform', ['shopee', 'tiktok']);
-                $table->enum('format_csv', ['shopee_standard', 'shopee_hemat_kargo', 'tiktok']);
+                $table->unsignedBigInteger('id_user')->nullable();
+                $table->string('platform', 50)->default('shopee');
+                $table->string('format_csv', 50)->nullable();
                 $table->string('no_resi', 50)->nullable();
-                $table->string('nama_pembeli', 100);
-                $table->dateTime('tanggal');
+                $table->string('nama_pembeli', 100)->nullable();
+                $table->dateTime('tanggal')->nullable();
                 $table->decimal('total_harga', 15, 2)->default(0);
                 $table->decimal('total_hpp', 15, 2)->default(0);
                 $table->decimal('ongkir', 15, 2)->default(0);
-                $table->enum('status', ['diproses', 'dikirim', 'selesai'])->default('diproses');
+                $table->string('status', 50)->default('diproses');
+                $table->string('status_mapping', 50)->nullable();
+                $table->text('pesan_mapping')->nullable();
                 $table->timestamps();
 
                 $table->foreign('id_user')->references('id')->on('ms_user')->onDelete('restrict');

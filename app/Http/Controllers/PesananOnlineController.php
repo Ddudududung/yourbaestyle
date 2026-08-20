@@ -426,6 +426,10 @@ class PesananOnlineController extends Controller
         'pesanan.*.no_pesanan' => 'required|string',
         'pesanan.*.nama_pembeli' => 'required|string',
         'pesanan.*.harga_satuan' => 'required|numeric|min:1000',
+        'pesanan.*.variasi' => 'nullable|string',
+        'pesanan.*.tanggal' => 'nullable|string',
+        'pesanan.*.qty' => 'nullable|numeric',
+        'pesanan.*.total_harga' => 'nullable|numeric',
     ]);
 
     $platform = session('csv_platform') ?? 'shopee';
@@ -459,12 +463,33 @@ class PesananOnlineController extends Controller
                 $mapping_status = 'not_found';
 
                 if (!empty($variasiLive)) {
-                    $katalog = KatalogLive::where('kode_live', $variasiLive)
+                    $cleanVar = trim($variasiLive);
+                    // 1. Match persis kode_live & tanggal
+                    $katalog = KatalogLive::where('kode_live', $cleanVar)
                                           ->whereDate('tanggal_live', date('Y-m-d', strtotime($tanggalLive)))
                                           ->with('produk')
                                           ->first();
 
-                    if ($katalog && $katalog->produk) {
+                    // 2. Fallback: Match tanpa batasan tanggal
+                    if (!$katalog) {
+                        $katalog = KatalogLive::where('kode_live', $cleanVar)
+                                              ->orderBy('created_at', 'desc')
+                                              ->with('produk')
+                                              ->first();
+                    }
+
+                    // 3. Fallback: Ekstrak nomor
+                    if (!$katalog && preg_match('/(\d+)/', $cleanVar, $m)) {
+                        $numCode = $m[1];
+                        $katalog = KatalogLive::where('kode_live', $numCode)
+                                              ->orWhere('kode_live', 'IYB ' . $numCode)
+                                              ->orWhere('kode_live', 'IYB-' . $numCode)
+                                              ->orderBy('created_at', 'desc')
+                                              ->with('produk')
+                                              ->first();
+                    }
+
+                    if ($katalog && $katalog->produk && $katalog->produk->status === 'aktif') {
                         $produk = $katalog->produk;
                         $mapping_status = 'auto_found';
                     }
@@ -501,8 +526,11 @@ class PesananOnlineController extends Controller
                     'variasi'      => $variasiLive,
                 ]);
 
-                // Potong stok dan update katalog live
-                $produk->decrement('stok', $row['qty']);
+                // Potong stok dan update katalog live (diberikan lockForUpdate)
+                $produkLocked = Produk::where('id', $produk->id)->lockForUpdate()->first();
+                if ($produkLocked) {
+                    $produkLocked->decrement('stok', $row['qty']);
+                }
                 
                 KatalogLive::firstOrCreate(
                     ['kode_live' => $variasiLive, 'tanggal_live' => date('Y-m-d', strtotime($tanggalLive))],

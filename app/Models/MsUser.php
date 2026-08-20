@@ -21,17 +21,26 @@ class MsUser extends Authenticatable
     // Cek apakah user punya akses ke menu tertentu
     public function bisaAkses(string $url): bool
     {
-        return $this->role->menus()->where('target_url', $url)->exists();
+        if (!$this->role) return false;
+        $cleanUrl = trim($url, '/');
+        return $this->role->menus()
+            ->where(function($q) use ($url, $cleanUrl) {
+                $q->where('target_url', $url)
+                  ->orWhere('target_url', $cleanUrl)
+                  ->orWhere('target_url', '/' . $cleanUrl);
+            })
+            ->where('is_active', true)
+            ->exists();
     }
 
     // Ambil semua menu yang boleh diakses user ini (untuk sidebar)
     public function menuAktif()
     {
-        return $this->role->menus()->where('is_active', true)->orderBy('order_menu')->get();
+        return $this->role ? $this->role->menus()->where('is_active', true)->orderBy('order_menu')->get() : collect();
     }
 
     // Shortcut cek role
-    public function isOwner(): bool { return $this->role->nama_role === 'owner'; }
-    public function isAdmin(): bool  { return $this->role->nama_role === 'admin'; }
-    public function isStaf(): bool   { return $this->role->nama_role === 'staf'; }
+    public function isOwner(): bool { return strtolower($this->role?->nama_role ?? '') === 'owner' || $this->id_role == 1; }
+    public function isAdmin(): bool  { return strtolower($this->role?->nama_role ?? '') === 'admin'; }
+    public function isStaf(): bool   { return strtolower($this->role?->nama_role ?? '') === 'staf'; }
 }

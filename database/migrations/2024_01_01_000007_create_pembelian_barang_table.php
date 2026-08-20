@@ -13,10 +13,14 @@ return new class extends Migration
                 $table->id();
                 $table->unsignedBigInteger('id_produk');
                 $table->unsignedBigInteger('id_pemasok');
-                $table->date('tanggal');
-                $table->integer('jumlah');
-                $table->decimal('harga_beli_per_unit', 15, 2);
-                $table->decimal('total_modal', 15, 2);
+                $table->date('tanggal')->nullable();
+                $table->date('tanggal_pembelian')->nullable();
+                $table->integer('jumlah')->default(0);
+                $table->integer('qty')->default(0);
+                $table->decimal('harga_beli_per_unit', 15, 2)->default(0);
+                $table->decimal('total_modal', 15, 2)->default(0);
+                $table->string('keterangan', 255)->nullable();
+                $table->string('status', 50)->nullable();
                 $table->timestamps();
 
                 $table->foreign('id_produk')->references('id')->on('produk')->onDelete('restrict');

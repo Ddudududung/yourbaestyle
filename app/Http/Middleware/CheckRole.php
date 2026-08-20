@@ -15,7 +15,10 @@ class CheckRole
     {
         $user = auth()->user();
 
-        if (!$user || !in_array($user->role->nama_role, $roles)) {
+        $userRole = strtolower($user->role?->nama_role ?? '');
+        $allowedRoles = array_map('strtolower', $roles);
+
+        if (!$user || (!in_array($userRole, $allowedRoles) && !$user->isOwner())) {
             abort(403, 'Akses Ditolak — Role tidak diizinkan');
         }
 

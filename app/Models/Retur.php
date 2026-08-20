@@ -9,7 +9,7 @@ class Retur extends Model
     protected $table = 'retur';
     protected $fillable = [
         'id_pesanan_online', 'id_produk', 'id_user', 'tanggal',
-        'alasan', 'kondisi_barang', 'ongkir_retur', 'nilai_kerugian'
+        'alasan', 'kondisi_barang', 'ongkir_retur', 'nilai_kerugian', 'qty'
     ];
 
     public function pesananOnline()
