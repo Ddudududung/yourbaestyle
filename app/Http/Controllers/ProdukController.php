@@ -238,6 +238,15 @@ class ProdukController extends Controller
                 'deskripsi'               => 'nullable|string',
             ]);
 
+            // VALIDASI HPP REALISASI HARUS >= HARGA BELI PER UNIT
+            if ($request->filled('hpp_realisasi') && (float)$request->hpp_realisasi > 0) {
+                $hargaBeli = (float) $request->harga_beli_per_unit;
+                $hppRealisasi = (float) $request->hpp_realisasi;
+                if ($hppRealisasi < $hargaBeli) {
+                    return back()->withInput()->with('error', "❌ HPP Realisasi (Rp " . number_format($hppRealisasi, 0, ',', '.') . ") tidak boleh lebih kecil dari Harga Beli per Unit (Rp " . number_format($hargaBeli, 0, ',', '.') . "). HPP Realisasi harus mencakup harga beli dasar ditambah biaya operasional/rebranding.");
+                }
+            }
+
             DB::beginTransaction();
 
             // PROSES OTOMATIS TAMBAH/RESOLVE MASTER DATA (JENIS, WARNA, MODEL)
@@ -389,6 +398,17 @@ class ProdukController extends Controller
                 'deskripsi'               => 'nullable|string',
                 'status'                  => 'nullable|in:aktif,nonaktif',
             ]);
+
+            // VALIDASI HPP REALISASI HARUS >= HARGA BELI PER UNIT
+            if ($request->filled('hpp_realisasi') && (float)$request->hpp_realisasi > 0) {
+                $hargaBeliCheck = $request->filled('harga_beli_per_unit') 
+                    ? (float)$request->harga_beli_per_unit 
+                    : (float)$produk->harga_beli_per_unit;
+                $hppRealisasi = (float)$request->hpp_realisasi;
+                if ($hppRealisasi < $hargaBeliCheck) {
+                    return back()->withInput()->with('error', "❌ HPP Realisasi (Rp " . number_format($hppRealisasi, 0, ',', '.') . ") tidak boleh lebih kecil dari Harga Beli per Unit (Rp " . number_format($hargaBeliCheck, 0, ',', '.') . ").");
+                }
+            }
 
             DB::beginTransaction();
 
@@ -577,13 +597,26 @@ class ProdukController extends Controller
 
     public function hppUpdate(Request $request, $id)
     {
+        if ($request->filled('hpp_realisasi')) {
+            $request->merge(['hpp_realisasi' => str_replace('.', '', $request->hpp_realisasi)]);
+        }
+
         $request->validate([
             'hpp_realisasi' => 'nullable|numeric|min:0',
         ]);
 
         $produk = Produk::findOrFail($id);
+
+        if ($request->filled('hpp_realisasi') && (float)$request->hpp_realisasi > 0) {
+            $hargaBeli = (float) $produk->harga_beli_per_unit;
+            $hppRealisasi = (float) $request->hpp_realisasi;
+            if ($hppRealisasi < $hargaBeli) {
+                return back()->with('error', "❌ HPP Realisasi (Rp " . number_format($hppRealisasi, 0, ',', '.') . ") tidak boleh lebih kecil dari Harga Beli per Unit (Rp " . number_format($hargaBeli, 0, ',', '.') . ").");
+            }
+        }
+
         $produk->update([
-            'hpp_realisasi' => $request->hpp_realisasi,
+            'hpp_realisasi' => ($request->filled('hpp_realisasi') && (float)$request->hpp_realisasi > 0) ? $request->hpp_realisasi : null,
         ]);
 
         return redirect()->route('produk.hpp')->with('success', 'HPP realisasi berhasil diperbarui!');

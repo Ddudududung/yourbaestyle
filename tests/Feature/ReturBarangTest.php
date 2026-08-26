@@ -86,6 +86,7 @@ class ReturBarangTest extends TestCase
             'kondisi_barang' => 'layak_jual',
             'qty' => 2,
             'ongkir_retur' => 15000,
+            'tipe_retur' => 'kembali_barang',
         ]);
 
         $response->assertRedirect(route('retur.index'))
@@ -118,6 +119,7 @@ class ReturBarangTest extends TestCase
             'kondisi_barang' => 'tidak_layak',
             'qty' => 2,
             'ongkir_retur' => 20000,
+            'tipe_retur' => 'kembali_barang',
         ]);
 
         $response->assertRedirect(route('retur.index'))
@@ -133,6 +135,84 @@ class ReturBarangTest extends TestCase
             'qty' => 2,
             'nilai_kerugian' => 220000,
         ]);
+    }
+
+    public function test_retur_tukar_barang_deducts_replacement_product_stock(): void
+    {
+        $this->actingAs($this->owner);
+
+        // Create replacement product with 5 stock
+        $pengganti = Produk::create([
+            'kode_produk' => 'CDG-PLS-RED-002',
+            'nama_produk' => 'Cardigan Merah Pengganti',
+            'id_jenis_pakaian' => $this->produk->id_jenis_pakaian,
+            'id_model' => $this->produk->id_model,
+            'id_warna' => $this->produk->id_warna,
+            'id_pemasok' => $this->produk->id_pemasok,
+            'harga_jual' => 150000,
+            'hpp_otomatis' => 100000,
+            'stok' => 5,
+            'status' => 'aktif',
+        ]);
+
+        $response = $this->post(route('retur.store'), [
+            'transaksi_type' => 'online',
+            'transaksi_id' => $this->pesanan->id,
+            'id_produk' => $this->produk->id,
+            'tanggal' => date('Y-m-d'),
+            'alasan' => 'Tukar warna',
+            'kondisi_barang' => 'layak_jual',
+            'qty' => 1,
+            'tipe_retur' => 'tukar_barang',
+            'id_produk_pengganti' => $pengganti->id,
+            'qty_pengganti' => 1,
+        ]);
+
+        $response->assertRedirect(route('retur.index'))
+                 ->assertSessionHas('success');
+
+        // Returned product stock increased 10 -> 11
+        $this->assertEquals(11, $this->produk->fresh()->stok);
+        // Replacement product stock decreased 5 -> 4
+        $this->assertEquals(4, $pengganti->fresh()->stok);
+    }
+
+    public function test_retur_tukar_barang_fails_when_replacement_stock_insufficient(): void
+    {
+        $this->actingAs($this->owner);
+
+        // Create replacement product with 0 stock
+        $pengganti = Produk::create([
+            'kode_produk' => 'CDG-PLS-BLU-003',
+            'nama_produk' => 'Cardigan Biru Habis',
+            'id_jenis_pakaian' => $this->produk->id_jenis_pakaian,
+            'id_model' => $this->produk->id_model,
+            'id_warna' => $this->produk->id_warna,
+            'id_pemasok' => $this->produk->id_pemasok,
+            'harga_jual' => 150000,
+            'hpp_otomatis' => 100000,
+            'stok' => 0,
+            'status' => 'aktif',
+        ]);
+
+        $response = $this->post(route('retur.store'), [
+            'transaksi_type' => 'online',
+            'transaksi_id' => $this->pesanan->id,
+            'id_produk' => $this->produk->id,
+            'tanggal' => date('Y-m-d'),
+            'alasan' => 'Tukar warna',
+            'kondisi_barang' => 'layak_jual',
+            'qty' => 1,
+            'tipe_retur' => 'tukar_barang',
+            'id_produk_pengganti' => $pengganti->id,
+            'qty_pengganti' => 1,
+        ]);
+
+        $response->assertSessionHas('error');
+        // Replacement product stock remains 0
+        $this->assertEquals(0, $pengganti->fresh()->stok);
+        // Original stock remains 10
+        $this->assertEquals(10, $this->produk->fresh()->stok);
     }
 
     public function test_retur_search_barcode_ajax(): void

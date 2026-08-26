@@ -25,10 +25,12 @@ class Produk extends Model
     ];
 
     // HPP yang aktif digunakan saat transaksi
-    // Pakai hpp_realisasi jika sudah diisi, fallback ke hpp_otomatis
     public function getHppAktifAttribute(): float
     {
-        return $this->hpp_realisasi ?? $this->hpp_otomatis;
+        if (!empty($this->hpp_realisasi) && (float)$this->hpp_realisasi > 0) {
+            return (float) $this->hpp_realisasi;
+        }
+        return (float) ($this->hpp_otomatis > 0 ? $this->hpp_otomatis : $this->harga_beli_per_unit);
     }
 
     // Generate kode produk otomatis (guaranteed unique & non-duplicate)

@@ -142,4 +142,32 @@ class ProdukAndHppTest extends TestCase
         $response->assertRedirect(route('produk.index'));
         $this->assertDatabaseMissing('produk', ['id' => $produk->id]);
     }
+
+    public function test_hpp_realisasi_less_than_harga_beli_fails_validation(): void
+    {
+        $this->actingAs($this->owner);
+
+        $produk = Produk::create([
+            'kode_produk' => 'CDG-PLS-BLK-003',
+            'nama_produk' => 'Cardigan Test HPP',
+            'id_jenis_pakaian' => $this->jenis->id,
+            'id_model' => $this->model->id,
+            'id_warna' => $this->warna->id,
+            'id_pemasok' => $this->pemasok->id,
+            'harga_jual' => 100000,
+            'harga_beli_per_unit' => 70000,
+            'hpp_otomatis' => 70000,
+            'stok' => 5,
+            'status' => 'aktif',
+        ]);
+
+        // Attempt setting hpp_realisasi lower than harga_beli_per_unit (50000 < 70000)
+        $response = $this->put(route('produk.hpp.update', $produk->id), [
+            'hpp_realisasi' => 50000,
+        ]);
+
+        $response->assertSessionHas('error');
+        // Check hpp_realisasi remained unchanged or null
+        $this->assertNull($produk->fresh()->hpp_realisasi);
+    }
 }

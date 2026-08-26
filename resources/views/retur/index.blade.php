@@ -60,7 +60,8 @@
                 <tr>
                     <th>Tanggal</th>
                     <th>No. Pesanan</th>
-                    <th>Produk</th>
+                    <th>Produk Retur</th>
+                    <th>Opsi Retur</th>
                     <th>Kondisi</th>
                     <th>Nilai Kerugian</th>
                     <th class="text-end">Diproses Oleh</th>
@@ -71,12 +72,31 @@
                 <tr>
                     <td class="fw-semibold">{{ \Carbon\Carbon::parse($r->tanggal)->format('d M Y') }}</td>
                     <td class="fw-bold" style="color: var(--ink);">{{ $r->pesananOnline->no_pesanan ?? 'POS Transaksi' }}</td>
-                    <td>{{ $r->produk->nama_produk ?? '-' }}</td>
+                    <td>
+                        <div class="fw-bold">{{ $r->produk->nama_produk ?? '-' }}</div>
+                        <small class="text-muted font-semibold">Qty: {{ $r->qty }} pcs</small>
+                    </td>
+                    <td>
+                        @if(($r->tipe_retur ?? 'tukar_barang') === 'tukar_barang')
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle font-semibold px-2.5 py-1 mb-1 d-inline-block">
+                                🔄 Tukar Barang
+                            </span>
+                            @if($r->produkPengganti)
+                                <div class="text-success font-semibold" style="font-size: 11.5px;">
+                                    <i class="bi bi-arrow-right-short me-0.5"></i>{{ $r->produkPengganti->nama_produk }} ({{ $r->qty_pengganti ?? 1 }} pcs)
+                                </div>
+                            @endif
+                        @else
+                            <span class="badge bg-secondary-subtle text-secondary border font-semibold px-2.5 py-1">
+                                📦 Tanpa Tukar
+                            </span>
+                        @endif
+                    </td>
                     <td>
                         @if($r->kondisi_barang == 'layak_jual')
-                            <span class="badge bg-success">Layak Jual</span>
+                            <span class="badge bg-success-subtle text-success border border-success-subtle font-semibold">Layak Jual</span>
                         @else
-                            <span class="badge bg-danger">Tidak Layak</span>
+                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle font-semibold">Tidak Layak</span>
                         @endif
                     </td>
                     <td class="fw-semibold">

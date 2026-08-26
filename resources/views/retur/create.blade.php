@@ -155,13 +155,59 @@
                     </div>
                 </div>
 
-                <!-- BAGIAN 5: TANGGAL RETUR -->
+                <!-- BAGIAN 5: TIPE RETUR & BARANG PENGGANTI (TUKAR BARANG) -->
+                <div class="mb-4 p-3 rounded-4" style="background: #FDF4F6; border: 1.5px solid #F7D4DD;">
+                    <label class="form-label fw-bold text-dark d-block mb-2">
+                        <i class="bi bi-arrow-repeat me-1" style="color: var(--pink-primary);"></i> Opsi / Tipe Retur <span class="text-danger">*</span>
+                    </label>
+                    
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-6">
+                            <div class="form-check card p-2.5 rounded-3 mb-0" style="background: #ffffff; border: 1px solid var(--border-soft);">
+                                <input class="form-check-input ms-1 me-2" type="radio" name="tipe_retur" id="tipeTukar" value="tukar_barang" checked onchange="togglePengganti(true)">
+                                <label class="form-check-label fw-bold text-dark" for="tipeTukar" style="cursor: pointer;">
+                                    🔄 Tukar Barang (Kirim Barang Pengganti)
+                                </label>
+                                <small class="text-muted d-block ms-4 mt-0.5" style="font-size: 11.5px;">Barang yang diretur ditukar dengan produk lain/sejenis.</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check card p-2.5 rounded-3 mb-0" style="background: #ffffff; border: 1px solid var(--border-soft);">
+                                <input class="form-check-input ms-1 me-2" type="radio" name="tipe_retur" id="tipeKembali" value="kembali_barang" onchange="togglePengganti(false)">
+                                <label class="form-check-label fw-bold text-dark" for="tipeKembali" style="cursor: pointer;">
+                                    📦 Pengembalian Barang Saja (Tanpa Tukar)
+                                </label>
+                                <small class="text-muted d-block ms-4 mt-0.5" style="font-size: 11.5px;">Barang diretur tanpa pengiriman produk baru pengganti.</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SELECTOR BARANG PENGGANTI -->
+                    <div id="sectionPengganti">
+                        <label class="form-label fw-bold text-dark" style="font-size: 13px;">
+                            Pilih Produk Pengganti <span class="text-danger">*</span>
+                        </label>
+                        <select name="id_produk_pengganti" id="produkPenggantiSelect" class="form-select font-semibold" onchange="checkStokPengganti()" required>
+                            <option value="" data-stok="0">— Pilih Barang Pengganti Dari Katalog —</option>
+                            @foreach($semuaProduk as $p)
+                                <option value="{{ $p->id }}" data-stok="{{ $p->stok }}" data-nama="{{ $p->nama_produk }}">
+                                    {{ $p->nama_produk }} (Kode: {{ $p->kode_produk }}) — Stok Tersedia: {{ $p->stok }} pcs
+                                </option>
+                            @endforeach
+                        </select>
+                        <div id="stokPenggantiInfo" class="mt-2 font-semibold" style="font-size: 12px;">
+                            <span class="text-muted"><i class="bi bi-info-circle me-1"></i>Pilih produk pengganti yang akan dikirimkan ke pelanggan.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BAGIAN 6: TANGGAL RETUR -->
                 <div class="mb-4">
                     <label class="form-label fw-bold text-dark">Tanggal Retur <span class="text-danger">*</span></label>
                     <input type="date" name="tanggal" class="form-control" value="{{ old('tanggal', date('Y-m-d')) }}" required>
                 </div>
 
-                <!-- BAGIAN 6: ONGKIR RETUR (OPTIONAL) -->
+                <!-- BAGIAN 7: ONGKIR RETUR (OPTIONAL) -->
                 <div class="mb-4">
                     <label class="form-label fw-bold text-dark">Ongkir Retur (Optional)</label>
                     <div class="input-group">
@@ -188,7 +234,42 @@
 @endsection
 
 @push('scripts')
-<script>
+function togglePengganti(show) {
+    const sec = document.getElementById('sectionPengganti');
+    const select = document.getElementById('produkPenggantiSelect');
+    if (show) {
+        sec.style.display = 'block';
+        select.setAttribute('required', 'required');
+    } else {
+        sec.style.display = 'none';
+        select.removeAttribute('required');
+        select.value = '';
+        document.getElementById('stokPenggantiInfo').innerHTML = '';
+    }
+}
+
+function checkStokPengganti() {
+    const select = document.getElementById('produkPenggantiSelect');
+    const info = document.getElementById('stokPenggantiInfo');
+    const qtyInput = document.getElementById('qtyInput');
+    const qtyNeed = parseInt(qtyInput ? qtyInput.value : 1) || 1;
+    
+    if (!select.value) {
+        info.innerHTML = '<span class="text-muted"><i class="bi bi-info-circle me-1"></i>Pilih produk pengganti yang akan dikirimkan ke pelanggan.</span>';
+        return;
+    }
+    
+    const selectedOption = select.options[select.selectedIndex];
+    const stok = parseInt(selectedOption.getAttribute('data-stok')) || 0;
+    const nama = selectedOption.getAttribute('data-nama') || 'Produk';
+
+    if (stok < qtyNeed) {
+        info.innerHTML = `<div class="alert alert-danger p-2 mb-0 rounded-3" style="font-size: 12px;"><i class="bi bi-exclamation-triangle-fill me-1"></i> <strong>STOK TIDAK MENCUKUPI!</strong> Stok <strong>${nama}</strong> saat ini hanya ${stok} pcs (Dibutuhkan: ${qtyNeed} pcs). Pilih produk pengganti lain atau isi stok terlebih dahulu.</div>`;
+    } else {
+        info.innerHTML = `<div class="alert alert-success p-2 mb-0 rounded-3" style="font-size: 12px;"><i class="bi bi-check-circle-fill me-1"></i> Stok <strong>${nama}</strong> aman (${stok} pcs tersedia). Stok akan otomatis dipotong ${qtyNeed} pcs setelah retur disimpan.</div>`;
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const produkSelect = document.getElementById('produkSelect');
     const qtyInput = document.getElementById('qtyInput');
@@ -234,6 +315,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } else if (val < 1 && this.value !== '') {
                 this.value = 1;
             }
+            checkStokPengganti();
         });
     }
 

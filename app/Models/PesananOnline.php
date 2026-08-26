@@ -43,7 +43,7 @@ class PesananOnline extends Model
      */
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'id_user');
+        return $this->belongsTo(MsUser::class, 'id_user');
     }
  
     /**

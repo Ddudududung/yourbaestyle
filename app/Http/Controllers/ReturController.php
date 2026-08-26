@@ -17,7 +17,7 @@ class ReturController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Retur::with(['pesananOnline', 'produk', 'user']);
+        $query = Retur::with(['pesananOnline', 'produk', 'produkPengganti', 'user']);
 
         if ($request->filled('kondisi')) {
             $query->where('kondisi_barang', $request->kondisi);
@@ -83,7 +83,8 @@ class ReturController extends Controller
                             ->with('error', 'Transaksi tidak ditemukan');
         }
         
-        return view('retur.create', compact('transaksi', 'transaksiType', 'detail'));
+        $semuaProduk = Produk::where('status', 'aktif')->orderBy('nama_produk')->get();
+        return view('retur.create', compact('transaksi', 'transaksiType', 'detail', 'semuaProduk'));
     }
 
     /**
@@ -131,44 +132,82 @@ class ReturController extends Controller
             'kondisi_barang'        => 'required|in:layak_jual,tidak_layak',
             'qty'                   => 'required|integer|min:1',
             'ongkir_retur'          => 'nullable|numeric|min:0',
+            'tipe_retur'            => 'required|in:tukar_barang,kembali_barang',
+            'id_produk_pengganti'   => 'nullable|required_if:tipe_retur,tukar_barang|exists:produk,id',
+            'qty_pengganti'         => 'nullable|integer|min:1',
         ]);
 
         DB::beginTransaction();
         try {
-            $produk = Produk::where('id', $request->id_produk)->lockForUpdate()->firstOrFail();
+            $produkRetur = Produk::where('id', $request->id_produk)->lockForUpdate()->firstOrFail();
             $ongkir = $request->ongkir_retur ?? 0;
-            $qty = $request->qty ?? 1;
+            $qtyRetur = (int) $request->qty;
+            $tipeRetur = $request->tipe_retur;
 
+            $idProdukPengganti = null;
+            $qtyPengganti = 0;
+
+            // PENGECEKAN STOK BARANG PENGGANTI (TUKAR BARANG)
+            if ($tipeRetur === 'tukar_barang' && !empty($request->id_produk_pengganti)) {
+                $idProdukPengganti = $request->id_produk_pengganti;
+                $qtyPengganti = (int)($request->qty_pengganti ?? $qtyRetur);
+
+                $produkPengganti = Produk::where('id', $idProdukPengganti)->lockForUpdate()->firstOrFail();
+
+                if ($produkPengganti->stok < $qtyPengganti) {
+                    DB::rollBack();
+                    return back()->withInput()->with('error', "❌ Stok barang pengganti [{$produkPengganti->nama_produk}] TIDAK MENCUKUPI! Stok tersedia: {$produkPengganti->stok} pcs, dibutuhkan: {$qtyPengganti} pcs. Harap pilih barang pengganti lain atau isi stok terlebih dahulu.");
+                }
+
+                // Potong stok barang pengganti
+                $produkPengganti->decrement('stok', $qtyPengganti);
+            }
+
+            // HITUNG KERUGIAN FINANSIAL
             $nilaiKerugian = 0;
             if ($request->kondisi_barang === 'tidak_layak') {
-                $nilaiKerugian = ($produk->hpp_otomatis * $qty) + $ongkir;
+                $nilaiKerugian = ($produkRetur->hpp_aktif * $qtyRetur) + $ongkir;
+            }
+
+            // KEMBALIKAN STOK BARANG RETUR JIKA LAYAK JUAL
+            if ($request->kondisi_barang === 'layak_jual') {
+                $produkRetur->increment('stok', $qtyRetur);
             }
 
             $idPesananOnline = ($request->transaksi_type === 'online') ? $request->transaksi_id : null;
+            $idTransaksiPos  = ($request->transaksi_type === 'pos') ? $request->transaksi_id : null;
 
             Retur::create([
-                'id_pesanan_online' => $idPesananOnline,
-                'id_produk'         => $request->id_produk,
-                'id_user'           => Auth::id(),
-                'tanggal'           => $request->tanggal,
-                'alasan'            => $request->alasan,
-                'kondisi_barang'    => $request->kondisi_barang,
-                'ongkir_retur'      => $ongkir,
-                'nilai_kerugian'    => $nilaiKerugian,
-                'qty'               => $qty,
+                'id_pesanan_online'   => $idPesananOnline,
+                'id_transaksi'        => $idTransaksiPos,
+                'id_produk'           => $request->id_produk,
+                'id_user'             => Auth::id(),
+                'tanggal'             => $request->tanggal,
+                'alasan'              => $request->alasan,
+                'kondisi_barang'      => $request->kondisi_barang,
+                'ongkir_retur'        => $ongkir,
+                'nilai_kerugian'      => $nilaiKerugian,
+                'qty'                 => $qtyRetur,
+                'tipe_retur'          => $tipeRetur,
+                'id_produk_pengganti' => $idProdukPengganti,
+                'qty_pengganti'       => $qtyPengganti,
             ]);
 
+            DB::commit();
+
+            $pesanSukses = '✅ Retur berhasil diproses!';
+            if ($tipeRetur === 'tukar_barang' && !empty($idProdukPengganti)) {
+                $pesanSukses .= " Stok barang pengganti telah dipotong ({$qtyPengganti} pcs).";
+            }
             if ($request->kondisi_barang === 'layak_jual') {
-                $produk->increment('stok', $qty);
+                $pesanSukses .= " Stok barang retur bertambah (+{$qtyRetur} pcs).";
             }
 
-            DB::commit();
-            return redirect()->route('retur.index')
-                            ->with('success', 'Retur berhasil diproses!');
+            return redirect()->route('retur.index')->with('success', $pesanSukses);
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+            return back()->withInput()->with('error', 'Terjadi kesalahan saat memproses retur: ' . $e->getMessage());
         }
     }
 
@@ -177,7 +216,7 @@ class ReturController extends Controller
      */
     public function show(string $id)
     {
-        $retur = Retur::with(['pesananOnline', 'produk', 'user'])->findOrFail($id);
+        $retur = Retur::with(['pesananOnline', 'produk', 'produkPengganti', 'user'])->findOrFail($id);
         return view('retur.show', compact('retur'));
     }
 }
