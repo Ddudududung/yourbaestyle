@@ -118,6 +118,9 @@ class PesananOnlineController extends Controller
         $tanggalLiveDefault = date('Y-m-d');
         
         foreach ($parsed as &$item) {
+            $noPesananCheck = $item['no_pesanan'] ?? null;
+            $item['is_duplicate'] = !empty($noPesananCheck) && PesananOnline::where('no_pesanan', $noPesananCheck)->exists();
+
             $variasiLive = $item['variasi'];
             
             if (!empty($variasiLive)) {

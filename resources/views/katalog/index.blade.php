@@ -87,6 +87,11 @@
                             <span class="badge rounded-pill px-2.5 py-1" style="background: var(--brand-light); color: var(--brand-pink); border: 1px solid var(--brand-border); font-size: 10px; font-weight: 800;">
                                 {{ strtoupper($p->jenisPakaian->nama ?? 'FASHION') }}
                             </span>
+                            @if(!empty($p->kode_live))
+                                <span class="badge rounded-pill px-2.5 py-1" style="background: #FFF9E6; color: #B35118; border: 1.5px solid #FFE699; font-size: 11.5px; font-weight: 800;" title="Nomor Baju Saat Live Stream">
+                                    <i class="bi bi-tag-fill me-1"></i> Live: {{ $p->kode_live }}
+                                </span>
+                            @endif
                         </div>
 
                         <h6 class="fw-bold text-dark mb-3 text-clamp-2" style="font-size: 14.5px; line-height: 1.4;">

@@ -22,7 +22,12 @@ class KatalogController extends Controller
             $liveQuery->whereRaw("TIMESTAMP(sesi_live.tanggal_live, sesi_live.jam_selesai) >= ?", [now()]);
         }
 
-        $liveProdukIds = $liveQuery->pluck('katalog_live.id_produk')->toArray();
+        $liveItems = $liveQuery->select('katalog_live.id_produk', 'katalog_live.kode_live')->get();
+        $liveMap = [];
+        foreach ($liveItems as $item) {
+            $liveMap[$item->id_produk] = $item->kode_live;
+        }
+        $liveProdukIds = array_keys($liveMap);
 
         // Fungsi filter pencarian (nama produk / jenis)
         $filter = function ($query) use ($request) {
@@ -42,6 +47,10 @@ class KatalogController extends Controller
             ->orderByDesc('created_at')
             ->paginate(12)
             ->withQueryString();
+
+        foreach ($liveProduks as $p) {
+            $p->kode_live = $liveMap[$p->id] ?? null;
+        }
 
         // 3. KELOMPOK BAWAH: Produk Tidak Live ATAU Stok Habis
         $otherProduks = Produk::where('status', 'aktif')

@@ -121,21 +121,41 @@
                     <span id="subtotalText" class="fw-bold" style="color: var(--ink);">Rp 0</span>
                 </div>
 
-                <!-- Input Diskon & Preset Chips -->
-                <div class="mb-3">
-                    <div class="d-flex justify-content-between align-items-center mb-1.5 flex-wrap gap-1">
-                        <label class="form-label font-semibold mb-0" style="font-size: 11.5px;">Diskon (Rp)</label>
-                        <div class="d-flex gap-1">
-                            <span class="discount-chip" onclick="setDiskon(5000)">+5k</span>
-                            <span class="discount-chip" onclick="setDiskon(10000)">+10k</span>
-                            <span class="discount-chip" onclick="setDiskon(15000)">+15k</span>
-                            <span class="discount-chip text-danger" onclick="setDiskon(0)">Reset</span>
+                <!-- Input Diskon & Preset Chips (Support Nominal Rp & Persentase %) -->
+                <div class="mb-3 p-3 rounded-3" style="background: var(--pink-soft-2); border: 1.5px solid var(--border-soft);">
+                    <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-1">
+                        <div class="d-flex align-items-center gap-1.5">
+                            <label class="form-label font-semibold mb-0" style="font-size: 12px; color: var(--ink);">
+                                <i class="bi bi-percent me-1" style="color: var(--pink-primary);"></i>Diskon Transaksi
+                            </label>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <input type="radio" class="btn-check" name="modeDiskon" id="modeRp" value="rp" checked onchange="switchModeDiskon('rp')">
+                                <label class="btn btn-outline-secondary font-semibold py-0.5 px-2" for="modeRp" style="font-size: 11px;">Rp</label>
+                                <input type="radio" class="btn-check" name="modeDiskon" id="modePersen" value="persen" onchange="switchModeDiskon('persen')">
+                                <label class="btn btn-outline-secondary font-semibold py-0.5 px-2" for="modePersen" style="font-size: 11px;">%</label>
+                            </div>
                         </div>
+                        <button type="button" class="btn btn-sm btn-link text-danger text-decoration-none p-0 font-semibold" style="font-size: 11px;" onclick="resetDiskon()">Reset Diskon</button>
                     </div>
+
+                    <!-- Preset Chips (Rp & %) -->
+                    <div class="d-flex gap-1 flex-wrap mb-2" id="presetChipsContainer">
+                        <span class="discount-chip" onclick="addDiskonNominal(5000)">+5k</span>
+                        <span class="discount-chip" onclick="addDiskonNominal(10000)">+10k</span>
+                        <span class="discount-chip" onclick="addDiskonNominal(20000)">+20k</span>
+                        <span class="discount-chip" onclick="addDiskonNominal(50000)">+50k</span>
+                        <span class="discount-chip bg-primary-subtle text-primary border border-primary-subtle" onclick="setDiskonPersen(5)">5%</span>
+                        <span class="discount-chip bg-primary-subtle text-primary border border-primary-subtle" onclick="setDiskonPersen(10)">10%</span>
+                        <span class="discount-chip bg-primary-subtle text-primary border border-primary-subtle" onclick="setDiskonPersen(15)">15%</span>
+                        <span class="discount-chip bg-primary-subtle text-primary border border-primary-subtle" onclick="setDiskonPersen(20)">20%</span>
+                        <span class="discount-chip bg-primary-subtle text-primary border border-primary-subtle" onclick="setDiskonPersen(50)">50%</span>
+                    </div>
+
                     <div class="input-group">
-                        <span class="input-group-text bg-white border-end-0" style="border-color: var(--border-soft); border-radius: 12px 0 0 12px; color: var(--ink-soft);">Rp</span>
-                        <input type="text" id="diskonInput" class="form-control border-start-0 input-rupiah" data-type="rupiah" value="0" oninput="updateTotal()" style="border-radius: 0 12px 12px 0; border-color: var(--border-soft);">
+                        <span class="input-group-text bg-white border-end-0 font-bold" id="diskonAddonText" style="border-color: var(--border-soft); border-radius: 10px 0 0 10px; color: var(--ink-soft); font-size: 12px;">Rp</span>
+                        <input type="text" id="diskonInput" class="form-control border-start-0 font-bold input-rupiah" data-type="rupiah" value="0" oninput="updateTotal()" style="border-radius: 0 10px 10px 0; border-color: var(--border-soft); font-size: 13px;">
                     </div>
+                    <div id="diskonBreakdownText" class="mt-1 font-semibold text-primary d-none" style="font-size: 11.5px;"></div>
                 </div>
 
                 <!-- Total Akhir Highlight Card -->
@@ -249,16 +269,59 @@ function getRawNumeric(elementId) {
     return parseFloat(cleanStr) || 0;
 }
 
-function setDiskon(nominal) {
-    const subtotal = keranjang.reduce((sum, item) => sum + (item.harga * item.qty), 0);
-    const diskonInput = document.getElementById('diskonInput');
-    let currentDiskon = getRawNumeric('diskonInput');
-    let newDiskon = currentDiskon + nominal;
-    if (nominal === 0) newDiskon = 0;
-    
-    if (newDiskon > subtotal) newDiskon = subtotal;
-    diskonInput.value = formatRupiahDisplay(newDiskon);
+let currentModeDiskon = 'rp';
+
+function switchModeDiskon(mode) {
+    currentModeDiskon = mode;
+    const addon = document.getElementById('diskonAddonText');
+    const input = document.getElementById('diskonInput');
+    if (mode === 'persen') {
+        addon.innerText = '%';
+        input.value = '0';
+    } else {
+        addon.innerText = 'Rp';
+        input.value = '0';
+    }
     updateTotal();
+}
+
+function addDiskonNominal(nominal) {
+    if (currentModeDiskon !== 'rp') {
+        switchModeDiskon('rp');
+        const modeRpEl = document.getElementById('modeRp');
+        if (modeRpEl) modeRpEl.checked = true;
+    }
+    const subtotal = keranjang.reduce((sum, item) => sum + (item.harga * item.qty), 0);
+    let currentVal = getRawNumeric('diskonInput');
+    let newVal = currentVal + nominal;
+    if (newVal > subtotal) newVal = subtotal;
+    document.getElementById('diskonInput').value = formatRupiahDisplay(newVal);
+    updateTotal();
+}
+
+function setDiskonPersen(persen) {
+    if (currentModeDiskon !== 'persen') {
+        switchModeDiskon('persen');
+        const modePersenEl = document.getElementById('modePersen');
+        if (modePersenEl) modePersenEl.checked = true;
+    }
+    document.getElementById('diskonInput').value = persen;
+    updateTotal();
+}
+
+function resetDiskon() {
+    document.getElementById('diskonInput').value = '0';
+    updateTotal();
+}
+
+function hitungDiskonNominal(subtotal) {
+    const rawVal = getRawNumeric('diskonInput');
+    if (currentModeDiskon === 'persen') {
+        const p = Math.min(100, Math.max(0, rawVal));
+        return (subtotal * p) / 100;
+    } else {
+        return Math.min(subtotal, Math.max(0, rawVal));
+    }
 }
 
 function formatRupiah(angka) { 
@@ -272,8 +335,8 @@ function toggleBayarTunai(isTunai) {
 
 function hitungKembalian() {
     const subtotal = keranjang.reduce((sum, item) => sum + (item.harga * item.qty), 0);
-    const diskon = getRawNumeric('diskonInput');
-    const totalNet = Math.max(0, subtotal - diskon);
+    const diskonNominal = hitungDiskonNominal(subtotal);
+    const totalNet = Math.max(0, subtotal - diskonNominal);
     const uangDiterima = getRawNumeric('uangDiterimaInput');
 
     const kembalianText = document.getElementById('kembalianText');
@@ -325,18 +388,26 @@ function renderKeranjang() {
 
 function updateTotal() {
     const subtotal = keranjang.reduce((sum, item) => sum + (item.harga * item.qty), 0);
-    let diskon = getRawNumeric('diskonInput');
-    
-    if (diskon < 0) {
-        diskon = 0;
-        document.getElementById('diskonInput').value = '0';
-    } else if (diskon > subtotal) {
-        diskon = subtotal;
-        document.getElementById('diskonInput').value = formatRupiahDisplay(subtotal);
+    const diskonNominal = hitungDiskonNominal(subtotal);
+    const breakdownEl = document.getElementById('diskonBreakdownText');
+
+    if (currentModeDiskon === 'persen' && getRawNumeric('diskonInput') > 0) {
+        const p = Math.min(100, getRawNumeric('diskonInput'));
+        if (breakdownEl) {
+            breakdownEl.innerHTML = `<i class="bi bi-info-circle me-1"></i>Diskon ${p}% = -${formatRupiah(diskonNominal)}`;
+            breakdownEl.classList.remove('d-none');
+        }
+    } else if (diskonNominal > 0) {
+        if (breakdownEl) {
+            breakdownEl.innerHTML = `<i class="bi bi-info-circle me-1"></i>Diskon Potongan = -${formatRupiah(diskonNominal)}`;
+            breakdownEl.classList.remove('d-none');
+        }
+    } else {
+        if (breakdownEl) breakdownEl.classList.add('d-none');
     }
 
     document.getElementById('subtotalText').innerText = formatRupiah(subtotal);
-    document.getElementById('totalText').innerText = formatRupiah(subtotal - diskon);
+    document.getElementById('totalText').innerText = formatRupiah(Math.max(0, subtotal - diskonNominal));
     hitungKembalian();
 }
 
@@ -358,8 +429,9 @@ function filterStok(tipe, btnEl) {
 
 function prosesTransaksi() {
     if (keranjang.length === 0) return;
+    const subtotal = keranjang.reduce((sum, item) => sum + (item.harga * item.qty), 0);
+    const diskon = hitungDiskonNominal(subtotal);
     const metode = document.querySelector('input[name="metode"]:checked').value;
-    const diskon = getRawNumeric('diskonInput');
     const items = keranjang.map(item => ({ id_produk: item.id_produk, qty: item.qty }));
 
     const btn = document.getElementById('btnProses');

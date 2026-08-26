@@ -75,7 +75,8 @@
                                         {{ $singleItem->produk->nama_produk ?? $singleItem->nama_produk_history ?? 'Produk' }}
                                         @if($singleItem->variasi) <span class="text-muted">({{ $singleItem->variasi }})</span> @endif
                                     </h6>
-                                    <span class="badge bg-light text-dark border">Total Beli: <strong>{{ $singleItem->qty }} pcs</strong></span>
+                                    <span class="badge bg-light text-dark border me-1">Total Beli: <strong>{{ $singleItem->qty }} pcs</strong></span>
+                                    <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle font-semibold">Stok Inventaris Saat Ini: {{ $singleItem->produk->stok ?? 0 }} pcs</span>
                                 </div>
                                 <i class="bi bi-check-circle-fill text-success fs-4"></i>
                             </div>
@@ -94,7 +95,7 @@
                                     data-name="{{ $d->produk->nama_produk ?? $d->nama_produk_history ?? 'Produk' }}">
                                 {{ $d->produk->nama_produk ?? $d->nama_produk_history ?? 'Produk Telah Dihapus' }} 
                                 @if($d->variasi) ({{ $d->variasi }}) @endif
-                                - Qty Beli: {{ $d->qty }} pcs
+                                — Beli: {{ $d->qty }} pcs | Stok Inventaris Saat Ini: {{ $d->produk->stok ?? 0 }} pcs
                             </option>
                             @endforeach
                         </select>

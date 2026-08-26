@@ -189,6 +189,11 @@
                                         <span class="badge" style="background: var(--pink-soft-2); color: var(--pink-primary-dark); border: 1px solid var(--border-soft); font-family: monospace; font-size: 11.5px; padding: 5px 8px;">
                                             {{ $row['no_pesanan'] ?? '-' }}
                                         </span>
+                                        @if(!empty($row['is_duplicate']))
+                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle ms-1 font-semibold" style="font-size: 10px;" title="Nomor pesanan ini sudah ada di database pesanan online!">
+                                                ⚠️ Duplikat
+                                            </span>
+                                        @endif
                                     </td>
                                     <td class="py-3 fw-bold" style="color: var(--ink);">{{ $row['nama_pembeli'] ?? '-' }}</td>
                                     <td class="py-3 text-center">
@@ -200,7 +205,14 @@
                                     <td class="py-3 text-end fw-bold" style="color: #2EAF6C;">Rp {{ number_format($row['total_harga'] ?? 0, 0, ',', '.') }}</td>
                                     
                                     <td class="py-3 pe-4 text-end">
-                                        @if($isAuto)
+                                        @if(!empty($row['is_duplicate']))
+                                            <select name="mapping_select[{{ $idx }}]" class="form-select form-select-sm rounded-3 mapping-select font-semibold d-inline-block shadow-2xs" data-idx="{{ $idx }}" style="font-size: 11.5px; max-width: 230px; border-color: #F7C9D3; background-color: #FFF0F2;">
+                                                <option value="skip" selected style="background-color: #FFE6E6; color: #dc3545;">▪ Skip (Order Duplikat)</option>
+                                                @foreach($produkAktif as $prod)
+                                                    <option value="{{ $prod->id }}">{{ substr($prod->nama_produk, 0, 25) }} (Stok: {{ $prod->stok }})</option>
+                                                @endforeach
+                                            </select>
+                                        @elseif($isAuto)
                                             <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1.5 rounded-pill font-semibold shadow-2xs" style="font-size: 11.5px;">
                                                 <i class="bi bi-check-lg me-1"></i> {{ substr($row['nama_produk_auto'] ?? '', 0, 26) }}
                                             </span>
