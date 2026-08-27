@@ -85,7 +85,7 @@
             <div class="p-3 rounded-3 mb-3" style="background: #EDF5EA; border: 1px solid #ACC9A4;">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <small class="d-block font-semibold" style="font-size: 11px; color: #56794D;">ESTIMASI PROFiT / UNIT</small>
+                        <small class="d-block font-semibold" style="font-size: 11px; color: #56794D;">ESTIMASI PROFIT / PRODUK</small>
                         <strong style="color: #2D7A4D; font-size: 15px;">Rp {{ number_format($marginUnit, 0, ',', '.') }}</strong>
                     </div>
                     <span class="badge bg-success" style="font-size: 11px;">{{ $persenMargin }}% Margin</span>
@@ -119,7 +119,7 @@
                             <th>Tanggal</th>
                             <th>Pemasok</th>
                             <th>Jumlah Masuk</th>
-                            <th>Harga Beli / Unit</th>
+                            <th>Harga Beli / Produk</th>
                             <th class="text-end">Total Modal</th>
                         </tr>
                     </thead>

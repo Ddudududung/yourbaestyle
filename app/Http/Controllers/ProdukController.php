@@ -243,7 +243,7 @@ class ProdukController extends Controller
                 $hargaBeli = (float) $request->harga_beli_per_unit;
                 $hppRealisasi = (float) $request->hpp_realisasi;
                 if ($hppRealisasi < $hargaBeli) {
-                    return back()->withInput()->with('error', "❌ HPP Realisasi (Rp " . number_format($hppRealisasi, 0, ',', '.') . ") tidak boleh lebih kecil dari Harga Beli per Unit (Rp " . number_format($hargaBeli, 0, ',', '.') . "). HPP Realisasi harus mencakup harga beli dasar ditambah biaya operasional/rebranding.");
+                    return back()->withInput()->with('error', "❌ HPP Realisasi (Rp " . number_format($hppRealisasi, 0, ',', '.') . ") tidak boleh lebih kecil dari Harga Beli per Produk (Rp " . number_format($hargaBeli, 0, ',', '.') . "). HPP Realisasi harus mencakup harga beli dasar ditambah biaya operasional/rebranding.");
                 }
             }
 
@@ -406,7 +406,7 @@ class ProdukController extends Controller
                     : (float)$produk->harga_beli_per_unit;
                 $hppRealisasi = (float)$request->hpp_realisasi;
                 if ($hppRealisasi < $hargaBeliCheck) {
-                    return back()->withInput()->with('error', "❌ HPP Realisasi (Rp " . number_format($hppRealisasi, 0, ',', '.') . ") tidak boleh lebih kecil dari Harga Beli per Unit (Rp " . number_format($hargaBeliCheck, 0, ',', '.') . ").");
+                    return back()->withInput()->with('error', "❌ HPP Realisasi (Rp " . number_format($hppRealisasi, 0, ',', '.') . ") tidak boleh lebih kecil dari Harga Beli per Produk (Rp " . number_format($hargaBeliCheck, 0, ',', '.') . ").");
                 }
             }
 
@@ -611,7 +611,7 @@ class ProdukController extends Controller
             $hargaBeli = (float) $produk->harga_beli_per_unit;
             $hppRealisasi = (float) $request->hpp_realisasi;
             if ($hppRealisasi < $hargaBeli) {
-                return back()->with('error', "❌ HPP Realisasi (Rp " . number_format($hppRealisasi, 0, ',', '.') . ") tidak boleh lebih kecil dari Harga Beli per Unit (Rp " . number_format($hargaBeli, 0, ',', '.') . ").");
+                return back()->with('error', "❌ HPP Realisasi (Rp " . number_format($hppRealisasi, 0, ',', '.') . ") tidak boleh lebih kecil dari Harga Beli per Produk (Rp " . number_format($hargaBeli, 0, ',', '.') . ").");
             }
         }
 

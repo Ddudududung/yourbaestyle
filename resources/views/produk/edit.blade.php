@@ -22,9 +22,8 @@
 
         <div class="card-body p-4">
 
-
             <!-- FORM EDIT -->
-            <form action="{{ route('produk.update', $produk->id) }}" method="POST" enctype="multipart/form-data">
+            <form action="{{ route('produk.update', $produk->id) }}" method="POST" enctype="multipart/form-data" id="formEditProduk">
                 @csrf
                 @method('PUT')
 
@@ -68,13 +67,13 @@
                 <div class="row g-3 mb-3">
                     <div class="col-md-6">
                         <label class="form-label fw-bold text-dark">Kode Produk</label>
-                        <input type="text" class="form-control bg-light" value="{{ $produk->kode_produk }}" readonly>
+                        <input type="text" class="form-control bg-light font-monospace fw-bold" value="{{ $produk->kode_produk }}" readonly>
                         <small class="text-muted" style="font-size: 11px;">Kode produk dikunci oleh sistem.</small>
                     </div>
 
                     <div class="col-md-6">
                         <label class="form-label fw-bold text-dark">Status Produk <span class="text-danger">*</span></label>
-                        <select name="status" class="form-select" required>
+                        <select name="status" class="form-select font-semibold" required>
                             <option value="aktif" {{ old('status', $produk->status) == 'aktif' ? 'selected' : '' }}>Aktif / Dijual</option>
                             <option value="nonaktif" {{ old('status', $produk->status) == 'nonaktif' ? 'selected' : '' }}>Nonaktif / Arsip</option>
                         </select>
@@ -187,7 +186,7 @@
                     <div class="col-12">
                         <label class="form-label fw-bold text-dark">Nama Produk <span class="text-danger">*</span></label>
                         <div class="input-group">
-                            <input type="text" name="nama_produk" id="nama_produk" class="form-control" value="{{ old('nama_produk', $produk->nama_produk) }}" required placeholder="Contoh: Knitwear Garis Kuning">
+                            <input type="text" name="nama_produk" id="nama_produk" class="form-control font-semibold" value="{{ old('nama_produk', $produk->nama_produk) }}" required placeholder="Contoh: Knitwear Garis Kuning">
                             <button type="button" id="btn_generate_nama" class="btn btn-outline-secondary btn-sm px-3" style="font-size:12px;" title="Reset ke nama otomatis">
                                 ⚡ Generate Nama
                             </button>
@@ -210,44 +209,110 @@
                     </div>
                 </div>
 
-                <!-- ==================== BAGIAN 3: HARGA & HPP ==================== -->
+                <!-- ==================== BAGIAN 3: DATA PEMBELIAN & HPP ==================== -->
+                <p class="text-secondary small fw-bold text-uppercase mb-3 mt-4" style="letter-spacing:.4px; font-family: 'Quicksand', sans-serif;">
+                    💰 Data Pembelian &amp; HPP
+                </p>
+
                 <div class="row g-3 mb-3">
                     <div class="col-md-6">
-                        <label class="form-label fw-bold text-dark">Harga Jual <span class="text-danger">*</span></label>
+                        <label class="form-label fw-bold text-dark">Harga Beli Per Produk</label>
                         <div class="input-group">
                             <span class="input-group-text bg-light border-end-0">Rp</span>
-                            <input type="text" name="harga_jual" class="form-control input-rupiah" data-type="rupiah" value="{{ old('harga_jual', number_format($produk->harga_jual ?? 0, 0, '', '')) }}" required>
+                            <input type="text" name="harga_beli_per_unit" id="harga_beli" class="form-control input-rupiah font-semibold" data-type="rupiah" value="{{ old('harga_beli_per_unit', number_format($produk->harga_beli_per_unit ?? 0, 0, '', '')) }}">
                         </div>
-                    </div>
-
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold text-dark">Harga Beli Per Unit</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light border-end-0">Rp</span>
-                            <input type="text" name="harga_beli_per_unit" class="form-control input-rupiah" data-type="rupiah" value="{{ old('harga_beli_per_unit', number_format($produk->harga_beli_per_unit ?? 0, 0, '', '')) }}">
-                        </div>
-                        <small class="text-muted d-block mt-1">Digunakan jika ada penambahan stok.</small>
+                        <small class="text-muted d-block mt-1" style="font-size: 11px;">Digunakan sebagai dasar kalkulasi modal & HPP.</small>
                     </div>
 
                     <div class="col-md-6">
                         <label class="form-label fw-bold text-dark">HPP Otomatis</label>
                         <div class="input-group">
                             <span class="input-group-text bg-light border-end-0">Rp</span>
-                            <input type="text" class="form-control bg-light input-rupiah" value="{{ number_format($produk->hpp_otomatis ?? 0, 0, '', '') }}" readonly>
+                            <input type="text" id="hpp_otomatis_display" class="form-control bg-light input-rupiah font-semibold" value="{{ number_format($produk->hpp_otomatis ?? 0, 0, '', '') }}" readonly>
                         </div>
                         <small class="text-muted" style="font-size: 11px;">Dihitung otomatis dari stok + harga beli.</small>
                     </div>
 
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold text-dark">HPP Realisasi (Optional)</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light border-end-0">Rp</span>
-                            <input type="text" name="hpp_realisasi" class="form-control input-rupiah" data-type="rupiah" value="{{ old('hpp_realisasi', $produk->hpp_realisasi ? number_format($produk->hpp_realisasi, 0, '', '') : '') }}">
+                    <div class="col-12">
+                        <div class="p-3 rounded-4" style="background: #FFFBF0; border: 1.5px solid #F6E0B5;">
+                            <label class="form-label fw-bold text-dark mb-1">
+                                ✨ HPP Realisasi (Optional)
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0">Rp</span>
+                                <input type="text" name="hpp_realisasi" id="hpp_realisasi" class="form-control input-rupiah font-semibold bg-white" data-type="rupiah" value="{{ old('hpp_realisasi', $produk->hpp_realisasi ? number_format($produk->hpp_realisasi, 0, '', '') : '') }}" placeholder="Isi jika ada biaya ekstra aktual">
+                            </div>
+                            <small class="text-muted d-block mt-1" style="font-size: 11.5px;">
+                                💡 Jika diisi, HPP Realisasi menjadi <strong>HPP Aktif</strong> dan akan memperbarui kalkulasi profit margin & harga jual.
+                            </small>
                         </div>
                     </div>
                 </div>
 
-                <!-- ==================== BAGIAN 4: PENGELOLAAN & PENYESUAIAN STOK ==================== -->
+                <!-- ==================== BAGIAN 4: PENENTUAN HARGA JUAL (BERADA DI BAWAH HPP) ==================== -->
+                <div class="card border-0 shadow-sm rounded-4 mb-4" style="background: #FDF6F8; border: 1.5px solid #F7D4DD !important;">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                            <h6 class="fw-bold mb-0 text-dark" style="font-family: 'Quicksand', sans-serif;">
+                                🏷️ Penentuan Harga Jual
+                            </h6>
+
+                            <!-- Opsi Mode Margin: Persenan (%) vs Langsung Nominal (Rp) -->
+                            <div class="btn-group btn-group-sm" role="group" id="groupMarginMode">
+                                <input type="radio" class="btn-check" name="margin_mode" id="modePersen" value="persen" checked autocomplete="off">
+                                <label class="btn btn-outline-pink font-semibold px-3" for="modePersen">
+                                    📊 Persenan Margin (%)
+                                </label>
+
+                                <input type="radio" class="btn-check" name="margin_mode" id="modeNominal" value="nominal" autocomplete="off">
+                                <label class="btn btn-outline-pink font-semibold px-3" for="modeNominal">
+                                    💵 Langsung Nominal (Rp)
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- MODE 1: PERSENAN MARGIN (%) -->
+                        <div id="boxModePersen" class="mb-3">
+                            <label class="form-label fw-bold text-dark small mb-1">Pilih / Masukkan Margin Profit (%)</label>
+                            
+                            <!-- Quick Preset Buttons -->
+                            <div class="d-flex flex-wrap gap-1.5 mb-2.5">
+                                <button type="button" class="btn btn-sm btn-preset-margin rounded-pill px-3 py-1 font-semibold" data-percent="10">+10%</button>
+                                <button type="button" class="btn btn-sm btn-preset-margin rounded-pill px-3 py-1 font-semibold" data-percent="20">+20%</button>
+                                <button type="button" class="btn btn-sm btn-preset-margin rounded-pill px-3 py-1 font-semibold active" data-percent="30">+30%</button>
+                                <button type="button" class="btn btn-sm btn-preset-margin rounded-pill px-3 py-1 font-semibold" data-percent="50">+50%</button>
+                                <button type="button" class="btn btn-sm btn-preset-margin rounded-pill px-3 py-1 font-semibold" data-percent="100">+100%</button>
+                            </div>
+
+                            <div class="input-group" style="max-width: 250px;">
+                                <span class="input-group-text bg-white">Margin</span>
+                                <input type="number" id="input_margin_persen" class="form-control font-semibold" min="0" max="1000" step="0.5" value="30">
+                                <span class="input-group-text bg-light fw-bold">%</span>
+                            </div>
+                        </div>
+
+                        <!-- INPUT UTAMA HARGA JUAL -->
+                        <div class="mb-2">
+                            <label class="form-label fw-bold text-dark">Harga Jual Akhir <span class="text-danger">*</span></label>
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text fw-bold text-dark" style="border-radius:16px 0 0 16px;background:var(--pink-soft);border:2px solid var(--border-soft);border-right:none">Rp</span>
+                                <input type="text" name="harga_jual" id="harga_jual" class="form-control input-rupiah font-bold text-dark" data-type="rupiah" value="{{ old('harga_jual', number_format($produk->harga_jual ?? 0, 0, '', '')) }}" style="font-size: 20px;" required>
+                            </div>
+                        </div>
+
+                        <!-- LIVE BADGE INDIKATOR MARGIN & PROFIT -->
+                        <div id="liveProfitBadge" class="p-2.5 rounded-3 mt-3 d-flex justify-content-between align-items-center" style="background: #E8F7EE; border: 1px solid #C3EEDB;">
+                            <div style="font-size: 12.5px;" class="font-semibold text-dark">
+                                <i class="bi bi-graph-up-arrow me-1" style="color: #276A43;"></i> HPP Aktif Acuan: <strong id="lblHppAktif">Rp 0</strong>
+                            </div>
+                            <div style="font-size: 13px;" class="fw-bold text-success" id="lblEstimasiProfit">
+                                Estimasi Profit: +0% (+Rp 0)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ==================== BAGIAN 5: PENGELOLAAN & PENYESUAIAN STOK ==================== -->
                 <div class="card mb-4 border-0 shadow-sm rounded-4" style="background: #FFF5F7; border: 1.5px solid #F7E5EA !important;">
                     <div class="card-body p-4">
                         <h6 class="fw-bold mb-3" style="color: #4D3D43; font-family: 'Quicksand', sans-serif;">
@@ -279,7 +344,7 @@
                                     <!-- Input Qty Koreksi -->
                                     <div class="col-12 col-sm-6" id="boxQtyKoreksi" style="display: none;">
                                         <div class="input-group">
-                                            <input type="number" name="qty_koreksi" id="qtyKoreksi" class="form-control" min="1" placeholder="Jumlah unit">
+                                            <input type="number" name="qty_koreksi" id="qtyKoreksi" class="form-control font-semibold" min="1" placeholder="Jumlah produk">
                                             <span class="input-group-text bg-light text-muted fw-bold">pcs</span>
                                         </div>
                                     </div>
@@ -287,7 +352,7 @@
                                     <!-- Input Set Total Baru -->
                                     <div class="col-12 col-sm-6" id="boxSetTotal" style="display: none;">
                                         <div class="input-group">
-                                            <input type="number" name="stok_total_baru" id="stokTotalBaru" class="form-control" min="0" placeholder="Stok total baru" value="{{ $produk->stok }}">
+                                            <input type="number" name="stok_total_baru" id="stokTotalBaru" class="form-control font-semibold" min="0" placeholder="Stok total baru" value="{{ $produk->stok }}">
                                             <span class="input-group-text bg-light text-muted fw-bold">pcs</span>
                                         </div>
                                     </div>
@@ -301,10 +366,10 @@
                     </div>
                 </div>
 
-                <!-- ==================== BAGIAN 5: DESKRIPSI ==================== -->
+                <!-- ==================== BAGIAN 6: DESKRIPSI ==================== -->
                 <div class="mb-3">
                     <label class="form-label fw-bold text-dark">Deskripsi Produk</label>
-                    <textarea name="deskripsi" class="form-control" rows="4" placeholder="Contoh: Kondisi baik, sedikit lecet di bagian atas...">{{ old('deskripsi', $produk->deskripsi) }}</textarea>
+                    <textarea name="deskripsi" class="form-control font-semibold" rows="4" placeholder="Contoh: Kondisi baik, sedikit lecet di bagian atas...">{{ old('deskripsi', $produk->deskripsi) }}</textarea>
                 </div>
 
                 <!-- ==================== TOMBOL ACTION ==================== -->
@@ -320,6 +385,35 @@
         </div>
     </div>
 </div>
+
+@endsection
+
+@push('scripts')
+<style>
+.btn-outline-pink {
+    color: var(--pink-primary-dark);
+    border-color: var(--pink-primary);
+    background-color: transparent;
+}
+.btn-check:checked + .btn-outline-pink {
+    background-color: var(--pink-primary);
+    border-color: var(--pink-primary);
+    color: #fff;
+    font-weight: 700;
+}
+.btn-preset-margin {
+    border: 1px solid #F0C4CE;
+    background-color: #ffffff;
+    color: var(--ink);
+    font-size: 12px;
+}
+.btn-preset-margin:hover, .btn-preset-margin.active {
+    background-color: var(--pink-primary);
+    border-color: var(--pink-primary);
+    color: #ffffff;
+    font-weight: 700;
+}
+</style>
 
 <script>
 function previewFotoEdit(input) {
@@ -353,6 +447,129 @@ function toggleKoreksiStok(val) {
         boxSet.style.display = 'none';
     }
 }
+
+// ============================================================
+// LOGIKA PENENTUAN HARGA JUAL, MARGIN %, DAN HPP REALISASI
+// ============================================================
+function parseRupiahVal(valStr) {
+    if (!valStr) return 0;
+    return parseFloat(valStr.toString().replace(/\D/g, '')) || 0;
+}
+
+function formatRupiahVal(num) {
+    return Math.round(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const inputHargaBeli = document.getElementById('harga_beli');
+    const inputHppRealisasi = document.getElementById('hpp_realisasi');
+    const hppOtomatisDisplay = document.getElementById('hpp_otomatis_display');
+    const inputHargaJual = document.getElementById('harga_jual');
+    const inputMarginPersen = document.getElementById('input_margin_persen');
+    const boxModePersen = document.getElementById('boxModePersen');
+
+    const lblHppAktif = document.getElementById('lblHppAktif');
+    const lblEstimasiProfit = document.getElementById('lblEstimasiProfit');
+
+    let currentMode = 'nominal'; // In edit mode, default to nominal unless changed
+
+    function getHppAktif() {
+        const hargaBeli = parseRupiahVal(inputHargaBeli ? inputHargaBeli.value : 0);
+        const hppReal = parseRupiahVal(inputHppRealisasi ? inputHppRealisasi.value : 0);
+        return (hppReal > 0) ? hppReal : hargaBeli;
+    }
+
+    function kalkulasiHargaJual() {
+        const hargaBeli = parseRupiahVal(inputHargaBeli ? inputHargaBeli.value : 0);
+        const hppReal = parseRupiahVal(inputHppRealisasi ? inputHppRealisasi.value : 0);
+        
+        if (hppOtomatisDisplay) {
+            hppOtomatisDisplay.value = formatRupiahVal(hargaBeli);
+        }
+
+        const hppAktif = getHppAktif();
+        if (lblHppAktif) {
+            lblHppAktif.textContent = 'Rp ' + formatRupiahVal(hppAktif);
+        }
+
+        if (currentMode === 'persen') {
+            const marginPct = parseFloat(inputMarginPersen.value) || 0;
+            const hargaJualHitung = hppAktif + (hppAktif * (marginPct / 100));
+            
+            if (inputHargaJual) {
+                inputHargaJual.value = formatRupiahVal(hargaJualHitung);
+            }
+            
+            const profitNominal = hargaJualHitung - hppAktif;
+            if (lblEstimasiProfit) {
+                lblEstimasiProfit.innerHTML = `Estimasi Profit: <strong>+${marginPct}%</strong> (+Rp ${formatRupiahVal(profitNominal)})`;
+            }
+        } else {
+            // Mode nominal langsung
+            const hargaJualVal = parseRupiahVal(inputHargaJual ? inputHargaJual.value : 0);
+            const profitNominal = hargaJualVal - hppAktif;
+            const marginPct = (hppAktif > 0) ? Math.round(((profitNominal / hppAktif) * 100) * 10) / 10 : 0;
+
+            if (lblEstimasiProfit) {
+                if (profitNominal >= 0) {
+                    lblEstimasiProfit.className = 'fw-bold text-success';
+                    lblEstimasiProfit.innerHTML = `Estimasi Profit: <strong>+${marginPct}%</strong> (+Rp ${formatRupiahVal(profitNominal)})`;
+                } else {
+                    lblEstimasiProfit.className = 'fw-bold text-danger';
+                    lblEstimasiProfit.innerHTML = `Estimasi Rugi: <strong>${marginPct}%</strong> (-Rp ${formatRupiahVal(Math.abs(profitNominal))})`;
+                }
+            }
+        }
+    }
+
+    // Toggle mode margin (Persenan vs Nominal)
+    const radiosMarginMode = document.querySelectorAll('input[name="margin_mode"]');
+    radiosMarginMode.forEach(radio => {
+        radio.addEventListener('change', function() {
+            currentMode = this.value;
+            if (currentMode === 'persen') {
+                boxModePersen.style.display = 'block';
+            } else {
+                boxModePersen.style.display = 'none';
+            }
+            kalkulasiHargaJual();
+        });
+    });
+
+    // Quick Preset Margin Buttons
+    const presetButtons = document.querySelectorAll('.btn-preset-margin');
+    presetButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            presetButtons.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            const pct = parseFloat(this.getAttribute('data-percent')) || 0;
+            inputMarginPersen.value = pct;
+            kalkulasiHargaJual();
+        });
+    });
+
+    // Event listeners untuk kalkulasi otomatis
+    if (inputHargaBeli) inputHargaBeli.addEventListener('input', kalkulasiHargaJual);
+    if (inputHppRealisasi) inputHppRealisasi.addEventListener('input', kalkulasiHargaJual);
+    if (inputMarginPersen) inputMarginPersen.addEventListener('input', kalkulasiHargaJual);
+    if (inputHargaJual) {
+        inputHargaJual.addEventListener('input', function() {
+            if (currentMode === 'nominal') {
+                kalkulasiHargaJual();
+            }
+        });
+    }
+
+    // Default to mode nominal in edit page
+    const modeNominalRadio = document.getElementById('modeNominal');
+    if (modeNominalRadio) {
+        modeNominalRadio.checked = true;
+        currentMode = 'nominal';
+        if (boxModePersen) boxModePersen.style.display = 'none';
+    }
+
+    kalkulasiHargaJual();
+});
 
 // ============================================================
 // AUTO GENERATE NAMA PRODUK & KODE MASTER DATA BARU
@@ -475,4 +692,4 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
-@endsection
+@endpush
