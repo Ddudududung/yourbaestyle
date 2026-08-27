@@ -50,8 +50,8 @@
             <label class="form-label font-semibold text-muted mb-1" style="font-size: 11.5px;">Kondisi Barang</label>
             <select name="kondisi" class="form-select font-semibold" style="border-radius: 14px; font-size: 13px;">
                 <option value="">Semua Kondisi</option>
-                <option value="layak_jual" {{ request('kondisi') == 'layak_jual' ? 'selected' : '' }}>🟢 Layak Jual (Restok)</option>
-                <option value="tidak_layak" {{ request('kondisi') == 'tidak_layak' ? 'selected' : '' }}>🔴 Tidak Layak (Kerugian)</option>
+                <option value="layak_jual" {{ request('kondisi') == 'layak_jual' ? 'selected' : '' }}>Layak Jual (Restok)</option>
+                <option value="tidak_layak" {{ request('kondisi') == 'tidak_layak' ? 'selected' : '' }}>Tidak Layak (Kerugian)</option>
             </select>
         </div>
 
@@ -100,9 +100,9 @@
                         </span>
                         <br>
                         @if($isOnline)
-                            <span class="badge px-2 py-0.5" style="background: #FFE6E6; color: #DC3545; font-size: 9.5px; font-weight: 700;">ONLINE</span>
+                            <span class="badge px-2 py-0.5" style="background: #FFF0F3; color: var(--pink-primary-dark); border: 1px solid var(--border-soft); font-size: 9.5px; font-weight: 700;">ONLINE</span>
                         @else
-                            <span class="badge px-2 py-0.5" style="background: #E8F7EE; color: #52976D; font-size: 9.5px; font-weight: 700;">POS (OFFLINE)</span>
+                            <span class="badge px-2 py-0.5" style="background: #E8F7EE; color: #1E7E34; border: 1px solid #C3EEDB; font-size: 9.5px; font-weight: 700;">POS (OFFLINE)</span>
                         @endif
                     </td>
                     <td class="py-3">
@@ -110,19 +110,13 @@
                         <small class="text-muted font-semibold" style="font-size: 11.5px;">Jumlah Retur: <strong>{{ $r->qty }} pcs</strong></small>
                     </td>
                     <td class="py-3">
-                        @if(($r->tipe_retur ?? 'tukar_barang') === 'tukar_barang')
-                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle font-semibold px-2.5 py-1 mb-1 d-inline-block" style="font-size: 10.5px;">
-                                🔄 Tukar Barang
-                            </span>
-                            @if($r->produkPengganti)
-                                <div class="text-success font-semibold" style="font-size: 11.5px;">
-                                    <i class="bi bi-arrow-right-short me-0.5"></i>{{ $r->produkPengganti->nama_produk }} ({{ $r->qty_pengganti ?? $r->qty }} pcs)
-                                </div>
-                            @endif
-                        @else
-                            <span class="badge bg-secondary-subtle text-secondary border font-semibold px-2.5 py-1" style="font-size: 10.5px;">
-                                📦 Tanpa Tukar
-                            </span>
+                        <span class="badge bg-white text-muted border font-semibold px-2.5 py-1 mb-1 d-inline-block" style="font-size: 10.5px;">
+                            <i class="bi bi-arrow-repeat me-1" style="color: var(--pink-primary);"></i> Tukar Barang
+                        </span>
+                        @if($r->produkPengganti)
+                            <div class="text-success font-semibold" style="font-size: 11.5px;">
+                                <i class="bi bi-arrow-right-short me-0.5"></i>{{ $r->produkPengganti->nama_produk }} ({{ $r->qty_pengganti ?? $r->qty }} pcs)
+                            </div>
                         @endif
                     </td>
                     <td class="py-3">

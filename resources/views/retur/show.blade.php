@@ -92,11 +92,11 @@
                         <small class="text-muted d-block font-semibold" style="font-size: 11px;">Kondisi Fisik Barang</small>
                         @if($retur->kondisi_barang === 'layak_jual')
                             <span class="badge bg-success-subtle text-success border border-success-subtle font-semibold px-2.5 py-1.5 mt-1" style="font-size: 12px;">
-                                🟢 Layak Jual (Restok (+{{ $retur->qty }} pcs) ke Inventaris)
+                                Layak Jual (Restok (+{{ $retur->qty }} pcs) ke Inventaris)
                             </span>
                         @else
                             <span class="badge bg-danger-subtle text-danger border border-danger-subtle font-semibold px-2.5 py-1.5 mt-1" style="font-size: 12px;">
-                                🔴 Tidak Layak (Kerugian Finansial)
+                                Tidak Layak (Kerugian Finansial)
                             </span>
                         @endif
                     </div>
@@ -104,10 +104,9 @@
             </div>
 
             <!-- BAGIAN 3: BARANG PENGGANTI (TUKAR BARANG) -->
-            @if(($retur->tipe_retur ?? 'tukar_barang') === 'tukar_barang')
-            <div class="p-3.5 rounded-4 mb-4" style="background: #F0F9FF; border: 1px solid #BAE6FD;">
+            <div class="p-3.5 rounded-4 mb-4" style="background: var(--pink-soft-2); border: 1px solid var(--border-soft);">
                 <h6 class="fw-bold mb-3 text-dark" style="font-family: 'Quicksand', sans-serif;">
-                    <i class="bi bi-arrow-repeat me-2" style="color: #0284C7;"></i>Barang Pengganti (Tukar Barang)
+                    <i class="bi bi-arrow-repeat me-2" style="color: var(--pink-primary);"></i>Barang Pengganti (Tukar Barang)
                 </h6>
 
                 @if($retur->produkPengganti)
@@ -117,7 +116,7 @@
                             <small class="text-muted font-monospace me-2">Kode: {{ $retur->produkPengganti->kode_produk }}</small>
                             <span class="badge bg-white text-dark border">Stok Inventaris Saat Ini: {{ $retur->produkPengganti->stok }} pcs</span>
                         </div>
-                        <span class="badge bg-primary px-3 py-2 rounded-pill font-semibold">
+                        <span class="badge bg-yb px-3 py-2 rounded-pill font-semibold text-white">
                             Dipotong {{ $retur->qty_pengganti ?? $retur->qty }} pcs dari stok
                         </span>
                     </div>
@@ -125,11 +124,6 @@
                     <span class="text-muted font-semibold">Produk pengganti tidak ditentukan.</span>
                 @endif
             </div>
-            @else
-            <div class="p-3 rounded-4 mb-4 bg-light border text-muted font-semibold" style="font-size: 12.5px;">
-                <i class="bi bi-info-circle me-1"></i> Tipe Retur: <strong>Pengembalian Barang Saja (Tanpa Pengiriman Produk Pengganti)</strong>
-            </div>
-            @endif
 
             <!-- BAGIAN 4: DAMPAK FINANSIAL & OPERATOR -->
             <div class="row g-3">
