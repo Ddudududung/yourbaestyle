@@ -41,8 +41,21 @@
                     <td>{{ $p->nama_pembeli }}</td>
                     <td>{{ $p->tanggal->format('d M Y') }}</td>
                     <td class="text-end fw-bold" style="color:var(--pink-primary-dark)">Rp {{ number_format($p->total_harga,0,',','.') }}</td>
-                    <td><span class="badge bg-light">{{ ucfirst($p->status) }}</span></td>
-                    <td><a href="{{ route('pesanan.show',$p->id) }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-eye"></i></a></td>
+                    <td>
+                        <form action="{{ route('pesanan.update_status', $p->id) }}" method="POST" class="d-inline-block">
+                            @csrf
+                            @method('PATCH')
+                            <select name="status" onchange="this.form.submit()" class="form-select form-select-sm rounded-pill font-semibold shadow-2xs" style="font-size: 11.5px; border-color: var(--border-soft); background-color: {{ $p->status=='selesai' ? '#E8F7EE' : ($p->status=='dikirim' ? '#EBF5FF' : ($p->status=='cancel' ? '#FFE6E6' : '#FFF9E6')) }}; color: {{ $p->status=='selesai' ? '#1E7E34' : ($p->status=='dikirim' ? '#1B6EC2' : ($p->status=='cancel' ? '#DC3545' : '#B35118')) }};">
+                                <option value="diproses" {{ $p->status=='diproses'?'selected':'' }}>⏳ Diproses</option>
+                                <option value="dikirim" {{ $p->status=='dikirim'?'selected':'' }}>🚚 Dikirim</option>
+                                <option value="selesai" {{ $p->status=='selesai'?'selected':'' }}>✅ Selesai</option>
+                                <option value="cancel" {{ $p->status=='cancel'?'selected':'' }}>❌ Dibatalkan</option>
+                            </select>
+                        </form>
+                    </td>
+                    <td>
+                        <a href="{{ route('pesanan.show',$p->id) }}" class="btn btn-sm btn-outline-secondary rounded-circle" title="Lihat Detail"><i class="bi bi-eye"></i></a>
+                    </td>
                 </tr>
                 @empty
                 <tr><td colspan="7" class="text-center text-secondary py-4">Belum ada pesanan online </td></tr>

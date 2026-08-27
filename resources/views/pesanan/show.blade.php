@@ -29,16 +29,17 @@
                 <span class="text-muted small d-block">Nomor Pesanan:</span>
                 <code class="fw-bold fs-6" style="color: #EC95A8; background: #FFF0F3; padding: 4px 10px; border-radius: 6px;">{{ $pesanan->no_pesanan }}</code>
             </div>
-            <div>
-                @if($pesanan->status === 'diproses')
-                    <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill fs-6"><i class="bi bi-check-circle me-1"></i> Diproses</span>
-                @elseif(in_array($pesanan->status, ['hold_review', 'hold_stok_kurang']))
-                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-3 py-2 rounded-pill fs-6"><i class="bi bi-exclamation-triangle me-1"></i> Hold Review</span>
-                @elseif($pesanan->status === 'cancel')
-                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 rounded-pill fs-6"><i class="bi bi-x-circle me-1"></i> Dibatalkan</span>
-                @else
-                    <span class="badge bg-light text-dark border px-3 py-2 rounded-pill fs-6">{{ strtoupper($pesanan->status) }}</span>
-                @endif
+            <div class="d-flex align-items-center gap-2">
+                <form action="{{ route('pesanan.update_status', $pesanan->id) }}" method="POST" class="d-inline-block">
+                    @csrf
+                    @method('PATCH')
+                    <select name="status" onchange="this.form.submit()" class="form-select form-select-sm rounded-pill font-bold shadow-2xs" style="font-size: 12.5px; padding: 6px 16px; border-color: var(--border-soft); background-color: {{ $pesanan->status=='selesai' ? '#E8F7EE' : ($pesanan->status=='dikirim' ? '#EBF5FF' : ($pesanan->status=='cancel' ? '#FFE6E6' : '#FFF9E6')) }}; color: {{ $pesanan->status=='selesai' ? '#1E7E34' : ($pesanan->status=='dikirim' ? '#1B6EC2' : ($pesanan->status=='cancel' ? '#DC3545' : '#B35118')) }};">
+                        <option value="diproses" {{ $pesanan->status=='diproses'?'selected':'' }}>⏳ Diproses</option>
+                        <option value="dikirim" {{ $pesanan->status=='dikirim'?'selected':'' }}>🚚 Dikirim</option>
+                        <option value="selesai" {{ $pesanan->status=='selesai'?'selected':'' }}>✅ Selesai</option>
+                        <option value="cancel" {{ $pesanan->status=='cancel'?'selected':'' }}>❌ Dibatalkan</option>
+                    </select>
+                </form>
             </div>
         </div>
         

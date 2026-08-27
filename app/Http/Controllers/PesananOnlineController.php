@@ -790,5 +790,29 @@ public function resolveManual(Request $request, $id)
     }
 
     return redirect()->back();
-  }
+    }
+
+    /**
+     * Update status pesanan online (diproses, dikirim, selesai, cancel)
+     */
+    public function updateStatus(Request $request, $id)
+    {
+        $request->validate([
+            'status' => 'required|in:diproses,dikirim,selesai,cancel,draft',
+        ]);
+
+        $pesanan = PesananOnline::findOrFail($id);
+        $pesanan->update(['status' => $request->status]);
+
+        $labels = [
+            'diproses' => 'Diproses',
+            'dikirim'  => 'Dikirim',
+            'selesai'  => 'Selesai',
+            'cancel'   => 'Dibatalkan',
+            'draft'    => 'Draft',
+        ];
+        $newLabel = $labels[$request->status] ?? $request->status;
+
+        return back()->with('success', "Status pesanan #{$pesanan->no_pesanan} berhasil diperbarui menjadi {$newLabel}!");
+    }
 }
