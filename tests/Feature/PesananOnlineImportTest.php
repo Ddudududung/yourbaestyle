@@ -183,4 +183,46 @@ class PesananOnlineImportTest extends TestCase
         // Stock reduced by 3 (20 -> 17)
         $this->assertEquals(17, $this->produk->fresh()->stok);
     }
+
+    public function test_import_multi_item_same_order_preserves_all_details(): void
+    {
+        $this->actingAs($this->owner);
+
+        $payload = [
+            'data_pesanan_mentah' => json_encode([
+                [
+                    'no_pesanan' => 'ORD-MULTI-100',
+                    'nama_pembeli' => 'Ani Pertiwi',
+                    'tanggal' => date('Y-m-d H:i:s'),
+                    'variasi' => 'IYB 5',
+                    'qty' => 1,
+                    'harga_satuan' => 150000,
+                    'total_harga' => 150000,
+                    'id_produk_auto' => $this->produk->id,
+                ],
+                [
+                    'no_pesanan' => 'ORD-MULTI-100',
+                    'nama_pembeli' => 'Ani Pertiwi',
+                    'tanggal' => date('Y-m-d H:i:s'),
+                    'variasi' => 'IYB 5',
+                    'qty' => 2,
+                    'harga_satuan' => 150000,
+                    'total_harga' => 300000,
+                    'id_produk_auto' => $this->produk->id,
+                ]
+            ]),
+            'mapping_data' => json_encode([
+                "0" => $this->produk->id,
+                "1" => $this->produk->id,
+            ])
+        ];
+
+        $response = $this->post(route('pesanan.import.proses'), $payload);
+        $response->assertRedirect(route('pesanan.index'));
+
+        $pesanan = PesananOnline::where('no_pesanan', 'ORD-MULTI-100')->first();
+        $this->assertNotNull($pesanan);
+        $this->assertEquals(450000, $pesanan->total_harga);
+        $this->assertCount(2, $pesanan->detail);
+    }
 }

@@ -451,6 +451,7 @@ class PesananOnlineController extends Controller
             $pesananBerhasil = 0;
             $pesananGagal = 0;
             $pesananSkip = 0;
+            $processedOrders = [];
 
             foreach ($dataPesanan as $idx => $row) {
                 $noPesanan = trim((string)($row['no_pesanan'] ?? ''));
@@ -518,6 +519,8 @@ class PesananOnlineController extends Controller
                     $hppSatuan = $produkObj->hpp_aktif;
                     $totalHpp = $hppSatuan * $qty;
 
+                    $isFirstTimeInBatch = false;
+
                     if (!$pesanan) {
                         $pesanan = PesananOnline::create([
                             'no_pesanan'     => $noPesanan,
@@ -533,24 +536,37 @@ class PesananOnlineController extends Controller
                             'status_mapping' => 'sukses',
                             'pesan_mapping'  => 'Berhasil dimapping',
                         ]);
+                        $isFirstTimeInBatch = true;
                     } else {
-                        $pesanan->update([
-                            'id_user'        => Auth::id() ?? $pesanan->id_user,
-                            'platform'       => $platform,
-                            'no_resi'        => $noResi ?: $pesanan->no_resi,
-                            'nama_pembeli'   => $namaPembeli,
-                            'tanggal'        => Carbon::parse($tanggalRow),
-                            'total_harga'    => $totalHarga,
-                            'total_hpp'      => $totalHpp,
-                            'ongkir'         => $ongkir,
-                            'status'         => 'diproses',
-                            'status_mapping' => 'sukses',
-                            'pesan_mapping'  => 'Berhasil dimapping',
-                        ]);
+                        if (!in_array($pesanan->id, $processedOrders)) {
+                            // First time encounter in this import batch -> reset totals & details
+                            $pesanan->update([
+                                'id_user'        => Auth::id() ?? $pesanan->id_user,
+                                'platform'       => $platform,
+                                'no_resi'        => $noResi ?: $pesanan->no_resi,
+                                'nama_pembeli'   => $namaPembeli,
+                                'tanggal'        => Carbon::parse($tanggalRow),
+                                'total_harga'    => $totalHarga,
+                                'total_hpp'      => $totalHpp,
+                                'ongkir'         => $ongkir ?: $pesanan->ongkir,
+                                'status'         => 'diproses',
+                                'status_mapping' => 'sukses',
+                                'pesan_mapping'  => 'Berhasil dimapping',
+                            ]);
+                            DetailPesananOnline::where('id_pesanan', $pesanan->id)->delete();
+                            $isFirstTimeInBatch = true;
+                        } else {
+                            // Subsequent item in the same import batch for this order
+                            $pesanan->update([
+                                'total_harga'    => $pesanan->total_harga + $totalHarga,
+                                'total_hpp'      => $pesanan->total_hpp + $totalHpp,
+                            ]);
+                        }
                     }
 
-                    // Hapus detail lama jika ada (agar tidak duplicate saat re-import)
-                    DetailPesananOnline::where('id_pesanan', $pesanan->id)->delete();
+                    if (!in_array($pesanan->id, $processedOrders)) {
+                        $processedOrders[] = $pesanan->id;
+                    }
 
                     DetailPesananOnline::create([
                         'id_pesanan'   => $pesanan->id,

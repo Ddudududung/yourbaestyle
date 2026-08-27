@@ -205,25 +205,23 @@
                                     <td class="py-3 text-end fw-bold" style="color: #2EAF6C;">Rp {{ number_format($row['total_harga'] ?? 0, 0, ',', '.') }}</td>
                                     
                                     <td class="py-3 pe-4 text-end">
-                                        @if(!empty($row['is_duplicate']))
-                                            <select name="mapping_select[{{ $idx }}]" class="form-select form-select-sm rounded-3 mapping-select font-semibold d-inline-block shadow-2xs" data-idx="{{ $idx }}" style="font-size: 11.5px; max-width: 230px; border-color: #F7C9D3; background-color: #FFF0F2;">
-                                                <option value="skip" selected style="background-color: #FFE6E6; color: #dc3545;">▪ Skip (Order Duplikat)</option>
-                                                @foreach($produkAktif as $prod)
-                                                    <option value="{{ $prod->id }}">{{ substr($prod->nama_produk, 0, 25) }} (Stok: {{ $prod->stok }})</option>
-                                                @endforeach
-                                            </select>
-                                        @elseif($isAuto)
+                                        @if($isAuto)
                                             <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1.5 rounded-pill font-semibold shadow-2xs" style="font-size: 11.5px;">
                                                 <i class="bi bi-check-lg me-1"></i> {{ substr($row['nama_produk_auto'] ?? '', 0, 26) }}
                                             </span>
+                                            @if(!empty($row['is_duplicate']))
+                                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle ms-1 font-semibold" style="font-size: 10px;" title="Order sudah ada di database, akan diperbarui">
+                                                    🔄 Update
+                                                </span>
+                                            @endif
                                             <input type="hidden" class="mapping-auto" data-idx="{{ $idx }}" value="{{ $row['id_produk_auto'] }}">
                                         @else
-                                            <select name="mapping_select[{{ $idx }}]" class="form-select form-select-sm rounded-3 mapping-select font-semibold d-inline-block shadow-2xs" data-idx="{{ $idx }}" style="font-size: 11.5px; max-width: 230px; border-color: #F8C3A4; background-color: #FFF9F5;">
+                                            <select name="mapping_select[{{ $idx }}]" class="form-select form-select-sm rounded-3 mapping-select font-semibold d-inline-block shadow-2xs" data-idx="{{ $idx }}" style="font-size: 11.5px; max-width: 230px; border-color: {{ !empty($row['is_duplicate']) ? '#F7C9D3' : '#F8C3A4' }}; background-color: {{ !empty($row['is_duplicate']) ? '#FFF0F2' : '#FFF9F5' }};">
                                                 <option value="">— Pilih Produk Katalog —</option>
                                                 @foreach($produkAktif as $prod)
                                                     <option value="{{ $prod->id }}">{{ substr($prod->nama_produk, 0, 25) }} (Stok: {{ $prod->stok }})</option>
                                                 @endforeach
-                                                <option value="skip" style="background-color: #FFE6E6; color: #dc3545;">▪ Skip Pesanan Ini</option>
+                                                <option value="skip" {{ !empty($row['is_duplicate']) ? 'selected' : '' }} style="background-color: #FFE6E6; color: #dc3545;">▪ Skip {{ !empty($row['is_duplicate']) ? '(Order Duplikat)' : 'Pesanan Ini' }}</option>
                                             </select>
                                         @endif
                                     </td>
@@ -274,6 +272,9 @@
                             <div class="p-2.5 rounded-3" style="background: #E8F7EE; border: 1px solid #C3EEDB;">
                                 <small class="text-success d-block font-semibold" style="font-size: 10px;">✓ Ter-map ke Produk:</small>
                                 <strong class="text-success" style="font-size: 12px;">{{ $row['nama_produk_auto'] ?? '-' }}</strong>
+                                @if(!empty($row['is_duplicate']))
+                                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle ms-1 font-semibold" style="font-size: 10px;">🔄 Update</span>
+                                @endif
                             </div>
                             <input type="hidden" class="mapping-auto" data-idx="{{ $idx }}" value="{{ $row['id_produk_auto'] }}">
                         @else
@@ -282,7 +283,7 @@
                                 @foreach($produkAktif as $prod)
                                     <option value="{{ $prod->id }}">{{ $prod->nama_produk }} (Stok: {{ $prod->stok }})</option>
                                 @endforeach
-                                <option value="skip" style="background-color: #FFE6E6; color: #dc3545;">▪ Skip Pesanan Ini</option>
+                                <option value="skip" {{ !empty($row['is_duplicate']) ? 'selected' : '' }} style="background-color: #FFE6E6; color: #dc3545;">▪ Skip {{ !empty($row['is_duplicate']) ? '(Order Duplikat)' : 'Pesanan Ini' }}</option>
                             </select>
                         @endif
                     </div>
@@ -349,7 +350,7 @@ document.getElementById('import-form').addEventListener('submit', function(e) {
     document.querySelectorAll('input.mapping-auto').forEach(input => {
         const idx = input.getAttribute('data-idx');
         const value = input.value;
-        if (idx && value) {
+        if (idx !== null && idx !== undefined && value) {
             mappingObj[idx] = value;
         }
     });
@@ -357,8 +358,10 @@ document.getElementById('import-form').addEventListener('submit', function(e) {
     document.querySelectorAll('select.mapping-select').forEach(select => {
         const idx = select.getAttribute('data-idx');
         const value = select.value;
-        if (idx && value) {
-            mappingObj[idx] = value;
+        if (idx !== null && idx !== undefined && value !== '') {
+            if (!mappingObj[idx] || value === 'skip') {
+                mappingObj[idx] = value;
+            }
         }
     });
     
