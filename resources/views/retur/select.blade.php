@@ -11,7 +11,7 @@
             <h4 class="mb-1 fw-bold" style="color: var(--ink); font-family: 'Quicksand', sans-serif;">
                 <i class="bi bi-reply-fill me-2" style="color: var(--pink-primary);"></i>Pilih Transaksi untuk Retur
             </h4>
-            <small class="text-muted font-semibold" style="font-size: 12px;">Cari dan pilih transaksi yang akan di-retur (dari Kasir POS atau Pesanan Online)</small>
+            <small class="text-muted font-semibold" style="font-size: 12px;">Cari dan pilih transaksi yang akan di-retur (dari Kasir POS Offline atau Pesanan Online)</small>
         </div>
         <a href="{{ route('retur.index') }}" class="btn btn-yb-outline px-3 py-2 text-decoration-none font-semibold" style="border-radius: 12px; font-size: 12.5px;">
             <i class="bi bi-arrow-left me-1"></i> Kembali ke Retur
@@ -61,8 +61,8 @@
                 <div class="col-12 col-sm-6 col-lg-3">
                     <label class="form-label font-semibold text-muted mb-1" style="font-size: 11.5px;">Tipe Transaksi</label>
                     <select name="type" class="form-select font-semibold" style="border-radius: 12px; border-color: var(--border-soft); font-size: 12.5px;">
-                        <option value="">-- Semua Tipe --</option>
-                        <option value="pos" {{ request('type') == 'pos' ? 'selected' : '' }}>Kasir (POS)</option>
+                        <option value="">-- Semua Tipe (POS & Online) --</option>
+                        <option value="pos" {{ request('type') == 'pos' ? 'selected' : '' }}>Kasir POS (Offline)</option>
                         <option value="online" {{ request('type') == 'online' ? 'selected' : '' }}>Pesanan Online</option>
                     </select>
                 </div>
@@ -76,7 +76,7 @@
                             <i class="bi bi-search"></i>
                         </span>
                         <input type="text" name="search" class="form-control border-start-0 ps-0 font-semibold" 
-                               placeholder="Cari nomor transaksi, resi, atau nama produk..." 
+                               placeholder="Cari nomor transaksi, resi, pembeli, atau produk..." 
                                value="{{ request('search', '') }}"
                                id="searchInput" autofocus style="border-radius: 0 12px 12px 0; border-color: var(--border-soft); font-size: 12.5px;">
                     </div>
@@ -127,8 +127,9 @@
                     <tr>
                         <th class="py-3 ps-4">No. Transaksi</th>
                         <th class="py-3">Tipe</th>
-                        <th class="py-3">Produk</th>
-                        <th class="py-3 text-end">Total</th>
+                        <th class="py-3">Pembeli / Kasir</th>
+                        <th class="py-3">Item Produk</th>
+                        <th class="py-3 text-end">Total Transaction</th>
                         <th class="py-3">Tanggal</th>
                         <th class="py-3 pe-4 text-center">Aksi</th>
                     </tr>
@@ -138,7 +139,12 @@
                     @php
                         $type = $tx->type ?? 'pos';
                         $kode = $tx->kode_transaksi ?? '-';
-                        $produkNames = $tx->detail ? $tx->detail->map(fn($d) => optional($d->produk)->nama_produk)->filter()->implode(', ') : '-';
+                        $pembeli = $tx->nama_pembeli ?? '-';
+                        $produkList = $tx->detail ? $tx->detail->map(function($d) {
+                            $nama = optional($d->produk)->nama_produk ?? $d->nama_produk_history ?? 'Produk';
+                            return $nama . ' (' . $d->qty . ' pcs)';
+                        })->implode(', ') : '-';
+                        $itemCount = $tx->detail ? $tx->detail->count() : 0;
                     @endphp
                     <tr>
                         <td class="py-3 ps-4">
@@ -148,13 +154,21 @@
                         </td>
                         <td class="py-3">
                             @if($type === 'online')
-                                <span class="badge font-semibold px-2.5 py-1" style="background: #F3E5F5; color: #7B1FA2; font-size: 10.5px;">PESANAN ONLINE</span>
+                                <span class="badge font-semibold px-2.5 py-1" style="background: #FFE6E6; color: #DC3545; font-size: 10.5px;">PESANAN ONLINE</span>
                             @else
-                                <span class="badge bg-success font-semibold px-2.5 py-1" style="font-size: 10.5px;">KASIR (POS)</span>
+                                <span class="badge font-semibold px-2.5 py-1" style="background: #E8F7EE; color: #52976D; font-size: 10.5px;">KASIR (POS)</span>
                             @endif
                         </td>
-                        <td class="py-3 fw-bold" style="color: var(--ink);" title="{{ $produkNames }}">
-                            {{ \Illuminate\Support\Str::limit($produkNames, 45) }}
+                        <td class="py-3 fw-semibold text-dark">
+                            {{ $pembeli }}
+                        </td>
+                        <td class="py-3" title="{{ $produkList }}">
+                            <div class="fw-bold" style="color: var(--ink);">
+                                {{ \Illuminate\Support\Str::limit($produkList, 40) }}
+                            </div>
+                            <small class="text-muted font-semibold" style="font-size: 11px;">
+                                <i class="bi bi-box-seam me-1"></i>{{ $itemCount }} jenis barang
+                            </small>
                         </td>
                         <td class="py-3 text-end fw-bold" style="color: #52976D; font-size: 13.5px;">
                             Rp {{ number_format($tx->total_harga ?? 0, 0, ',', '.') }}
@@ -171,7 +185,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="6" class="text-center py-5">
+                        <td colspan="7" class="text-center py-5">
                             <div class="py-4">
                                 <i class="bi bi-inbox fs-1 d-block mb-2" style="color: var(--border-soft);"></i>
                                 <h6 class="fw-bold mb-1" style="color: var(--ink);">Transaksi tidak ditemukan</h6>
@@ -191,7 +205,11 @@
         @php
             $type = $tx->type ?? 'pos';
             $kode = $tx->kode_transaksi ?? '-';
-            $produkNames = $tx->detail ? $tx->detail->map(fn($d) => optional($d->produk)->nama_produk)->filter()->implode(', ') : '-';
+            $pembeli = $tx->nama_pembeli ?? '-';
+            $produkList = $tx->detail ? $tx->detail->map(function($d) {
+                $nama = optional($d->produk)->nama_produk ?? $d->nama_produk_history ?? 'Produk';
+                return $nama . ' (' . $d->qty . ' pcs)';
+            })->implode(', ') : '-';
         @endphp
         <div class="p-3 mb-3 rounded-3" style="background: #ffffff; border: 1.5px solid var(--border-soft);">
             <div class="d-flex justify-content-between align-items-start mb-2.5">
@@ -201,16 +219,17 @@
                     </span>
                     <br>
                     @if($type === 'online')
-                        <span class="badge font-semibold px-2 py-0.5" style="background: #F3E5F5; color: #7B1FA2; font-size: 10px;">PESANAN ONLINE</span>
+                        <span class="badge font-semibold px-2 py-0.5" style="background: #FFE6E6; color: #DC3545; font-size: 10px;">PESANAN ONLINE</span>
                     @else
-                        <span class="badge bg-success font-semibold px-2 py-0.5" style="font-size: 10px;">KASIR (POS)</span>
+                        <span class="badge font-semibold px-2 py-0.5" style="background: #E8F7EE; color: #52976D; font-size: 10px;">KASIR (POS)</span>
                     @endif
                 </div>
+                <small class="text-muted font-semibold" style="font-size: 11px;">{{ $pembeli }}</small>
             </div>
 
             <div class="mb-3">
                 <small class="text-muted d-block font-semibold" style="font-size: 11px;">Produk</small>
-                <strong style="color: var(--ink); font-size: 13px;">{{ $produkNames }}</strong>
+                <strong style="color: var(--ink); font-size: 13px;">{{ $produkList }}</strong>
             </div>
 
             <div class="row g-2 mb-3">

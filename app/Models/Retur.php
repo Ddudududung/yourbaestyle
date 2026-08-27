@@ -8,7 +8,7 @@ class Retur extends Model
 {
     protected $table = 'retur';
     protected $fillable = [
-        'id_pesanan_online', 'id_produk', 'id_user', 'tanggal',
+        'id_pesanan_online', 'id_transaksi', 'id_produk', 'id_user', 'tanggal',
         'alasan', 'kondisi_barang', 'ongkir_retur', 'nilai_kerugian', 'qty',
         'tipe_retur', 'id_produk_pengganti', 'qty_pengganti'
     ];
@@ -16,6 +16,11 @@ class Retur extends Model
     public function pesananOnline()
     {
         return $this->belongsTo(PesananOnline::class, 'id_pesanan_online');
+    }
+
+    public function transaksiPos()
+    {
+        return $this->belongsTo(TransaksiPos::class, 'id_transaksi');
     }
 
     public function produk()

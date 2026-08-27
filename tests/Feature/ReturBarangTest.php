@@ -11,6 +11,9 @@ use App\Models\MsJenisPakaian;
 use App\Models\MsModel;
 use App\Models\Pemasok;
 use App\Models\PesananOnline;
+use App\Models\DetailPesananOnline;
+use App\Models\TransaksiPos;
+use App\Models\DetailTransaksiPos;
 use App\Models\Retur;
 use Illuminate\Support\Facades\DB;
 
@@ -70,6 +73,14 @@ class ReturBarangTest extends TestCase
             'status' => 'diproses',
             'total_harga' => 150000,
             'total_hpp' => 100000,
+        ]);
+
+        DetailPesananOnline::create([
+            'id_pesanan' => $this->pesanan->id,
+            'id_produk' => $this->produk->id,
+            'qty' => 5,
+            'harga_satuan' => 150000,
+            'hpp_satuan' => 100000,
         ]);
     }
 
@@ -213,6 +224,48 @@ class ReturBarangTest extends TestCase
         $this->assertEquals(0, $pengganti->fresh()->stok);
         // Original stock remains 10
         $this->assertEquals(10, $this->produk->fresh()->stok);
+    }
+
+    public function test_retur_pos_offline_transaction(): void
+    {
+        $this->actingAs($this->owner);
+
+        $posTx = TransaksiPos::create([
+            'kode_transaksi' => 'TRX-20260827-0001',
+            'id_user' => $this->owner->id,
+            'tanggal' => now(),
+            'total_harga' => 150000,
+            'total_hpp' => 100000,
+            'metode_bayar' => 'tunai',
+        ]);
+
+        DetailTransaksiPos::create([
+            'id_transaksi' => $posTx->id,
+            'id_produk' => $this->produk->id,
+            'qty' => 3,
+            'harga_satuan' => 150000,
+            'hpp_satuan' => 100000,
+        ]);
+
+        $response = $this->post(route('retur.store'), [
+            'transaksi_type' => 'pos',
+            'transaksi_id' => $posTx->id,
+            'id_produk' => $this->produk->id,
+            'tanggal' => date('Y-m-d'),
+            'alasan' => 'Cacat produksi',
+            'kondisi_barang' => 'layak_jual',
+            'qty' => 2,
+            'tipe_retur' => 'kembali_barang',
+        ]);
+
+        $response->assertRedirect(route('retur.index'))
+                 ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('retur', [
+            'id_transaksi' => $posTx->id,
+            'id_produk' => $this->produk->id,
+            'qty' => 2,
+        ]);
     }
 
     public function test_retur_search_barcode_ajax(): void
