@@ -815,4 +815,31 @@ public function resolveManual(Request $request, $id)
 
         return back()->with('success', "Status pesanan #{$pesanan->no_pesanan} berhasil diperbarui menjadi {$newLabel}!");
     }
+
+    /**
+     * Update status massal (bulk) untuk banyak pesanan sekaligus
+     */
+    public function bulkUpdateStatus(Request $request)
+    {
+        $request->validate([
+            'ids'    => 'required|array|min:1',
+            'ids.*'  => 'exists:pesanan_online,id',
+            'status' => 'required|in:diproses,dikirim,selesai,cancel,draft',
+        ]);
+
+        $count = PesananOnline::whereIn('id', $request->ids)->update([
+            'status' => $request->status
+        ]);
+
+        $labels = [
+            'diproses' => 'Diproses',
+            'dikirim'  => 'Dikirim',
+            'selesai'  => 'Selesai',
+            'cancel'   => 'Dibatalkan',
+            'draft'    => 'Draft',
+        ];
+        $newLabel = $labels[$request->status] ?? $request->status;
+
+        return back()->with('success', "Berhasil memperbarui status {$count} pesanan terpilih menjadi '{$newLabel}'!");
+    }
 }

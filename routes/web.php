@@ -73,6 +73,7 @@ Route::middleware(['auth', 'menu.access'])->group(function () {
     Route::get('/pesanan/review-manual',          [PesananOnlineController::class, 'reviewManual'])->name('pesanan.review_manual');
     Route::patch('/pesanan/review-manual/{id}/resolve', [PesananOnlineController::class, 'resolveManual'])->name('pesanan.resolve_manual');
     Route::get('/pesanan/{id}',                   [PesananOnlineController::class, 'show'])->name('pesanan.show');
+    Route::patch('/pesanan/bulk-status',          [PesananOnlineController::class, 'bulkUpdateStatus'])->name('pesanan.bulk_update_status');
     Route::patch('/pesanan/{id}/status',          [PesananOnlineController::class, 'updateStatus'])->name('pesanan.update_status');
     
     // Mapping Sesi Live (Co-Host)
