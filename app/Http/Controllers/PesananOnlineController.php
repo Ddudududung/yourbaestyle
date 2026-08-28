@@ -693,9 +693,16 @@ private function parseTanggal($value): string
     if ($request->filled('status'))
         $query->where('status', $request->status);
     
-    // Filter by date
+    // Filter by single date
     if ($request->filled('tanggal'))
         $query->whereDate('tanggal', $request->tanggal);
+
+    // Filter by date range
+    if ($request->filled('tanggal_mulai'))
+        $query->whereDate('tanggal', '>=', $request->tanggal_mulai);
+
+    if ($request->filled('tanggal_akhir'))
+        $query->whereDate('tanggal', '<=', $request->tanggal_akhir);
     
     // Search by nomor pesanan atau nama pembeli
     if ($request->filled('search')) {
@@ -705,8 +712,12 @@ private function parseTanggal($value): string
         });
     }
 
-    $pesanan = $query->orderBy('tanggal', 'desc')->paginate(15);
-    return view('pesanan.index', compact('pesanan'));
+    $totalOrderCount = (clone $query)->count();
+    $totalOmset      = (clone $query)->sum('total_harga');
+
+    $pesanan = $query->orderBy('tanggal', 'desc')->paginate(15)->withQueryString();
+
+    return view('pesanan.index', compact('pesanan', 'totalOrderCount', 'totalOmset'));
 }
    public function show(string $id)
 {

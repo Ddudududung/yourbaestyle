@@ -121,8 +121,8 @@
                                                 Sudah Diretur: {{ $qtySudahRetur }} pcs
                                             </span>
                                         @endif
-                                        <span class="badge bg-success-subtle text-success border border-success-subtle" style="padding: 4px 8px;">
-                                            Stok Toko: {{ $stokSkrg }} pcs
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle" style="padding: 4px 8px;" title="Stok inventaris produk ini di toko saat ini">
+                                            <i class="bi bi-box-seam me-1"></i>Stok Toko Saat Ini: <strong>{{ $stokSkrg }} pcs</strong>
                                         </span>
                                     </div>
 

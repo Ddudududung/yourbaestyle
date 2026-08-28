@@ -4,34 +4,69 @@
 
 @section('content')
 
-<div class="card-yb p-4 mb-3">
-    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-        <form method="GET" class="row g-2 grow">
-            <div class="col-md-3">
-                <select name="platform" class="form-select font-semibold">
-                    <option value="">Semua Platform</option>
-                    <option value="shopee" {{ request('platform')=='shopee'?'selected':'' }}>Shopee</option>
-                    <option value="tiktok" {{ request('platform')=='tiktok'?'selected':'' }}>TikTok</option>
-                </select>
+<!-- STATISTIK RINGKASAN PESANAN ONLINE -->
+<div class="row g-3 mb-3">
+    <div class="col-12 col-md-6 col-lg-6">
+        <div class="card-yb p-3.5 d-flex align-items-center justify-content-between" style="background: var(--pink-soft-2); border: 1.5px solid var(--border-soft);">
+            <div>
+                <small class="text-muted font-semibold d-block mb-1" style="font-size: 11.5px;">Total Pesanan Online Filtered</small>
+                <h4 class="fw-bold mb-0" style="color: var(--pink-primary-dark); font-family: 'Quicksand', sans-serif;">{{ number_format($totalOrderCount ?? 0, 0, ',', '.') }} Order</h4>
             </div>
-            <div class="col-md-3">
-                <select name="status" class="form-select font-semibold">
-                    <option value="">Semua Status</option>
-                    <option value="diproses" {{ request('status')=='diproses'?'selected':'' }}>⏳ Diproses</option>
-                    <option value="dikirim" {{ request('status')=='dikirim'?'selected':'' }}>🚚 Dikirim</option>
-                    <option value="selesai" {{ request('status')=='selesai'?'selected':'' }}>✅ Selesai</option>
-                    <option value="cancel" {{ request('status')=='cancel'?'selected':'' }}>❌ Dibatalkan</option>
-                </select>
+            <div class="rounded-circle p-3 d-flex align-items-center justify-content-center" style="background: #ffffff; color: var(--pink-primary); width: 48px; height: 48px;">
+                <i class="bi bi-bag-check-fill fs-4"></i>
             </div>
-            <div class="col-md-4">
-                <input type="text" name="search" class="form-control font-semibold" placeholder="Cari no. pesanan / pembeli..." value="{{ request('search') }}">
-            </div>
-            <div class="col-md-2">
-                <button class="btn btn-yb w-100 font-semibold">Filter</button>
-            </div>
-        </form>
-        <a href="{{ route('pesanan.import') }}" class="btn btn-yb ms-2 font-semibold"><i class="bi bi-cloud-upload"></i> Import File</a>
+        </div>
     </div>
+    <div class="col-12 col-md-6 col-lg-6">
+        <div class="card-yb p-3.5 d-flex align-items-center justify-content-between" style="background: #E8F7EE; border: 1.5px solid #C3EEDB;">
+            <div>
+                <small class="text-success font-semibold d-block mb-1" style="font-size: 11.5px;">Total Omset Sales Online Filtered</small>
+                <h4 class="fw-bold mb-0 text-success" style="font-family: 'Quicksand', sans-serif;">Rp {{ number_format($totalOmset ?? 0, 0, ',', '.') }}</h4>
+            </div>
+            <div class="rounded-circle p-3 d-flex align-items-center justify-content-center bg-white text-success" style="width: 48px; height: 48px;">
+                <i class="bi bi-cash-stack fs-4"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card-yb p-4 mb-3">
+    <form method="GET" class="row g-2 align-items-end">
+        <div class="col-6 col-md-2">
+            <label class="form-label font-semibold mb-1" style="font-size: 11px;">Platform</label>
+            <select name="platform" class="form-select form-select-sm font-semibold">
+                <option value="">Semua Platform</option>
+                <option value="shopee" {{ request('platform')=='shopee'?'selected':'' }}>Shopee</option>
+                <option value="tiktok" {{ request('platform')=='tiktok'?'selected':'' }}>TikTok</option>
+            </select>
+        </div>
+        <div class="col-6 col-md-2">
+            <label class="form-label font-semibold mb-1" style="font-size: 11px;">Status Order</label>
+            <select name="status" class="form-select form-select-sm font-semibold">
+                <option value="">Semua Status</option>
+                <option value="diproses" {{ request('status')=='diproses'?'selected':'' }}>⏳ Diproses</option>
+                <option value="dikirim" {{ request('status')=='dikirim'?'selected':'' }}>🚚 Dikirim</option>
+                <option value="selesai" {{ request('status')=='selesai'?'selected':'' }}>✅ Selesai</option>
+                <option value="cancel" {{ request('status')=='cancel'?'selected':'' }}>❌ Dibatalkan</option>
+            </select>
+        </div>
+        <div class="col-6 col-md-2">
+            <label class="form-label font-semibold mb-1" style="font-size: 11px;">Tgl Mulai</label>
+            <input type="date" name="tanggal_mulai" class="form-control form-control-sm font-semibold" value="{{ request('tanggal_mulai') }}">
+        </div>
+        <div class="col-6 col-md-2">
+            <label class="form-label font-semibold mb-1" style="font-size: 11px;">Tgl Akhir</label>
+            <input type="date" name="tanggal_akhir" class="form-control form-control-sm font-semibold" value="{{ request('tanggal_akhir') }}">
+        </div>
+        <div class="col-12 col-md-2">
+            <label class="form-label font-semibold mb-1" style="font-size: 11px;">Pencarian</label>
+            <input type="text" name="search" class="form-control form-control-sm font-semibold" placeholder="No. Pesanan / Pembeli..." value="{{ request('search') }}">
+        </div>
+        <div class="col-12 col-md-2 d-flex gap-2">
+            <button class="btn btn-sm btn-yb w-100 font-semibold"><i class="bi bi-filter"></i> Filter</button>
+            <a href="{{ route('pesanan.import') }}" class="btn btn-sm btn-outline-danger font-semibold text-nowrap"><i class="bi bi-cloud-upload"></i> Import</a>
+        </div>
+    </form>
 </div>
 
 <!-- BAR AKSI MASSAL (BULK ACTION BAR) -->

@@ -15,8 +15,8 @@
 
             <div style="font-size:12px" class="fw-semibold">
                 <div class="d-flex justify-content-between"><span class="text-secondary">No. Transaksi</span><span>{{ $transaksi->kode_transaksi }}</span></div>
-                <div class="d-flex justify-content-between"><span class="text-secondary">Tanggal</span><span>{{ $transaksi->tanggal->format('d M Y, H:i') }}</span></div>
-                <div class="d-flex justify-content-between"><span class="text-secondary">Kasir</span><span>{{ $transaksi->user->nama }}</span></div>
+                <div class="d-flex justify-content-between"><span class="text-secondary">Tanggal</span><span>{{ \Carbon\Carbon::parse($transaksi->tanggal)->format('d M Y, H:i') }}</span></div>
+                <div class="d-flex justify-content-between"><span class="text-secondary">Kasir</span><span>{{ $transaksi->user->nama ?? $transaksi->user->name ?? 'Kasir POS' }}</span></div>
                 <div class="d-flex justify-content-between"><span class="text-secondary">Metode Bayar</span><span>{{ ucfirst($transaksi->metode_bayar) }}</span></div>
             </div>
 
@@ -25,8 +25,8 @@
             <div style="font-size:12px">
                 @foreach($transaksi->detail as $d)
                 <div class="d-flex justify-content-between mb-1 fw-semibold">
-                    <span class="grow">{{ $d->produk->nama_produk }} x{{ $d->qty }}</span>
-                    <span>Rp {{ number_format($d->subtotal,0,',','.') }}</span>
+                    <span class="grow">{{ $d->produk->nama_produk ?? 'Produk' }} x{{ $d->qty }}</span>
+                    <span>Rp {{ number_format(($d->harga_satuan ?? 0) * $d->qty, 0, ',', '.') }}</span>
                 </div>
                 @endforeach
             </div>
@@ -35,9 +35,11 @@
 
             <div style="font-size:12px" class="fw-semibold">
                 <div class="d-flex justify-content-between"><span class="text-secondary">Subtotal</span><span>Rp {{ number_format($transaksi->total_harga + $transaksi->diskon,0,',','.') }}</span></div>
-                <div class="d-flex justify-content-between"><span class="text-secondary">Diskon</span><span>Rp {{ number_format($transaksi->diskon,0,',','.') }}</span></div>
+                @if($transaksi->diskon > 0)
+                <div class="d-flex justify-content-between text-success"><span class="text-secondary">Diskon</span><span>-Rp {{ number_format($transaksi->diskon,0,',','.') }}</span></div>
+                @endif
                 <div class="d-flex justify-content-between fw-bold mt-1 pt-1" style="font-size:15px;color:var(--pink-primary-dark);border-top:2px dashed var(--border-soft)">
-                    <span>Total</span><span>Rp {{ number_format($transaksi->total_harga,0,',','.') }}</span>
+                    <span>Total Bayar</span><span>Rp {{ number_format($transaksi->total_harga,0,',','.') }}</span>
                 </div>
             </div>
 

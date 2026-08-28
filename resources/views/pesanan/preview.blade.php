@@ -25,6 +25,7 @@
 
     $berhasil = count(array_filter($cleanParsed, fn($p) => ($p['mapping_status'] ?? '') === 'auto_found'));
     $gagalMapping = count(array_filter($cleanParsed, fn($p) => ($p['mapping_status'] ?? '') !== 'auto_found'));
+    $duplikat = count(array_filter($cleanParsed, fn($p) => !empty($p['is_duplicate'])));
     $total = count($cleanParsed);
 @endphp
 
@@ -34,12 +35,18 @@
     <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
         <div>
             <h4 class="mb-1 fw-bold" style="color: var(--ink); font-family: 'Quicksand', sans-serif;">
-                <i class="bi bi-file-earmark-check-fill me-2" style="color: var(--pink-primary);"></i>Preview Import Pesanan
+                <i class="bi bi-file-earmark-check-fill me-2" style="color: var(--pink-primary);"></i>Preview Import Pesanan Omnichannel
             </h4>
             <div class="d-flex align-items-center gap-2 flex-wrap font-semibold" style="font-size: 12.5px;">
                 <span class="text-muted">Platform: <strong style="color: var(--ink);">{{ strtoupper($platform) }}</strong></span>
                 <span class="text-muted">•</span>
                 <span class="text-muted">Format: <strong style="color: var(--ink);">{{ $formatCsv }}</strong></span>
+                @if($duplikat > 0)
+                    <span class="text-muted">•</span>
+                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2.5 py-1 font-semibold" style="font-size: 11px;">
+                        🚨 Terdeteksi {{ $duplikat }} Order Duplikat di Database
+                    </span>
+                @endif
             </div>
         </div>
         <div>
@@ -49,7 +56,7 @@
         </div>
     </div>
 
-    <!-- 2. STATISTIK CARDS (CENTER ALIGNED & THEMED) -->
+    <!-- 2. STATISTIK CARDS -->
     <div class="row g-2.5 g-md-3 mb-4">
         <div class="col-6 col-md-3">
             <div class="p-3.5 rounded-4 h-100 text-center d-flex flex-column justify-content-center align-items-center" style="background: #E8F7EE; border: 1.5px solid #C3EEDB; box-shadow: 0 4px 12px rgba(46, 175, 108, 0.08);">
@@ -57,7 +64,7 @@
                     <span class="fw-bold text-success small"><i class="bi bi-check-circle-fill me-1"></i> Auto-Map</span>
                 </div>
                 <h3 class="mb-1 fw-bold text-success" style="font-size: 1.7rem; font-family: 'Quicksand', sans-serif;">{{ $berhasil }}</h3>
-                <small class="text-success font-semibold opacity-85" style="font-size: 11px;">Sudah terpetakan otomatis</small>
+                <small class="text-success font-semibold opacity-85" style="font-size: 11px;">Terpetakan otomatis</small>
             </div>
         </div>
 
@@ -72,22 +79,22 @@
         </div>
 
         <div class="col-6 col-md-3">
+            <div class="p-3.5 rounded-4 h-100 text-center d-flex flex-column justify-content-center align-items-center" style="background: {{ $duplikat > 0 ? '#FFF0F2' : '#F8FAFC' }}; border: 1.5px solid {{ $duplikat > 0 ? '#F5B8C5' : '#E2E8F0' }}; box-shadow: 0 4px 12px rgba(224, 82, 112, 0.08);">
+                <div class="d-flex align-items-center justify-content-center gap-1.5 mb-1">
+                    <span class="fw-bold {{ $duplikat > 0 ? 'text-danger' : 'text-muted' }} small"><i class="bi bi-shield-exclamation me-1"></i> Order Duplikat</span>
+                </div>
+                <h3 class="mb-1 fw-bold {{ $duplikat > 0 ? 'text-danger' : 'text-dark' }}" style="font-size: 1.7rem; font-family: 'Quicksand', sans-serif;">{{ $duplikat }}</h3>
+                <small class="text-muted font-semibold" style="font-size: 11px;">{{ $duplikat > 0 ? 'Sudah ada di database' : 'Tidak ada duplikat' }}</small>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-3">
             <div class="p-3.5 rounded-4 h-100 text-center d-flex flex-column justify-content-center align-items-center" style="background: var(--pink-soft-2); border: 1.5px solid var(--border-soft); box-shadow: 0 4px 12px rgba(236, 149, 168, 0.08);">
                 <div class="d-flex align-items-center justify-content-center gap-1.5 mb-1">
                     <span class="fw-bold small" style="color: var(--ink);"><i class="bi bi-box-seam me-1" style="color: var(--pink-primary);"></i> Total Order</span>
                 </div>
                 <h3 class="mb-1 fw-bold" style="color: var(--pink-primary-dark); font-size: 1.7rem; font-family: 'Quicksand', sans-serif;">{{ $total }}</h3>
-                <small class="text-muted font-semibold" style="font-size: 11px;">Valid item dari Excel</small>
-            </div>
-        </div>
-
-        <div class="col-6 col-md-3">
-            <div class="p-3.5 rounded-4 h-100 text-center d-flex flex-column justify-content-center align-items-center" style="background: #FAF0F7; border: 1.5px solid #EBC6E3; box-shadow: 0 4px 12px rgba(124, 53, 90, 0.06);">
-                <div class="d-flex align-items-center justify-content-center gap-1.5 mb-1">
-                    <span class="fw-bold small" style="color: #7C355A;"><i class="bi bi-lightning-charge-fill me-1"></i> Ready</span>
-                </div>
-                <h3 class="mb-1 fw-bold" style="color: #7C355A; font-size: 1.7rem; font-family: 'Quicksand', sans-serif;">{{ $total > 0 ? '✓' : '–' }}</h3>
-                <small class="text-muted font-semibold" style="font-size: 11px;">Siap disimpan</small>
+                <small class="text-muted font-semibold" style="font-size: 11px;">Item dari Excel</small>
             </div>
         </div>
     </div>

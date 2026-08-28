@@ -29,13 +29,28 @@ class KatalogController extends Controller
         }
         $liveProdukIds = array_keys($liveMap);
 
-        // Fungsi filter pencarian (nama produk / jenis)
-        $filter = function ($query) use ($request) {
+        // Fungsi filter pencarian (nama produk / kode_produk / kode_live)
+        $filter = function ($query) use ($request, $liveMap) {
             if ($request->filled('search')) {
-                $query->where('nama_produk', 'like', '%' . $request->search . '%');
+                $search = $request->search;
+                // Cari ID produk yang kode_live-nya cocok dengan kata pencarian
+                $matchingLiveIds = [];
+                foreach ($liveMap as $pId => $kLive) {
+                    if (stripos((string)$kLive, $search) !== false) {
+                        $matchingLiveIds[] = $pId;
+                    }
+                }
+
+                $query->where(function($q) use ($search, $matchingLiveIds) {
+                    $q->where('nama_produk', 'like', '%' . $search . '%')
+                      ->orWhere('kode_produk', 'like', '%' . $search . '%');
+                    if (!empty($matchingLiveIds)) {
+                        $q->orWhereIn('id', $matchingLiveIds);
+                    }
+                });
             }
             if ($request->filled('jenis')) {
-                $query->where('jenis', $request->jenis);
+                $query->where('id_jenis_pakaian', $request->jenis);
             }
         };
 

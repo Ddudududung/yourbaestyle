@@ -16,16 +16,23 @@
 <div class="card-yb p-4">
     <div class="table-responsive">
         <table class="table table-yb align-middle">
-            <thead><tr><th>Kode Transaksi</th><th>Kasir</th><th>Tanggal</th><th>Metode</th><th class="text-end">Total</th><th>Aksi</th></tr></thead>
+            <thead><tr><th>Kode Transaksi</th><th>Kasir</th><th>Tanggal</th><th>Metode</th><th class="text-end">Diskon</th><th class="text-end">Total Akhir</th><th>Aksi</th></tr></thead>
             <tbody>
                 @forelse($transaksi as $t)
                 <tr>
                     <td class="fw-semibold">{{ $t->kode_transaksi }}</td>
-                    <td>{{ $t->user->nama }}</td>
-                    <td>{{ $t->tanggal->format('d M Y, H:i') }}</td>
-                    <td><span class="badge bg-light">{{ ucfirst($t->metode_bayar) }}</span></td>
+                    <td>{{ $t->user->nama ?? $t->user->name ?? 'Kasir' }}</td>
+                    <td>{{ \Carbon\Carbon::parse($t->tanggal)->format('d M Y, H:i') }}</td>
+                    <td><span class="badge bg-light text-dark border">{{ ucfirst($t->metode_bayar) }}</span></td>
+                    <td class="text-end">
+                        @if($t->diskon > 0)
+                            <span class="badge bg-success-subtle text-success border border-success-subtle">-Rp {{ number_format($t->diskon,0,',','.') }}</span>
+                        @else
+                            <span class="text-muted">-</span>
+                        @endif
+                    </td>
                     <td class="text-end fw-bold" style="color:var(--pink-primary-dark)">Rp {{ number_format($t->total_harga,0,',','.') }}</td>
-                    <td><a href="{{ route('transaksi.show',$t->id) }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-printer"></i> Cetak Ulang</a></td>
+                    <td><a href="{{ route('transaksi.show',$t->id) }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-printer"></i> Cetak Struk</a></td>
                 </tr>
                 @empty
                 <tr><td colspan="6" class="text-center text-secondary py-4">Belum ada transaksi 🌷</td></tr>

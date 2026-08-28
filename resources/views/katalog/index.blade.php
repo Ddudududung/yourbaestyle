@@ -68,8 +68,14 @@
                 <div class="product-card h-100 d-flex flex-column" style="border: 2px solid #ff0050;">
                     
                     <!-- Area Foto & Badge Live -->
-                    <div class="product-image-wrapper">
+                    <div class="product-image-wrapper position-relative">
                         <span class="status-badge status-live"><i class="bi bi-broadcast me-1"></i> LIVE NOW</span>
+
+                        @if(!empty($p->kode_live))
+                            <span class="position-absolute top-0 end-0 m-2 badge rounded-pill px-3 py-1.5 shadow-sm" style="background: linear-gradient(135deg, #E60044, #FF3366); color: #ffffff; font-size: 12.5px; font-weight: 800; z-index: 10; border: 2px solid #ffffff;">
+                                <i class="bi bi-hash me-0.5"></i>No. Live: {{ $p->kode_live }}
+                            </span>
+                        @endif
 
                         @if($p->foto)
                             <img src="{{ asset('storage/'.$p->foto) }}" class="product-image" alt="{{ $p->nama_produk }}">
@@ -88,8 +94,8 @@
                                 {{ strtoupper($p->jenisPakaian->nama ?? 'FASHION') }}
                             </span>
                             @if(!empty($p->kode_live))
-                                <span class="badge rounded-pill px-2.5 py-1" style="background: #FFF9E6; color: #B35118; border: 1.5px solid #FFE699; font-size: 11.5px; font-weight: 800;" title="Nomor Baju Saat Live Stream">
-                                    <i class="bi bi-tag-fill me-1"></i> Live: {{ $p->kode_live }}
+                                <span class="badge rounded-pill px-2.5 py-1" style="background: #FFF3C4; color: #854D0E; border: 1.5px solid #FDE047; font-size: 11.5px; font-weight: 800;" title="Nomor Baju Saat Live Stream">
+                                    <i class="bi bi-broadcast-pin me-1"></i> Kode: {{ $p->kode_live }}
                                 </span>
                             @endif
                         </div>
